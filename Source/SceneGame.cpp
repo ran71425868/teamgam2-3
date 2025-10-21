@@ -1,8 +1,6 @@
 #include "System/Graphics.h"
 #include "SceneGame.h"
 #include "Camera.h"
-#include "EnemyManager.h"
-#include "EnemySlime.h"
 #include "Player.h"
 #include "EffectManager.h"
 
@@ -33,32 +31,12 @@ void SceneGame::Initialize()
 
 	cameraController = new CameraController;
 
-	//エネミー初期化
-	// エネミーマネージャーをインスタンスから呼び出す
-	EnemyManager& enemyManager = EnemyManager::Instance();
-	
-	for (int i = 0; i < 2; ++i) 
-	{
-		// 敵を作成する
-		EnemySlime* slime = new EnemySlime();
-
-		// 敵の位置を設定
-		slime->SetPosition(DirectX::XMFLOAT3(i*2.0f, 0, 5));
-
-		slime->SetTerritory(slime->GetPosition(), 10.0f);
-
-		// 作成した敵をエネミーマネージャーに登録
-		enemyManager.Register(slime);
-	}
-
 }
 
 // 終了化
 void SceneGame::Finalize()
 {
-	//エネミー終了化
-	EnemyManager::Instance().Clear();
-
+	
 	if (cameraController != nullptr) {
 		delete cameraController;
 		cameraController = nullptr;
@@ -94,8 +72,7 @@ void SceneGame::Update(float elapsedTime)
 	stage->Update(elapsedTime);
 	//プレイヤー更新処理
 	Player::Instance().Update(elapsedTime);
-	//エネミー更新処理
-	EnemyManager::Instance().Update(elapsedTime);
+	
 	//エフェクトマネージャー更新処理
 	EffectManager::Instance().Update(elapsedTime);
 }
@@ -126,8 +103,7 @@ void SceneGame::Render()
 		stage->Render(rc, modelRenderer);
 		//プレイヤー描画
 		Player::Instance().Render(rc, modelRenderer);
-		//エネミー描画
-		EnemyManager::Instance().Render(rc, modelRenderer);
+		
 		//エフェクトマネージャー描画
 		EffectManager::Instance().Render(rc.view, rc.projection);
 	}
@@ -136,8 +112,7 @@ void SceneGame::Render()
 	{
 		//プレイヤーデバッグプリミティブ描画
 		Player::Instance().RenderDebugPrimitive(rc, shapeRenderer);
-		//エネミーデバッグプリミティブ描画
-		EnemyManager::Instance().RenderDebugPrimitive(rc, shapeRenderer);
+		
 	}
 
 	// 2Dスプライト描画

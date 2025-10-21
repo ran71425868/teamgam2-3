@@ -2,10 +2,7 @@
 #include "System/Input.h"
 #include <imgui.h>
 #include "Camera.h"
-#include "EnemyManager.h"
 #include "Collision.h"
-#include "ProjectileStraight.h"
-#include "ProjectileHoming.h"
 #include "System/Audio.h"
 
 //初期化
@@ -39,23 +36,8 @@ void Player::Update(float elapsedTime)
 	//移動入力処理
 	InputMove(elapsedTime);
 
-	//ジャンプ入力処理
-	InputJump();
-
-	//弾丸入力処理
-	InputProjectile();
-
 	//速力処理更新
 	UpdateVelocity(elapsedTime);
-
-	//弾丸更新処理
-	projectileManager.Update(elapsedTime);
-
-	//プレイヤーと敵との衝突判定
-	CollisionPlayerVsEnemies();
-
-	//弾丸と敵の衝突処理
-	CollisionProjectilesVsEnemies();
 
 	//オブジェクト行列を更新
 	UpdateTransform();
@@ -129,241 +111,10 @@ DirectX::XMFLOAT3 Player::GetMoveVec() const
 	return vec;
 }
 
-//プレイヤーとエネミーの衝突処理
-void Player::CollisionPlayerVsEnemies()
-{
-	EnemyManager& enemyManager = EnemyManager::Instance();
-
-	//全ての敵と総当たりで衝突処理
-	int enemyCount = enemyManager.GetEnemyCount();
-
-	for (int i = 0; i < enemyCount; i++) 
-	{
-		Enemy* enemy = enemyManager.GetEnemy(i);
-
-		//衝突処理
-		DirectX::XMFLOAT3 outPosition;
-		if (Collision::IntersectCylinderVsCylinder(position, radius, height, enemy->GetPosition(), enemy->GetRadius(), enemy->GetHeight(), outPosition))
-		{
-			
-			//敵の真上付近に当たったかを判定
-			//プレイヤーの位置をXMVECTORに変換
-			DirectX::XMVECTOR P = DirectX::XMLoadFloat3(&position);
-
-			//敵の位置をXMVECTORに変換
-			DirectX::XMVECTOR E = DirectX::XMLoadFloat3(&enemy->GetPosition());
-
-			//敵からプレイヤーへのベクトルを計算
-			DirectX::XMVECTOR V = DirectX::XMVectorSubtract(P, E);
-
-			//そのベクトルを正規化（単位ベクトル化）
-			DirectX::XMVECTOR N = DirectX::XMVector3Normalize(V);
-
-			//正規化したベクトルXMFLOAT3に変換
-			DirectX::XMFLOAT3 normal;
-			DirectX::XMStoreFloat3(&normal, N);
-
-			//上から踏んづけた場合は小ジャンプする
-			if (normal.y > 0.8f)
-			{
-				//小ジャンプ
-				Jump(jumpSpeed * 0.5f);
-			}
-			else
-			{
-				//押し出し後の位置設定（上から踏んづけなかった場合の処理）
-				enemy->SetPosition(outPosition);
-
-			}
-
-		}
-	}
-}
-
-//弾丸と敵の衝突処理
-void Player::CollisionProjectilesVsEnemies()
-{
-	EnemyManager& enemyManager = EnemyManager::Instance();
-
-	//全ての弾丸と全ての敵を総当たりで衝突処理
-	int projectileCount = projectileManager.GetProjectileCount();
-	int enemyCount = enemyManager.GetEnemyCount();
-	for (int i = 0; i < projectileCount; ++i)
-	{
-		Projectile* projectile = projectileManager.GetProjectile(i);
-
-		for (int j = 0; j < enemyCount; ++j)
-		{
-			Enemy* enemy = enemyManager.GetEnemy(j);
-
-			//衝突処理
-			DirectX::XMFLOAT3 outPosition;
-			if (Collision::IntersectSphereVsCylinder(
-				projectile->GetPosition(),
-				projectile->GetRadius(),
-				enemy->GetPosition(),
-				enemy->GetRadius(),
-				enemy->GetHeight(),
-				outPosition))
-			{
-				//ダメージを与える
-				if (enemy->ApplyDamage(1, 0.5f))
-				{
-					//吹き飛ばす
-					{
-						DirectX::XMFLOAT3 impulse;
-						const float power = 10.0f;
-						const DirectX::XMFLOAT3& e = enemy->GetPosition();
-						const DirectX::XMFLOAT3& p = projectile->GetPosition();
-						float vx = e.x - p.x;
-						float vz = e.z - p.z;
-						float lengthXZ = sqrtf(vx * vx + vz * vz);
-						vx /= lengthXZ;
-						vz /= lengthXZ;
-
-						impulse.x = vx * power;
-						impulse.y = power * 0.5f;
-						impulse.z = vz * power;
-
-						enemy->AddImpulse(impulse);
-					}
-
-					//ヒットエフェクト
-					{
-						DirectX::XMFLOAT3 e = enemy->GetPosition();
-						e.y += enemy->GetHeight() * 0.5f;
-						hitEffect->Play(e);
-					}
-
-					//ヒットSE再生
-					{
-						hitSE->Play(false);
-					}
-
-					//弾丸破棄
-					projectile->Destroy();
-				}
-			}
-		}
-	}
-
-}
-
-//着地した時に呼ばれる
-void Player::OnLanding()
-{
-	//現在のジャンプ回数をリセット
-	jumpCount = 0;
-}
-
-
-//ジャンプ入力処理
-void Player::InputJump() 
-{
-	GamePad& gamePad = Input::Instance().GetGamePad();
-	if (gamePad.GetButtonDown() & GamePad::BTN_A)
-	{
-		//ジャンプ回数制限(現在のジャンプ回数がジャンプの最大数より小さければ)
-		//現在のジャンプ回数を増加させ
-		if (jumpCount < jumpLimit) 
-		{
-			jumpCount++;
-			//ジャンプ
-			Jump(jumpSpeed);
-
-		}
-
-	}
-
-}
-
-//弾丸入力処理
-void Player::InputProjectile()
-{
-	GamePad& gamePad = Input::Instance().GetGamePad();
-
-	//直進弾丸発射
-	if (gamePad.GetButtonDown() & GamePad::BTN_X)
-	{
-		//前方向
-		DirectX::XMFLOAT3 dir;
-		dir.x = sinf(angle.y);//前方向(sinとangleで計算)
-		dir.y = 0.0f;
-		dir.z = cosf(angle.y);//前方向(cosとangleで計算)
-
-		//発射位置(プレイヤーの腰あたり,yがheightの半分)
-		DirectX::XMFLOAT3 pos;
-		pos.x = position.x;
-		pos.y = position.y + height * 0.5f;
-		pos.z = position.z;
-
-		//発射
-		ProjectileStraight* projectile = new ProjectileStraight(&projectileManager);
-		projectile->Launch(dir, pos);
-		//projectileManager.Register(projectile);
-	}
-
-	//追尾処理
-	if (gamePad.GetButtonDown() & GamePad::BTN_Y)
-	{
-		//前方向
-		DirectX::XMFLOAT3 dir;
-		dir.x = sinf(angle.y);
-		dir.y = 0.0f;
-		dir.z = cosf(angle.y);
-
-		//発射位置(プレイヤーの腰あたり,yがheightの半分)
-		DirectX::XMFLOAT3 pos;
-		pos.x = position.x;
-		pos.y = position.y + height * 0.5f;
-		pos.z = position.z;
-
-		//ターゲット(デフォルトではプレイヤーの前方)
-		DirectX::XMFLOAT3 target;
-		target.x = pos.x + dir.x * 1000.0f;
-		target.y = pos.y + dir.y * 1000.0f;
-		target.z = pos.z + dir.z * 1000.0f;
-
-		//一番近くの敵をターゲットにする
-		float dist = FLT_MAX;
-		EnemyManager& enemyManager = EnemyManager::Instance();
-		int enemyCount = enemyManager.GetEnemyCount();
-		for (int i = 0; i < enemyCount; i++)
-		{
-			//敵との距離判定
-			Enemy* enemy = EnemyManager::Instance().GetEnemy(i);
-			DirectX::XMVECTOR P = DirectX::XMLoadFloat3(&position);//プレイヤーの位置
-			DirectX::XMVECTOR E = DirectX::XMLoadFloat3(&enemy->GetPosition());//敵の位置
-			DirectX::XMVECTOR V = DirectX::XMVectorSubtract(P, E);//敵への方向ベクトル-プレイヤーの位置
-			DirectX::XMVECTOR D = DirectX::XMVector3LengthSq(V);//敵への方向ベクトルの長さ
-
-			float d;//今回の距離(球から敵までの距離)
-			DirectX::XMStoreFloat(&d, D);
-			
-			//今回の敵の方がプレイヤーに近いからどうかチェック
-			if (d < dist)
-			{
-				//近かったらtargetに設定
-				dist = d;
-				target = enemy->GetPosition();
-				target.y += enemy->GetHeight()*0.5f;
-			}
-		}
-
-		//発射
-		ProjectileHoming* projectile = new ProjectileHoming(&projectileManager);
-		projectile->Launch(dir, pos, target);
-
-	}
-}
-
 //描画処理
 void Player::Render(const RenderContext& rc, ModelRenderer* renderer)
 {
 	renderer->Render(rc, transform, model, ShaderId::Lambert);
-
-	//弾丸描画処理
-	projectileManager.Render(rc, renderer);
 }
 
 //デバッグプリミティブ描画
@@ -371,9 +122,6 @@ void Player::RenderDebugPrimitive(const RenderContext& rc, ShapeRenderer* render
 {
 	//基底クラスの関数呼び出し
 	Character::RenderDebugPrimitive(rc, renderer);
-
-	//弾丸デバッグプリミティブ描画
-	projectileManager.RenderDebugPrimitive(rc, renderer);
 
 }
 

@@ -2,7 +2,6 @@
 
 #include "System/ModelRenderer.h"
 #include "Character.h" 
-#include "ProjectileManager.h"
 #include "Effect.h"
 #include "System/AudioSource.h"
 
@@ -39,8 +38,6 @@ public:
 	//デバッグ用GUI描画
 	void DrawDebugGUI();
 
-	//ジャンプ入力処理
-	void InputJump();
 
 private:
 	//スティック入力値から移動ベクトルを取得
@@ -48,19 +45,6 @@ private:
 
 	//移動入力処理
 	void InputMove(float elapsedTime);
-
-	//プレイヤーとエネミーとの衝突処理
-	void CollisionPlayerVsEnemies();
-
-	//弾丸入力処理
-	void InputProjectile();
-
-	//弾丸と敵の衝突判定
-	void CollisionProjectilesVsEnemies();
-
-protected:
-	//着地した時に呼ばれる
-	void OnLanding() override;
 
 
 private:
@@ -71,8 +55,6 @@ private:
 
 	int jumpCount = 0;
 	int jumpLimit = 2;
-
-	ProjectileManager projectileManager;//弾丸管理
 
 	Effect* hitEffect = nullptr;
 
