@@ -41,7 +41,7 @@ void SceneGame::Initialize()
 		DirectX::XMConvertToRadians(45),//視野角
 		graphics.GetScreenWidth() / graphics.GetScreenHeight(),//画面アスペクト比
 		0.1f,//クリップ距離(近)
-		1000.0f//クリップ距離(遠)
+		10000.0f//クリップ距離(遠)
 		);
 
 	cameraController = new CameraController;
@@ -91,7 +91,17 @@ void SceneGame::Update(float elapsedTime)
 
 
 	//カメラコントローラー更新処理
+
+	DirectX::XMFLOAT3 Poswhite{ 400.0f,0.0f,300.0f };
+	DirectX::XMFLOAT3 Posblack{ 400.0f,0.0f,600.0f };
+
+
 	DirectX::XMFLOAT3 target = Player::Instance().GetPosition();
+
+	//DirectX::XMFLOAT3 target;
+	target.x = Poswhite.x;
+	target.y = 0.0f;
+	target.z = Posblack.z - Poswhite.z;
 
 	target.y += 0.5f;
 	cameraController->SetTarget(target);
