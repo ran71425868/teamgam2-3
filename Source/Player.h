@@ -49,7 +49,7 @@ private:
 
 private:
 	Model* model = nullptr;
-	float moveSpeed = 5.0f;
+	float moveSpeed = 10.0f;
 	float turnSpeed = DirectX::XMConvertToRadians(720);
 	float jumpSpeed = 12.0f;
 

@@ -1,0 +1,187 @@
+#include "Board.h"
+#include <iostream>
+#include <iomanip>
+
+Board::Board() {
+    grid.resize(8, std::vector<std::shared_ptr<ChessPiece>>(8, nullptr));
+    currentTurn = "white";
+}
+
+void Board::initialize() {
+    // 白の駒
+    grid[0][0] = std::make_shared<Rook>("white", Position{ 0, 0 });
+    grid[0][1] = std::make_shared<Knight>("white", Position{ 1, 0 });
+    grid[0][2] = std::make_shared<Bishop>("white", Position{ 2, 0 });
+    grid[0][3] = std::make_shared<Queen>("white", Position{ 3, 0 });
+    grid[0][4] = std::make_shared<King>("white", Position{ 4, 0 });
+    grid[0][5] = std::make_shared<Bishop>("white", Position{ 5, 0 });
+    grid[0][6] = std::make_shared<Knight>("white", Position{ 6, 0 });
+    grid[0][7] = std::make_shared<Rook>("white", Position{ 7, 0 });
+    for (int i = 0; i < 8; ++i)
+        grid[1][i] = std::make_shared<Pawn>("white", Position{ i, 1 });
+
+    // 黒の駒
+    grid[7][0] = std::make_shared<Rook>("black", Position{ 0, 7 });
+    grid[7][1] = std::make_shared<Knight>("black", Position{ 1, 7 });
+    grid[7][2] = std::make_shared<Bishop>("black", Position{ 2, 7 });
+    grid[7][3] = std::make_shared<Queen>("black", Position{ 3, 7 });
+    grid[7][4] = std::make_shared<King>("black", Position{ 4, 7 });
+    grid[7][5] = std::make_shared<Bishop>("black", Position{ 5, 7 });
+    grid[7][6] = std::make_shared<Knight>("black", Position{ 6, 7 });
+    grid[7][7] = std::make_shared<Rook>("black", Position{ 7, 7 });
+    for (int i = 0; i < 8; ++i)
+        grid[6][i] = std::make_shared<Pawn>("black", Position{ i, 6 });
+}
+
+void Board::printBoard() const {
+    for (int y = 7; y >= 0; --y) {
+        std::cout << y + 1 << " ";
+        for (int x = 0; x < 8; ++x) {
+            auto piece = grid[y][x];
+            if (piece) {
+                char symbol = piece->getType()[0];
+                if (piece->getColor() == "black") symbol = tolower(symbol);
+                std::cout << symbol << " ";
+            }
+            else {
+                std::cout << ". ";
+            }
+        }
+        std::cout << "\n";
+    }
+    std::cout << "  a b c d e f g h\n";
+}
+
+std::shared_ptr<ChessPiece> Board::getPieceAt(Position pos) const {
+    if (!isInsideBoard(pos)) return nullptr;
+    return grid[pos.y][pos.x];
+}
+
+void Board::setPieceAt(Position pos, std::shared_ptr<ChessPiece> piece) {
+    if (isInsideBoard(pos)) {
+        grid[pos.y][pos.x] = piece;
+    }
+}
+
+void Board::movePiece(Position from, Position to) {
+    if (!isInsideBoard(from) || !isInsideBoard(to)) return;
+    auto piece = grid[from.y][from.x];
+    if (piece) {
+        piece->setPosition(to);
+        grid[to.y][to.x] = piece;
+        grid[from.y][from.x] = nullptr;
+    }
+}
+
+bool Board::isInsideBoard(Position pos) const {
+    return pos.x >= 0 && pos.x < 8 && pos.y >= 0 && pos.y < 8;
+}
+
+// ターン管理
+std::string Board::getCurrentTurn() const {
+    return currentTurn;
+}
+
+void Board::switchTurn() {
+    currentTurn = (currentTurn == "white") ? "black" : "white";
+}
+
+// チェック・チェックメイト判定
+bool Board::isKingInCheck(std::string color) const {
+    Position kingPos{ -1, -1 };
+    // キングの位置を探す
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            auto piece = grid[y][x];
+            if (piece && piece->getType() == "King" && piece->getColor() == color) {
+                kingPos = { x, y };
+                break;
+            }
+        }
+    }
+    if (kingPos.x == -1) return false;
+
+    // 敵駒の合法手にキングが含まれるか確認
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            auto piece = grid[y][x];
+            if (piece && piece->getColor() != color) {
+                auto moves = piece->getLegalMoves(*this);
+                for (auto& m : moves) {
+                    if (m.x == kingPos.x && m.y == kingPos.y) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool Board::isCheckmate(std::string color) {
+    if (!isKingInCheck(color)) return false;
+
+    // 自軍のすべての駒の合法手を試して、チェックを回避できるか確認
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            auto piece = grid[y][x];
+            if (piece && piece->getColor() == color) {
+                auto moves = piece->getLegalMoves(*this);
+                Position originalPos = { x, y };
+                for (auto& m : moves) {
+                    auto backup = grid[m.y][m.x];
+                    grid[m.y][m.x] = piece;
+                    grid[y][x] = nullptr;
+                    piece->setPosition(m);
+
+                    bool stillInCheck = isKingInCheck(color);
+
+                    // 元に戻す
+                    grid[y][x] = piece;
+                    grid[m.y][m.x] = backup;
+                    piece->setPosition(originalPos);
+
+                    if (!stillInCheck) return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+void Board::filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& moves) const {
+    std::vector<Position> legal;
+    Position original = piece.getPosition();
+
+    for (auto& m : moves) {
+        // Board を一時コピー
+        Board tempBoard = *this;
+
+        // 駒を仮移動
+        tempBoard.setPieceAt(m, tempBoard.getPieceAt(original));
+        tempBoard.setPieceAt(original, nullptr);
+        tempBoard.getPieceAt(m)->setPosition(m);
+
+        // チェック判定
+        if (!tempBoard.isKingInCheck(piece.getColor())) {
+            legal.push_back(m);
+        }
+
+        //auto backup = grid[m.y][m.x];
+        //grid[m.y][m.x] = grid[original.y][original.x];
+        //grid[original.y][original.x] = nullptr;
+        //grid[m.y][m.x]->setPosition(m);
+
+        //bool inCheck = isKingInCheck(piece.getColor());
+
+        //// 元に戻す
+        //grid[original.y][original.x] = grid[m.y][m.x];
+        //grid[m.y][m.x] = backup;
+        //grid[original.y][original.x]->setPosition(original);
+
+        //if (!inCheck)
+        //    legal.push_back(m);
+    }
+
+    moves = legal;
+}

@@ -1,6 +1,7 @@
 #include "System/Input.h"
 #include "CameraController.h"
 #include "Camera.h"
+#include "Slime.h"
 
 //更新処理
 void CameraController::Update(float elapsedTime) 
@@ -29,7 +30,6 @@ void CameraController::Update(float elapsedTime)
 	if (angle.y > -DirectX::XM_PI) {
 		angle.y -= DirectX::XM_2PI;
 	}
-
 
 	//カメラ回転値を回転行列に変換	
 	DirectX::XMMATRIX Transform = DirectX::XMMatrixRotationRollPitchYaw(angle.x, angle.y, angle.z);

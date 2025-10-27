@@ -2,6 +2,9 @@
 
 #include "Stage.h"
 //#include "Player.h"
+#include "Slime.h"
+#include "Board.h"
+#include <vector>
 #include "CameraController.h"
 #include "Scene.h"
 
@@ -22,13 +25,17 @@ public:
 	void Update(float elapsedTime)override;
 
 	// •`‰æˆ—
-	void Render()override;
+	void Render() override;
 
 	// GUI•`‰æ
 	void DrawGUI()override;
 
 private:
 	Stage* stage = nullptr;
+	Board* board = nullptr;
+	Slime* slime = nullptr;
+
+	std::vector<Slime*> pieces;
 	//Player* player = nullptr;
 	CameraController* cameraController = nullptr;
 

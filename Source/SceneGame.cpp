@@ -2,6 +2,7 @@
 #include "SceneGame.h"
 #include "Camera.h"
 #include "Player.h"
+#include "Slime.h"
 #include "EffectManager.h"
 
 // 初期化
@@ -9,9 +10,23 @@ void SceneGame::Initialize()
 {
 	//ステージ初期化
 	stage = new Stage();
+
+	board = new Board();
+	board->initialize();
+
 	//プレイヤー初期化
 	//player = new Player();
 	Player::Instance().Initializa();
+
+	// 駒を初期配置（例：白と黒のスライム）
+	for (int i = 0; i <= 7; i++)
+	{
+		pieces.push_back(new Slime("white", { i, 1 }));
+		pieces.push_back(new Slime("black", { i, 6 }));
+	}
+	
+	SetReady();
+
 
 	//カメラ初期設定
 	Graphics& graphics = Graphics::Instance();
@@ -56,11 +71,25 @@ void SceneGame::Finalize()
 		delete stage;
 		stage = nullptr;
 	}
+
+	if (board != nullptr)
+	{
+		delete board;
+		board = nullptr;
+	}
+
+	for (auto p : pieces) delete p;
+	pieces.clear();
+
 }
 
 // 更新処理
 void SceneGame::Update(float elapsedTime)
 {
+	stage->Update(elapsedTime);
+	for (auto p : pieces) p->Update(elapsedTime);
+
+
 	//カメラコントローラー更新処理
 	DirectX::XMFLOAT3 target = Player::Instance().GetPosition();
 
@@ -91,11 +120,15 @@ void SceneGame::Render()
 	rc.lightDirection = { 0.0f, -1.0f, 0.0f };	// ライト方向（下方向）
 	rc.renderState = graphics.GetRenderState();
 
+	ModelRenderer* renderer = graphics.GetModelRenderer(); // ←環境に応じて取得方法を調整
+	stage->Render(rc, renderer);
+	for (auto p : pieces) p->Render(rc, renderer);
+
+
 	//カメラパラメータ設定
 	Camera& camera = Camera::Instance();
 	rc.view = camera.GetView();
 	rc.projection = camera.GetProjection();
-
 
 	// 3Dモデル描画
 	{
@@ -103,6 +136,12 @@ void SceneGame::Render()
 		stage->Render(rc, modelRenderer);
 		//プレイヤー描画
 		Player::Instance().Render(rc, modelRenderer);
+
+		/*slime->Render(rc, modelRenderer);*/
+
+		for (auto p : pieces) {
+			p->Render(rc, renderer);
+		}
 		
 		//エフェクトマネージャー描画
 		EffectManager::Instance().Render(rc.view, rc.projection);
