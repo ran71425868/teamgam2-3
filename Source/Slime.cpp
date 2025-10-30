@@ -2,7 +2,8 @@
 
 Slime::Slime(std::string c, Position boardPos) : color(c), boardPosition(boardPos) {
     model = new Model("Data/Model/Slime/Slime.mdl");
-    stage_model = new Model("Data/Model/Stage/stage.mdl");
+    black_bord = new Model("Data/Model/Stage/black_bord.mdl");
+    white_bord = new Model("Data/Model/Stage/white_bord.mdl");
     //モデルが大きいのでスケーリング
     scale.x = scale.y = scale.z = 1.0f;
 }
@@ -25,20 +26,12 @@ void Slime::Render(const RenderContext& rc, ModelRenderer* renderer) {
         )
     );
 
-    DirectX::XMFLOAT4X4 stage_transform;
-    DirectX::XMStoreFloat4x4(&stage_transform,
-        DirectX::XMMatrixScaling(4.3f, 4.3f, 4.3f) *
-        DirectX::XMMatrixTranslation(
-            350.0f, // 盤面1マス = 100ユニット
-            0.0f,
-            350.0f
-        )
-    );
-
-
     renderer->Render(rc, transform, model, ShaderId::Lambert);
 
-    renderer->Render(rc, stage_transform, stage_model, ShaderId::Lambert);
+    if ((static_cast<int>(boardPosition.x) + static_cast<int>(boardPosition.y)) % 2 == 0) 
+    renderer->Render(rc, transform, white_bord, ShaderId::Lambert);
+    else
+    renderer->Render(rc, transform, black_bord, ShaderId::Lambert);
 }
 
 void Slime::SetBoardPosition(Position pos) {

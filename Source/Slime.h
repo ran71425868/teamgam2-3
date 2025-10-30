@@ -15,7 +15,8 @@ public:
 
 private:
     Model* model = nullptr;
-    Model* stage_model = nullptr;
+    Model* black_bord = nullptr;
+    Model* white_bord = nullptr;
     DirectX::XMFLOAT3  scale = { 1,1,1 };
     std::string color;
     Position boardPosition; // 盤面上の座標（0〜7）
