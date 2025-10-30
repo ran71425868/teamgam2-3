@@ -28,10 +28,25 @@ void Slime::Render(const RenderContext& rc, ModelRenderer* renderer) {
 
     renderer->Render(rc, transform, model, ShaderId::Lambert);
 
-    if ((static_cast<int>(boardPosition.x) + static_cast<int>(boardPosition.y)) % 2 == 0) 
-    renderer->Render(rc, transform, white_bord, ShaderId::Lambert);
-    else
-    renderer->Render(rc, transform, black_bord, ShaderId::Lambert);
+    for (int i = 0; i <= 7; i++)
+    {
+        for (int j = 0; j <= 7; j++)
+        {
+            DirectX::XMFLOAT4X4 bord_transform;
+            DirectX::XMStoreFloat4x4(&bord_transform,
+                DirectX::XMMatrixTranslation(
+                    i * 100.0f, // 盤面1マス = 100ユニット
+                    0.0f,
+                    j * 100.0f
+                )
+            );
+
+            if ((static_cast<int>(i) + static_cast<int>(j)) % 2 == 0)
+                renderer->Render(rc, bord_transform, white_bord, ShaderId::Lambert);
+            else
+                renderer->Render(rc, bord_transform, black_bord, ShaderId::Lambert);
+        }
+    }
 }
 
 void Slime::SetBoardPosition(Position pos) {
