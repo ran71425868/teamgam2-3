@@ -26,5 +26,5 @@ void Stage::Render(const RenderContext& rc, ModelRenderer* renderer)
 	DirectX::XMStoreFloat4x4(&transform, DirectX::XMMatrixIdentity());
 
 	//ƒŒƒ“ƒ_ƒ‰‚Éƒ‚ƒfƒ‹‚ð•`‰æ‚µ‚Ä‚à‚ç‚¤
-	renderer->Render(rc, transform, model, ShaderId::Lambert);
+	/*renderer->Render(rc, transform, model, ShaderId::Lambert);*/
 }

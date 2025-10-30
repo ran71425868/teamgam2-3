@@ -9,7 +9,7 @@
 void SceneGame::Initialize()
 {
 	//ステージ初期化
-	stage = new Stage();
+	/*stage = new Stage();*/
 
 	board = new Board();
 	board->initialize();
@@ -25,8 +25,6 @@ void SceneGame::Initialize()
 		pieces.push_back(new Slime("black", { i, 6 }));
 	}
 	
-	SetReady();
-
 
 	//カメラ初期設定
 	Graphics& graphics = Graphics::Instance();
@@ -45,6 +43,8 @@ void SceneGame::Initialize()
 		);
 
 	cameraController = new CameraController;
+
+	SetReady();
 
 }
 
@@ -108,7 +108,7 @@ void SceneGame::Update(float elapsedTime)
 	cameraController->Update(elapsedTime);
 
 	//ステージ更新処理
-	stage->Update(elapsedTime);
+	//stage->Update(elapsedTime);
 	//プレイヤー更新処理
 	Player::Instance().Update(elapsedTime);
 	
