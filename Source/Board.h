@@ -11,6 +11,7 @@ private:
 
 public:
     Board();
+
     void initialize(); // ‰Šú”z’u
     void printBoard() const;
     std::shared_ptr<ChessPiece> getPieceAt(Position pos) const;

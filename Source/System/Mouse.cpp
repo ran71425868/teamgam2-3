@@ -61,3 +61,11 @@ void Mouse::Update()
 	positionX[0] = (LONG)(cursor.x / static_cast<float>(viewportW) * static_cast<float>(screenW));
 	positionY[0] = (LONG)(cursor.y / static_cast<float>(viewportH) * static_cast<float>(screenH));
 }
+
+POINT Mouse::GetPosition() const
+{
+	POINT p;
+	p.x = positionX[0];
+	p.y = positionY[0];
+	return p;
+}

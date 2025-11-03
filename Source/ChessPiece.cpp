@@ -24,12 +24,22 @@ std::vector<Position> King::getLegalMoves(const Board& board) const {
                     auto self = tempBoard.getPieceAt(pos);
                     tempBoard.setPieceAt(p, self);
                     tempBoard.setPieceAt(pos, nullptr);
-                    self->setPosition(p);
+
+                    //if (self) {
+                    //    self->setPosition(p); // 仮移動時に位置更新
+                    //}
 
                     if (!tempBoard.isKingInCheck(color)) {
                         moves.push_back(p);
-
                     }
+
+                    tempBoard.setPieceAt(pos, self);
+                    tempBoard.setPieceAt(p, nullptr);
+
+                    //if (self) {
+                    //    self->setPosition(pos); // 元に戻すときも安全に
+                    //}
+
                 }
             }
         }

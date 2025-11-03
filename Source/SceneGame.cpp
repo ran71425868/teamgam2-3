@@ -1,4 +1,5 @@
 #include "System/Graphics.h"
+#include <iostream>
 #include "SceneGame.h"
 #include "Camera.h"
 #include "Player.h"
@@ -21,8 +22,8 @@ void SceneGame::Initialize()
 	// 駒を初期配置（例：白と黒のスライム）
 	for (int i = 0; i <= 7; i++)
 	{
-		pieces.push_back(new Slime("white", { i, 1 }));
-		pieces.push_back(new Slime("black", { i, 6 }));
+		pieces.push_back(new Slime("white", { i, 1 }));//白　手前
+		pieces.push_back(new Slime("black", { i, 6 }));//黒　奥
 	}
 	
 
@@ -86,6 +87,48 @@ void SceneGame::Finalize()
 // 更新処理
 void SceneGame::Update(float elapsedTime)
 {
+	Mouse& mouseCursor = Input::Instance().GetMouse();
+	//mouseCursor.Update(); // 毎フレーム更新
+
+	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
+		POINT cursor = mouseCursor.GetPosition();
+		Position clicked = ScreenToBoard(cursor.x, cursor.y);
+
+		if (!board->isInsideBoard(clicked)) return;
+
+		auto clickedPiece = board->getPieceAt(clicked);
+
+		if (selectedPos.x == -1) {
+			// 駒を選択
+			if (clickedPiece && clickedPiece->getColor() == board->getCurrentTurn()) {
+				if (clickedPiece->getColor() == "black") return;
+				selectedPos = clicked;
+				legalMoves = clickedPiece->getLegalMoves(*board);
+			}
+		}
+		else {
+			// 移動先として合法か判定
+			for (auto& move : legalMoves) {
+				if (move.x == clicked.x && move.y == clicked.y) {
+					board->movePiece(selectedPos, clicked);
+
+					auto slime = FindSlimeAt(selectedPos);
+					if (slime) slime->SetBoardPosition(clicked);
+
+					selectedPos = { -1, -1 };
+					legalMoves.clear();
+					board->switchTurn();
+					return;
+				}
+			}
+
+			// 不正な場所 → 選択解除
+			selectedPos = { -1, -1 };
+			legalMoves.clear();
+		}
+	}
+
+
 	stage->Update(elapsedTime);
 	for (auto p : pieces) p->Update(elapsedTime);
 
@@ -109,6 +152,7 @@ void SceneGame::Update(float elapsedTime)
 
 	//ステージ更新処理
 	//stage->Update(elapsedTime);
+
 	//プレイヤー更新処理
 	Player::Instance().Update(elapsedTime);
 	
@@ -175,4 +219,21 @@ void SceneGame::DrawGUI()
 {
 	//プレイヤーデバッグ描画
 	Player::Instance().DrawDebugGUI();
+}
+
+//マウス座標 → 盤面座標変換
+Position SceneGame::ScreenToBoard(int screenX, int screenY) {
+	int boardX = screenX / 100;
+	int boardY = screenY / 100;
+	return { boardX, boardY };
+}
+
+//Slime を盤面座標から取得
+Slime* SceneGame::FindSlimeAt(Position pos) {
+	for (auto slime : pieces) {
+		if (slime->GetBoardPosition().x == pos.x &&
+			slime->GetBoardPosition().y == pos.y)
+			return slime;
+	}
+	return nullptr;
 }

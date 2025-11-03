@@ -1,5 +1,7 @@
 #pragma once
 
+#include "System/Mouse.h"
+#include "System/Input.h"
 #include "Stage.h"
 //#include "Player.h"
 #include "Slime.h"
@@ -38,5 +40,14 @@ private:
 	std::vector<Slime*> pieces;
 	//Player* player = nullptr;
 	CameraController* cameraController = nullptr;
+
+	
+
+	Position selectedPos = { -1, -1 };
+	std::vector<Position> legalMoves;
+
+	Position ScreenToBoard(int screenX, int screenY);
+	Slime* FindSlimeAt(Position pos);
+
 
 };
