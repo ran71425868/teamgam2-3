@@ -41,7 +41,7 @@ void Slime::Render(const RenderContext& rc, ModelRenderer* renderer) {
                 )
             );
 
-            if ((static_cast<int>(i) + static_cast<int>(j)) % 2 == 0)
+            if ((static_cast<int>(i) + static_cast<int>(j)) % 2 == 1)
                 renderer->Render(rc, bord_transform, white_bord, ShaderId::Lambert);
             else
                 renderer->Render(rc, bord_transform, black_bord, ShaderId::Lambert);
