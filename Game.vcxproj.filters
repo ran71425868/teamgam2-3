@@ -189,6 +189,9 @@
     <ClInclude Include="Source\Queen.h">
       <Filter>Source\ChessPiece</Filter>
     </ClInclude>
+    <ClInclude Include="NetworkManager.h">
+      <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui-docking\imgui.cpp">
@@ -331,6 +334,9 @@
     </ClCompile>
     <ClCompile Include="Source\Queen.cpp">
       <Filter>Source\ChessPiece</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkManager.cpp">
+      <Filter>Source\ソースファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
