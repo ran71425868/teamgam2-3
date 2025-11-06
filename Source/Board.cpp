@@ -1,4 +1,10 @@
 #include "Board.h"
+#include "King.h"
+#include "Rook.h"
+#include "Bishop.h"
+#include "Knight.h"
+#include "Queen.h"
+#include "Pawn.h"
 #include <iostream>
 #include <iomanip>
 
@@ -54,11 +60,19 @@ void Board::printBoard() const {
 
 std::shared_ptr<ChessPiece> Board::getPieceAt(Position pos) const {
     if (!isInsideBoard(pos)) return nullptr;
-    return grid[pos.y][pos.x];
+
+    // 今この配列の　pos.x と pos. y をいれかえています。
+    // そもそもクリック位置と pos があっていない
+    //auto piace = grid[pos.x][pos.y];
+
+    // 実際はこう
+    auto piace = grid[pos.y][pos.x];
+    return piace;
 }
 
 void Board::setPieceAt(Position pos, std::shared_ptr<ChessPiece> piece) {
     if (isInsideBoard(pos)) {
+        //if (!isInsideBoard(pos)) return nullptr;
         grid[pos.y][pos.x] = piece;
     }
 }
@@ -73,8 +87,18 @@ void Board::movePiece(Position from, Position to) {
     }
 }
 
-bool Board::isInsideBoard(Position pos) const {
-    return pos.x >= 0 && pos.x < 8 && pos.y >= 0 && pos.y < 8;
+bool Board::isInsideBoard(const Position& pos) const {
+    // 無効値チェック（未選択や異常値）
+    if (pos.x < 0 || pos.y < 0) return false;
+
+    // 上限チェック（盤面サイズに依存）
+    constexpr int boardWidth = 8;
+    constexpr int boardHeight = 8;
+
+    if (pos.x >= boardWidth || pos.y >= boardHeight) return false;
+
+    return pos.isValid();
+
 }
 
 // ターン管理
@@ -87,67 +111,67 @@ void Board::switchTurn() {
 }
 
 // チェック・チェックメイト判定
-bool Board::isKingInCheck(std::string color) const {
-    Position kingPos{ -1, -1 };
-    // キングの位置を探す
-    for (int y = 0; y < 8; ++y) {
-        for (int x = 0; x < 8; ++x) {
-            auto piece = grid[y][x];
-            if (piece && piece->getType() == "King" && piece->getColor() == color) {
-                kingPos = { x, y };
-                break;
-            }
-        }
-    }
-    if (kingPos.x == -1) return false;
+//bool Board::isKingInCheck(std::string color) const {
+//    Position kingPos{ -1, -1 };
+//    // キングの位置を探す
+//    for (int y = 0; y < 8; ++y) {
+//        for (int x = 0; x < 8; ++x) {
+//            auto piece = grid[y][x];
+//            if (piece && piece->getType() == "King" && piece->getColor() == color) {
+//                kingPos = { x, y };
+//                break;
+//            }
+//        }
+//    }
+//    if (kingPos.x == -1) return false;
+//
+//    // 敵駒の合法手にキングが含まれるか確認
+//    for (int y = 0; y < 8; ++y) {
+//        for (int x = 0; x < 8; ++x) {
+//            auto piece = grid[y][x];
+//            if (piece && piece->getColor() != color) {
+//                auto moves = piece->getLegalMoves(*this);
+//                for (auto& m : moves) {
+//                    if (m.x == kingPos.x && m.y == kingPos.y) {
+//                        return true;
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    return false;
+//}
 
-    // 敵駒の合法手にキングが含まれるか確認
-    for (int y = 0; y < 8; ++y) {
-        for (int x = 0; x < 8; ++x) {
-            auto piece = grid[y][x];
-            if (piece && piece->getColor() != color) {
-                auto moves = piece->getLegalMoves(*this);
-                for (auto& m : moves) {
-                    if (m.x == kingPos.x && m.y == kingPos.y) {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    return false;
-}
-
-bool Board::isCheckmate(std::string color) {
-    if (!isKingInCheck(color)) return false;
-
-    // 自軍のすべての駒の合法手を試して、チェックを回避できるか確認
-    for (int y = 0; y < 8; ++y) {
-        for (int x = 0; x < 8; ++x) {
-            auto piece = grid[y][x];
-            if (piece && piece->getColor() == color) {
-                auto moves = piece->getLegalMoves(*this);
-                Position originalPos = { x, y };
-                for (auto& m : moves) {
-                    auto backup = grid[m.y][m.x];
-                    grid[m.y][m.x] = piece;
-                    grid[y][x] = nullptr;
-                    piece->setPosition(m);
-
-                    bool stillInCheck = isKingInCheck(color);
-
-                    // 元に戻す
-                    grid[y][x] = piece;
-                    grid[m.y][m.x] = backup;
-                    piece->setPosition(originalPos);
-
-                    if (!stillInCheck) return false;
-                }
-            }
-        }
-    }
-    return true;
-}
+//bool Board::isCheckmate(std::string color) {
+//    if (!isKingInCheck(color)) return false;
+//
+//    // 自軍のすべての駒の合法手を試して、チェックを回避できるか確認
+//    for (int y = 0; y < 8; ++y) {
+//        for (int x = 0; x < 8; ++x) {
+//            auto piece = grid[y][x];
+//            if (piece && piece->getColor() == color) {
+//                auto moves = piece->getLegalMoves(*this);
+//                Position originalPos = { x, y };
+//                for (auto& m : moves) {
+//                    auto backup = grid[m.y][m.x];
+//                    grid[m.y][m.x] = piece;
+//                    grid[y][x] = nullptr;
+//                    piece->setPosition(m);
+//
+//                    bool stillInCheck = isKingInCheck(color);
+//
+//                    // 元に戻す
+//                    grid[y][x] = piece;
+//                    grid[m.y][m.x] = backup;
+//                    piece->setPosition(originalPos);
+//
+//                    if (!stillInCheck) return false;
+//                }
+//            }
+//        }
+//    }
+//    return true;
+//}
 
 void Board::filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& moves) const {
     std::vector<Position> legal;
@@ -163,9 +187,9 @@ void Board::filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& mo
         tempBoard.getPieceAt(m)->setPosition(m);
 
         // チェック判定
-        if (!tempBoard.isKingInCheck(piece.getColor())) {
+       /* if (!tempBoard.isKingInCheck(piece.getColor())) {
             legal.push_back(m);
-        }
+        }*/
 
         //auto backup = grid[m.y][m.x];
         //grid[m.y][m.x] = grid[original.y][original.x];

@@ -1,46 +1,48 @@
-#include "System/Graphics.h"
+ï»¿#include "System/Graphics.h"
 #include <iostream>
 #include "SceneGame.h"
 #include "Camera.h"
 #include "Player.h"
 #include "Slime.h"
 #include "EffectManager.h"
+#include <DirectXMath.h>
+using namespace DirectX;
 
-// ‰Šú‰»
+// åˆæœŸåŒ–
 void SceneGame::Initialize()
 {
-	//ƒXƒe[ƒW‰Šú‰»
+	//ã‚¹ãƒ†ãƒ¼ã‚¸åˆæœŸåŒ–
 	/*stage = new Stage();*/
 
 	board = new Board();
 	board->initialize();
 
-	//ƒvƒŒƒCƒ„[‰Šú‰»
+	//ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼åˆæœŸåŒ–
 	//player = new Player();
 	Player::Instance().Initializa();
 
-	// ‹î‚ğ‰Šú”z’ui—áF”’‚Æ•‚ÌƒXƒ‰ƒCƒ€j
+	// é§’ã‚’åˆæœŸé…ç½®ï¼ˆä¾‹ï¼šç™½ã¨é»’ã®ã‚¹ãƒ©ã‚¤ãƒ ï¼‰
 	for (int i = 0; i <= 7; i++)
 	{
-		pieces.push_back(new Slime("white", { i, 1 }));//”’@è‘O
-		pieces.push_back(new Slime("black", { i, 6 }));//•@‰œ
+		pieces.push_back(new Slime("white", { i, 1 }));//ç™½ã€€æ‰‹å‰
+		pieces.push_back(new Slime("black", { i, 6 }));//é»’ã€€å¥¥
 	}
 	
 
-	//ƒJƒƒ‰‰Šúİ’è
+	//ã‚«ãƒ¡ãƒ©åˆæœŸè¨­å®š
 	Graphics& graphics = Graphics::Instance();
 	Camera& camera = Camera::Instance();
 	camera.SetLookAt(
-		DirectX::XMFLOAT3(0,10,-10),//‹“_
-		DirectX::XMFLOAT3(0,0,0),//’‹“_
-		DirectX::XMFLOAT3(0,1,0)//ã•ûŒü
+		DirectX::XMFLOAT3(0,10,-10),//è¦–ç‚¹
+		DirectX::XMFLOAT3(0,0,0),//æ³¨è¦–ç‚¹
+		DirectX::XMFLOAT3(0,1,0)//ä¸Šæ–¹å‘
 	);
 
 	camera.SetPerspectiveFov(
-		DirectX::XMConvertToRadians(45),//‹–ìŠp
-		graphics.GetScreenWidth() / graphics.GetScreenHeight(),//‰æ–ÊƒAƒXƒyƒNƒg”ä
-		0.1f,//ƒNƒŠƒbƒv‹——£(‹ß)
-		10000.0f//ƒNƒŠƒbƒv‹——£(‰“)
+		DirectX::XMConvertToRadians(45),//è¦–é‡è§’
+		graphics.GetScreenWidth() / graphics.GetScreenHeight(),//ç”»é¢ã‚¢ã‚¹ãƒšã‚¯ãƒˆæ¯”
+		0.1f,//ã‚¯ãƒªãƒƒãƒ—è·é›¢(è¿‘)
+		10000.0f//ã‚¯ãƒªãƒƒãƒ—è·é›¢(é )
 		);
 
 	cameraController = new CameraController;
@@ -49,7 +51,7 @@ void SceneGame::Initialize()
 
 }
 
-// I—¹‰»
+// çµ‚äº†åŒ–
 void SceneGame::Finalize()
 {
 	
@@ -58,7 +60,7 @@ void SceneGame::Finalize()
 		cameraController = nullptr;
 	}
 
-	//ƒvƒŒƒCƒ„[I—¹‰»
+	//ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼çµ‚äº†åŒ–
 	/*if (player != nullptr)
 	{
 		delete player;
@@ -66,7 +68,7 @@ void SceneGame::Finalize()
 	}*/
 	Player::Instance().Finalize();
 
-	//ƒXƒe[ƒWI—¹‰»
+	//ã‚¹ãƒ†ãƒ¼ã‚¸çµ‚äº†åŒ–
 	if (stage != nullptr)
 	{
 		delete stage;
@@ -84,32 +86,37 @@ void SceneGame::Finalize()
 
 }
 
-// XVˆ—
+// æ›´æ–°å‡¦ç†
 void SceneGame::Update(float elapsedTime)
 {
 	Mouse& mouseCursor = Input::Instance().GetMouse();
-	//mouseCursor.Update(); // –ˆƒtƒŒ[ƒ€XV
+	//mouseCursor.Update(); // æ¯ãƒ•ãƒ¬ãƒ¼ãƒ æ›´æ–°
 
 	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
 		POINT cursor = mouseCursor.GetPosition();
-		Position clicked = ScreenToBoard(cursor.x, cursor.y);
 
+
+		// ä»Šã¯ã–ã¤ã„
+		Position clicked = ScreenToBoard(cursor.x, cursor.y);
 		if (!board->isInsideBoard(clicked)) return;
+
+
 
 		auto clickedPiece = board->getPieceAt(clicked);
 
 		if (selectedPos.x == -1) {
-			// ‹î‚ğ‘I‘ğ
-			if (clickedPiece && clickedPiece->getColor() == board->getCurrentTurn()) {
-				if (clickedPiece->getColor() == "black") return;
-				selectedPos = clicked;
-				legalMoves = clickedPiece->getLegalMoves(*board);
-			}
-		}
-		else {
-			// ˆÚ“®æ‚Æ‚µ‚Ä‡–@‚©”»’è
-			for (auto& move : legalMoves) {
-				if (move.x == clicked.x && move.y == clicked.y) {
+			// é§’ã‚’é¸æŠ
+			if (clickedPiece) 
+			{
+				auto color = clickedPiece->getColor();
+				auto currentTurn = board->getCurrentTurn();
+
+				if ( color == currentTurn ) {
+					/*if (clickedPiece->getColor() == "black") return;*/
+					selectedPos = clicked;
+					legalMoves = clickedPiece->getLegalMoves(*board);
+
+					// ç§»å‹•å…ˆã¨ã—ã¦åˆæ³•ã‹åˆ¤å®š
 					board->movePiece(selectedPos, clicked);
 
 					auto slime = FindSlimeAt(selectedPos);
@@ -121,8 +128,9 @@ void SceneGame::Update(float elapsedTime)
 					return;
 				}
 			}
-
-			// •s³‚ÈêŠ ¨ ‘I‘ğ‰ğœ
+		}
+		else {
+			// ä¸æ­£ãªå ´æ‰€ â†’ é¸æŠè§£é™¤
 			selectedPos = { -1, -1 };
 			legalMoves.clear();
 		}
@@ -133,7 +141,7 @@ void SceneGame::Update(float elapsedTime)
 	for (auto p : pieces) p->Update(elapsedTime);
 
 
-	//ƒJƒƒ‰ƒRƒ“ƒgƒ[ƒ‰[XVˆ—
+	//ã‚«ãƒ¡ãƒ©ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ©ãƒ¼æ›´æ–°å‡¦ç†
 
 	DirectX::XMFLOAT3 Poswhite{ 400.0f,0.0f,300.0f };
 	DirectX::XMFLOAT3 Posblack{ 400.0f,0.0f,600.0f };
@@ -150,17 +158,17 @@ void SceneGame::Update(float elapsedTime)
 	cameraController->SetTarget(target);
 	cameraController->Update(elapsedTime);
 
-	//ƒXƒe[ƒWXVˆ—
+	//ã‚¹ãƒ†ãƒ¼ã‚¸æ›´æ–°å‡¦ç†
 	//stage->Update(elapsedTime);
 
-	//ƒvƒŒƒCƒ„[XVˆ—
+	//ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼æ›´æ–°å‡¦ç†
 	Player::Instance().Update(elapsedTime);
 	
-	//ƒGƒtƒFƒNƒgƒ}ƒl[ƒWƒƒ[XVˆ—
+	//ã‚¨ãƒ•ã‚§ã‚¯ãƒˆãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼æ›´æ–°å‡¦ç†
 	EffectManager::Instance().Update(elapsedTime);
 }
 
-// •`‰æˆ—
+// æç”»å‡¦ç†
 void SceneGame::Render()
 {
 	Graphics& graphics = Graphics::Instance();
@@ -168,27 +176,27 @@ void SceneGame::Render()
 	ShapeRenderer* shapeRenderer = graphics.GetShapeRenderer();
 	ModelRenderer* modelRenderer = graphics.GetModelRenderer();
 
-	// •`‰æ€”õ
+	// æç”»æº–å‚™
 	RenderContext rc;
 	rc.deviceContext = dc;
-	rc.lightDirection = { 0.0f, -1.0f, 0.0f };	// ƒ‰ƒCƒg•ûŒüi‰º•ûŒüj
+	rc.lightDirection = { 0.0f, -1.0f, 0.0f };	// ãƒ©ã‚¤ãƒˆæ–¹å‘ï¼ˆä¸‹æ–¹å‘ï¼‰
 	rc.renderState = graphics.GetRenderState();
 
-	ModelRenderer* renderer = graphics.GetModelRenderer(); // ©ŠÂ‹«‚É‰‚¶‚Äæ“¾•û–@‚ğ’²®
+	ModelRenderer* renderer = graphics.GetModelRenderer(); // â†ç’°å¢ƒã«å¿œã˜ã¦å–å¾—æ–¹æ³•ã‚’èª¿æ•´
 	stage->Render(rc, renderer);
 	for (auto p : pieces) p->Render(rc, renderer);
 
 
-	//ƒJƒƒ‰ƒpƒ‰ƒ[ƒ^İ’è
+	//ã‚«ãƒ¡ãƒ©ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿è¨­å®š
 	Camera& camera = Camera::Instance();
 	rc.view = camera.GetView();
 	rc.projection = camera.GetProjection();
 
-	// 3Dƒ‚ƒfƒ‹•`‰æ
+	// 3Dãƒ¢ãƒ‡ãƒ«æç”»
 	{
-		//ƒXƒe[ƒW•`‰æ
+		//ã‚¹ãƒ†ãƒ¼ã‚¸æç”»
 		stage->Render(rc, modelRenderer);
-		//ƒvƒŒƒCƒ„[•`‰æ
+		//ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼æç”»
 		Player::Instance().Render(rc, modelRenderer);
 
 		/*slime->Render(rc, modelRenderer);*/
@@ -197,38 +205,147 @@ void SceneGame::Render()
 			p->Render(rc, renderer);
 		}
 		
-		//ƒGƒtƒFƒNƒgƒ}ƒl[ƒWƒƒ[•`‰æ
+		//ã‚¨ãƒ•ã‚§ã‚¯ãƒˆãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼æç”»
 		EffectManager::Instance().Render(rc.view, rc.projection);
 	}
 
-	// 3DƒfƒoƒbƒO•`‰æ
+	// 3Dãƒ‡ãƒãƒƒã‚°æç”»
 	{
-		//ƒvƒŒƒCƒ„[ƒfƒoƒbƒOƒvƒŠƒ~ƒeƒBƒu•`‰æ
+		//ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãƒ‡ãƒãƒƒã‚°ãƒ—ãƒªãƒŸãƒ†ã‚£ãƒ–æç”»
 		Player::Instance().RenderDebugPrimitive(rc, shapeRenderer);
 		
 	}
 
-	// 2DƒXƒvƒ‰ƒCƒg•`‰æ
+	// 2Dã‚¹ãƒ—ãƒ©ã‚¤ãƒˆæç”»
 	{
 
 	}
 }
 
-// GUI•`‰æ
+// GUIæç”»
 void SceneGame::DrawGUI()
 {
-	//ƒvƒŒƒCƒ„[ƒfƒoƒbƒO•`‰æ
+	//ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãƒ‡ãƒãƒƒã‚°æç”»
 	Player::Instance().DrawDebugGUI();
 }
 
-//ƒ}ƒEƒXÀ•W ¨ ”Õ–ÊÀ•W•ÏŠ·
-Position SceneGame::ScreenToBoard(int screenX, int screenY) {
-	int boardX = screenX / 100;
-	int boardY = screenY / 100;
+//ãƒã‚¦ã‚¹åº§æ¨™ â†’ ç›¤é¢åº§æ¨™å¤‰æ›
+Position SceneGame::ScreenToBoard(int screenX, int screenY)
+{
+	using namespace DirectX;
+
+	// ã‚¹ã‚¯ãƒªãƒ¼ãƒ³ã‚µã‚¤ã‚º
+	int screenWidth = Graphics::Instance().GetScreenWidth();
+	int screenHeight = Graphics::Instance().GetScreenHeight();
+
+	// ã‚¹ã‚¯ãƒªãƒ¼ãƒ³åº§æ¨™ â†’ NDCï¼ˆ-1ã€œ+1ï¼‰
+	float ndcX = (2.0f * screenX / screenWidth) - 1.0f;
+	float ndcY = 1.0f - (2.0f * screenY / screenHeight); // Yåè»¢
+
+	// ãƒ“ãƒ¥ãƒ¼ãƒ»ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ã‚·ãƒ§ãƒ³è¡Œåˆ—
+	XMMATRIX view = XMLoadFloat4x4(&Camera::Instance().GetView());
+	XMMATRIX proj = XMLoadFloat4x4(&Camera::Instance().GetProjection());
+	XMMATRIX invViewProj = XMMatrixInverse(nullptr, view * proj);
+
+	// NDC â†’ ãƒ¯ãƒ¼ãƒ«ãƒ‰ç©ºé–“ãƒ¬ã‚¤
+	XMVECTOR nearPoint = XMVectorSet(ndcX, ndcY, 0.0f, 1.0f);
+	XMVECTOR farPoint = XMVectorSet(ndcX, ndcY, 1.0f, 1.0f);
+
+	nearPoint = XMVector3TransformCoord(nearPoint, invViewProj);
+	farPoint = XMVector3TransformCoord(farPoint, invViewProj);
+
+	XMVECTOR rayOrigin = nearPoint;
+	XMVECTOR rayDir = XMVector3Normalize(farPoint - nearPoint);
+
+	// ãƒ¬ã‚¤ã¨ç›¤é¢ï¼ˆY=0ï¼‰ã¨ã®äº¤ç‚¹ã‚’æ±‚ã‚ã‚‹
+	float rayY = XMVectorGetY(rayDir);
+	if (fabs(rayY) < 1e-5f) return { -1, -1 };
+
+	float t = -XMVectorGetY(rayOrigin) / rayY;
+	if (t < 0) return { -1, -1 };
+
+	XMVECTOR hitPos = rayOrigin + rayDir * t;
+
+	float x = XMVectorGetX(hitPos);
+	float z = XMVectorGetZ(hitPos);
+
+	// âœ… åŸç‚¹è£œæ­£ï¼ˆç›¤é¢ã®æç”»é–‹å§‹ä½ç½®ï¼‰
+	constexpr float boardOriginX = -50.0f; // â† å¿…è¦ã«å¿œã˜ã¦ -50.0f ãªã©ã«èª¿æ•´
+	constexpr float boardOriginZ = 0.0f;
+
+	float localX = x - boardOriginX;
+	float localZ = z - boardOriginZ;
+
+	// âœ… ç¯„å›²ãƒã‚§ãƒƒã‚¯ï¼ˆç›¤é¢ã‚µã‚¤ã‚º 8x8, 1ãƒã‚¹100ï¼‰
+	if (localX < 0 || localX >= 800 || localZ < 0 || localZ >= 800)
+		return { -1, -1 };
+
+	// âœ… floorã§ä¸¸ã‚èª¤å·®ã‚’é˜²æ­¢
+	int boardX = static_cast<int>(std::floor(localX / 100.0f));
+	int boardY = static_cast<int>(std::floor(localZ / 100.0f));
+
 	return { boardX, boardY };
 }
+//Position SceneGame::ScreenToBoard(int screenX, int screenY)
+//{
+//	// ã‚¹ã‚¯ãƒªãƒ¼ãƒ³ã‚µã‚¤ã‚º
+//	int screenWidth = Graphics::Instance().GetScreenWidth();
+//	int screenHeight = Graphics::Instance().GetScreenHeight();
+//
+//	// ã‚¹ã‚¯ãƒªãƒ¼ãƒ³åº§æ¨™ â†’ NDCï¼ˆ-1ã€œ+1ï¼‰
+//	float ndcX = (2.0f * screenX / screenWidth) - 1.0f;
+//	float ndcY = 1.0f - (2.0f * screenY / screenHeight); // Yåè»¢
+//
+//	// ãƒ“ãƒ¥ãƒ¼ãƒ»ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ã‚·ãƒ§ãƒ³è¡Œåˆ—
+//	XMMATRIX view = XMLoadFloat4x4(&Camera::Instance().GetView());
+//	XMMATRIX proj = XMLoadFloat4x4(&Camera::Instance().GetProjection());
+//	XMMATRIX invViewProj = XMMatrixInverse(nullptr, view * proj);
+//
+//	// NDC â†’ ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™ï¼ˆnear/farï¼‰
+//	XMVECTOR nearPoint = XMVectorSet(ndcX, ndcY, 0.0f, 1.0f);
+//	XMVECTOR farPoint = XMVectorSet(ndcX, ndcY, 1.0f, 1.0f);
+//
+//	nearPoint = XMVector3TransformCoord(nearPoint, invViewProj);
+//	farPoint = XMVector3TransformCoord(farPoint, invViewProj);
+//
+//	// ãƒ¬ã‚¤ã®åŸç‚¹ã¨æ–¹å‘
+//	XMVECTOR rayOrigin = nearPoint;
+//	XMVECTOR rayDir = XMVector3Normalize(farPoint - nearPoint);
+//
+//	// ãƒ¬ã‚¤ã¨ç›¤é¢ï¼ˆY=0ï¼‰ã¨ã®äº¤å·®åˆ¤å®š
+//	float rayY = XMVectorGetY(rayDir);
+//	if (fabs(rayY) < 1e-5f) return { -1, -1 }; // æ°´å¹³ãƒ¬ã‚¤ã¯ç„¡åŠ¹
+//
+//	float t = -XMVectorGetY(rayOrigin) / rayY;
+//	if (t < 0) return { -1, -1 }; // ç›¤é¢ã®ä¸‹ã«å‘ã‹ã£ã¦ã„ãªã„
+//
+//	XMVECTOR hitPos = rayOrigin + rayDir * t;
+//
+//	float x = XMVectorGetX(hitPos);
+//	float z = XMVectorGetZ(hitPos);
+//
+//	// ç›¤é¢ã®ç¯„å›²ãƒã‚§ãƒƒã‚¯ï¼ˆ0ã€œ800ï¼‰
+//	float boardOriginX = 0.0f;
+//	float boardOriginZ = 0.0f;
+//
+//	float localX = x - boardOriginX;
+//	float localZ = z - boardOriginZ;
+//
+//	if (localX < 0 || localX >= 800 || localZ < 0 || localZ >= 800)
+//		return { -1, -1 };
+//
+//	int boardX = static_cast<int>(std::floor(localX / 100.0f));
+//	int boardY = static_cast<int>(std::floor(localZ / 100.0f));
+//
+//
+//	// ãƒã‚¹åº§æ¨™ã«å¤‰æ›ï¼ˆ1ãƒã‚¹ = 100ï¼‰
+//	/*int boardX = static_cast<int>(std::floor(x / 100.0f));
+//	int boardY = static_cast<int>(std::floor(z / 100.0f));*/
+//
+//	return { boardX, boardY };
+//}
 
-//Slime ‚ğ”Õ–ÊÀ•W‚©‚çæ“¾
+//Slime ã‚’ç›¤é¢åº§æ¨™ã‹ã‚‰å–å¾—
 Slime* SceneGame::FindSlimeAt(Position pos) {
 	for (auto slime : pieces) {
 		if (slime->GetBoardPosition().x == pos.x &&
