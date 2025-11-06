@@ -1,3 +1,4 @@
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "NetworkManager.h"
 
 NetworkManager::NetworkManager()

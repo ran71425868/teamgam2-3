@@ -42,12 +42,12 @@ private:
 	//Player* player = nullptr;
 	CameraController* cameraController = nullptr;
 
-	NetworkManager network;
-	bool isServer = false;
-
 
 	Position selectedPos = { -1, -1 };
 	std::vector<Position> legalMoves;
+
+	NetworkManager network;
+	bool isServer = false;
 
 	Position ScreenToBoard(int screenX, int screenY);
 	Slime* FindSlimeAt(Position pos);

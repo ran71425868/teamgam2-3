@@ -56,8 +56,6 @@ void SceneGame::Initialize()
 	//pieces.push_back(new Slime("black", { 5, 7 }));
 	////queen
 	//pieces.push_back(new Slime("black", { 3, 7 }));
-
-	 // 通信初期化
 	isServer = true; // ← サーバー側なら true / クライアントなら false に設定
 	if (isServer)
 		network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
@@ -121,6 +119,7 @@ void SceneGame::Finalize()
 	pieces.clear();
 
 	network.Finalize();
+
 }
 
 // 更新処理
@@ -173,9 +172,9 @@ void SceneGame::Update(float elapsedTime)
 				auto slime = FindSlimeAt(selectedPos);
 				if (slime) slime->SetBoardPosition(clicked);
 
-				// ✅ 自分の移動を送信
 				MoveData move{ 1, selectedPos.x, selectedPos.y, clicked.x, clicked.y };
 				network.SendMove(move);
+
 
 				// 選択を解除し、ターンを切り替える
 				selectedPos = { -1, -1 };
@@ -256,6 +255,7 @@ void SceneGame::Update(float elapsedTime)
 	//		legalMoves.clear();
 	//	}
 	//}
+
 	MoveData recvMove{};
 	if (network.ReceiveMove(recvMove)) {
 		Position from{ recvMove.fromX, recvMove.fromY };
@@ -264,7 +264,6 @@ void SceneGame::Update(float elapsedTime)
 		auto slime = FindSlimeAt(from);
 		if (slime) slime->SetBoardPosition(to);
 	}
-
 
 	stage->Update(elapsedTime);
 	for (auto p : pieces) p->Update(elapsedTime);
