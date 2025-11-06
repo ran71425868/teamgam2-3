@@ -28,8 +28,35 @@ void SceneGame::Initialize()
 		pieces.push_back(new Slime("black", { i, 6 }));//黒　奥
 	}
 	
-	pieces.push_back(new Slime("white", { 4, 0 }));
-	pieces.push_back(new Slime("black", { 4, 7 }));
+	//king
+	//pieces.push_back(new Slime("white", { 4, 0 }));
+	////rook
+	//pieces.push_back(new Slime("white", { 0, 0 }));
+	//pieces.push_back(new Slime("white", { 7, 0 }));
+	////knight
+	//pieces.push_back(new Slime("white", { 1, 0 }));
+	//pieces.push_back(new Slime("white", { 6, 0 }));
+	////bishop
+	//pieces.push_back(new Slime("white", { 2, 0 }));
+	//pieces.push_back(new Slime("white", { 5, 0 }));
+	////queen
+	//pieces.push_back(new Slime("white", { 3, 0 }));
+
+
+	//king
+	//pieces.push_back(new Slime("black", { 4, 7 }));
+	////rook
+	//pieces.push_back(new Slime("black", { 0, 7 }));
+	//pieces.push_back(new Slime("black", { 7, 7 }));
+	////knight
+	//pieces.push_back(new Slime("black", { 1, 7 }));
+	//pieces.push_back(new Slime("black", { 6, 7 }));
+	////bishop
+	//pieces.push_back(new Slime("black", { 2, 7 }));
+	//pieces.push_back(new Slime("black", { 5, 7 }));
+	////queen
+	//pieces.push_back(new Slime("black", { 3, 7 }));
+
 
 
 	//カメラ初期設定
