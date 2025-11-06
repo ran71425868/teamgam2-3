@@ -4,7 +4,7 @@
 // Pawn
 Pawn::Pawn(std::string c, Position p) : ChessPiece(c, p) {}
 std::string Pawn::getType() const { return "Pawn"; }
-std::vector<Position> Pawn::getLegalMoves(const Board& board) const {
+std::vector<Position> Pawn::getLegalMoves(const Board& board, bool isForCheck) const {
     std::vector<Position> moves;
 
     int dir = (color == "white") ? 1 : -1;
@@ -32,7 +32,9 @@ std::vector<Position> Pawn::getLegalMoves(const Board& board) const {
         }
     }
 
-    board.filterPinnedMoves(*this, moves);
+    if (!isForCheck) {
+        board.filterPinnedMoves(*this, moves);
+    }
 
     //int direction = (color == "white") ? 1 : -1;
     //moves.push_back({ pos.x, pos.y + direction });

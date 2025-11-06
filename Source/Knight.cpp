@@ -4,7 +4,7 @@
 // Knight
 Knight::Knight(std::string c, Position p) : ChessPiece(c, p) {}
 std::string Knight::getType() const { return "Knight"; }
-std::vector<Position> Knight::getLegalMoves(const Board& board) const {
+std::vector<Position> Knight::getLegalMoves(const Board& board, bool isForCheck) const {
     std::vector<Position> moves;
     const int jumps[8][2] = {
         {1,2},{2,1},{-1,2},{-2,1},
@@ -18,8 +18,9 @@ std::vector<Position> Knight::getLegalMoves(const Board& board) const {
                 moves.push_back(p);
         }
     }
-    board.filterPinnedMoves(*this, moves);
-
+    if (!isForCheck) {
+        board.filterPinnedMoves(*this, moves);
+    }
     /*= {
         {pos.x + 1, pos.y + 2}, {pos.x + 1, pos.y - 2},
         {pos.x - 1, pos.y + 2}, {pos.x - 1, pos.y - 2},

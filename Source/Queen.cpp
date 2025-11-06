@@ -4,7 +4,7 @@
 // Queen
 Queen::Queen(std::string c, Position p) : ChessPiece(c, p) {}
 std::string Queen::getType() const { return "Queen"; }
-std::vector<Position> Queen::getLegalMoves(const Board& board) const {
+std::vector<Position> Queen::getLegalMoves(const Board& board, bool isForCheck) const {
     std::vector<Position> moves;
     const int dirs[8][2] = { {1,0},{-1,0},{0,1},{0,-1},{1,1},{-1,-1},{1,-1},{-1,1} };
     for (auto& d : dirs) {
@@ -19,7 +19,9 @@ std::vector<Position> Queen::getLegalMoves(const Board& board) const {
             x += d[0]; y += d[1];
         }
     }
-    board.filterPinnedMoves(*this, moves);
+    if (!isForCheck) {
+        board.filterPinnedMoves(*this, moves);
+    }
     /*for (int i = 1; i < 8; ++i) {
         moves.push_back({ pos.x + i, pos.y });
         moves.push_back({ pos.x - i, pos.y });

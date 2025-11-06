@@ -28,6 +28,9 @@ void SceneGame::Initialize()
 		pieces.push_back(new Slime("black", { i, 6 }));//黒　奥
 	}
 	
+	pieces.push_back(new Slime("white", { 4, 0 }));
+	pieces.push_back(new Slime("black", { 4, 7 }));
+
 
 	//カメラ初期設定
 	Graphics& graphics = Graphics::Instance();

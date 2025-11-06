@@ -4,7 +4,7 @@
 // Bishop
 Bishop::Bishop(std::string c, Position p) : ChessPiece(c, p) {}
 std::string Bishop::getType() const { return "Bishop"; }
-std::vector<Position> Bishop::getLegalMoves(const Board& board) const {
+std::vector<Position> Bishop::getLegalMoves(const Board& board, bool isForCheck) const {
     std::vector<Position> moves;
     const int directions[4][2] = { {1,1},{-1,-1},{1,-1},{-1,1} };
 
@@ -25,7 +25,9 @@ std::vector<Position> Bishop::getLegalMoves(const Board& board) const {
     }
 
     // ピン判定でフィルタリング
-    board.filterPinnedMoves(*this, moves);
+    if (!isForCheck) {
+        board.filterPinnedMoves(*this, moves);
+    }
     return moves;
 
 

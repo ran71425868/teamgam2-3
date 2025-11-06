@@ -110,68 +110,100 @@ void Board::switchTurn() {
     currentTurn = (currentTurn == "white") ? "black" : "white";
 }
 
-// チェック・チェックメイト判定
-//bool Board::isKingInCheck(std::string color) const {
-//    Position kingPos{ -1, -1 };
-//    // キングの位置を探す
-//    for (int y = 0; y < 8; ++y) {
-//        for (int x = 0; x < 8; ++x) {
-//            auto piece = grid[y][x];
-//            if (piece && piece->getType() == "King" && piece->getColor() == color) {
-//                kingPos = { x, y };
-//                break;
-//            }
-//        }
-//    }
-//    if (kingPos.x == -1) return false;
-//
-//    // 敵駒の合法手にキングが含まれるか確認
-//    for (int y = 0; y < 8; ++y) {
-//        for (int x = 0; x < 8; ++x) {
-//            auto piece = grid[y][x];
-//            if (piece && piece->getColor() != color) {
-//                auto moves = piece->getLegalMoves(*this);
-//                for (auto& m : moves) {
-//                    if (m.x == kingPos.x && m.y == kingPos.y) {
-//                        return true;
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    return false;
-//}
+bool Board::isKingInCheck(std::string color) const {
+    Position kingPos{ -1, -1 };
+    // 1. キングの位置を探す
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            auto piece = grid[y][x];
+            if (piece && piece->getType() == "King" && piece->getColor() == color) {
+                kingPos = { x, y };
+                goto find_king_end; // キングを見つけたらループを抜ける
+            }
+        }
+    }
+find_king_end:; // gotoのターゲット
+    if (kingPos.x == -1) return false;
 
-//bool Board::isCheckmate(std::string color) {
-//    if (!isKingInCheck(color)) return false;
-//
-//    // 自軍のすべての駒の合法手を試して、チェックを回避できるか確認
-//    for (int y = 0; y < 8; ++y) {
-//        for (int x = 0; x < 8; ++x) {
-//            auto piece = grid[y][x];
-//            if (piece && piece->getColor() == color) {
-//                auto moves = piece->getLegalMoves(*this);
-//                Position originalPos = { x, y };
-//                for (auto& m : moves) {
-//                    auto backup = grid[m.y][m.x];
-//                    grid[m.y][m.x] = piece;
-//                    grid[y][x] = nullptr;
-//                    piece->setPosition(m);
-//
-//                    bool stillInCheck = isKingInCheck(color);
-//
-//                    // 元に戻す
-//                    grid[y][x] = piece;
-//                    grid[m.y][m.x] = backup;
-//                    piece->setPosition(originalPos);
-//
-//                    if (!stillInCheck) return false;
-//                }
-//            }
-//        }
-//    }
-//    return true;
-//}
+    // 2. 敵駒の合法手にキングが含まれるか確認 (再帰防止のためフラグを使用)
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            auto piece = grid[y][x];
+            if (piece && piece->getColor() != color) {
+                // ★無限ループ回避: isForCheck=true を渡す
+                auto moves = piece->getLegalMoves(*this, true);
+
+                for (auto& m : moves) {
+                    if (m.x == kingPos.x && m.y == kingPos.y) {
+                        return true; // キングが攻撃を受けている
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool Board::isCheckmate(std::string color) const { // ★const を付け、盤面を書き換えないようにする
+
+    // 1. まずチェックを受けているか確認
+    // isKingInCheck は既に無限ループ対策（isForCheckフラグ）が施されている前提
+    if (!isKingInCheck(color)) return false;
+
+    // 2. 自軍のすべての駒の合法手を試して、チェックを回避できるか確認
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            auto piece = grid[y][x];
+
+            // 自分の駒であるか確認
+            if (piece && piece->getColor() == color) {
+
+                // ★注意: ここで getLegalMoves を呼び出すと、その内部で filterPinnedMoves が
+                // isKingInCheck を呼び出すため、無限再帰の可能性があります。
+                // 駒の基本的な移動先リスト（未フィルタリング）を取得するべきです。
+                // ただし、ここでは既存の getLegalMoves を利用するため、
+                // filterPinnedMoves の中で isKingInCheck を呼ばない設計が理想です。
+
+                // 一旦、フィルタリングされた合法手を取得します
+                auto moves = piece->getLegalMoves(*this);
+
+                Position originalPos = { x, y };
+
+                // 全ての合法な移動先について試す
+                for (auto& m : moves) {
+
+                    // --- 仮移動のシミュレーション（盤面のコピーを利用） ---
+
+                    // 盤面を一時コピー
+                    Board tempBoard = *this;
+
+                    // 移動元の駒を取得 (tempBoard内から)
+                    auto self = tempBoard.getPieceAt(originalPos);
+
+                    // 駒を移動
+                    tempBoard.setPieceAt(m, self);
+                    tempBoard.setPieceAt(originalPos, nullptr);
+
+                    // ★重要: 駒の内部座標を更新 (この行がないとシミュレーションが破綻する可能性あり)
+                    // if (self) self->setPosition(m); 
+
+                    // 3. 移動後にチェックされていないか確認
+                    // isKingInCheck(color) は、再帰を防止する isForCheck=true の動作をする必要があります。
+                    // 盤面のコピーを使うため、元の盤面は変更されません。
+                    bool stillInCheck = tempBoard.isKingInCheck(color);
+
+                    // --- 元に戻す処理は不要（tempBoardが破棄されるため） ---
+
+                    // チェック状態を回避できた手があれば、チェックメイトではない
+                    if (!stillInCheck) return false;
+                }
+            }
+        }
+    }
+
+    // どの駒のどの移動でもチェックを回避できなかった場合、チェックメイトである
+    return true;
+}
 
 void Board::filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& moves) const {
    
@@ -190,21 +222,21 @@ void Board::filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& mo
         tempBoard.getPieceAt(m)->setPosition(m);
 
         // チェック判定
-       /* if (!tempBoard.isKingInCheck(piece.getColor())) {
+        /*if (!tempBoard.isKingInCheck(piece.getColor())) {
             legal.push_back(m);
         }*/
 
-        //auto backup = grid[m.y][m.x];
-        //grid[m.y][m.x] = grid[original.y][original.x];
-        //grid[original.y][original.x] = nullptr;
-        //grid[m.y][m.x]->setPosition(m);
+        /*auto backup = grid[m.y][m.x];
+        grid[m.y][m.x] = grid[original.y][original.x];
+        grid[original.y][original.x] = nullptr;
+        grid[m.y][m.x]->setPosition(m);*/
 
         //bool inCheck = isKingInCheck(piece.getColor());
 
-        //// 元に戻す
-        //grid[original.y][original.x] = grid[m.y][m.x];
-        //grid[m.y][m.x] = backup;
-        //grid[original.y][original.x]->setPosition(original);
+        // 元に戻す
+        /*grid[original.y][original.x] = grid[m.y][m.x];
+        grid[m.y][m.x] = backup;
+        grid[original.y][original.x]->setPosition(original);*/
 
         //if (!inCheck)
          legal.push_back(m);

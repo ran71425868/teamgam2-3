@@ -7,5 +7,5 @@ class Pawn : public ChessPiece {
 public:
     Pawn(std::string c, Position p);
     std::string getType() const override;
-    std::vector<Position> getLegalMoves(const Board& board) const override;
+    std::vector<Position> getLegalMoves(const Board& board, bool isForCheck = false) const override;
 };

@@ -28,8 +28,8 @@ public:
     void switchTurn();
 
     // チェック・チェックメイト判定
-    //bool isKingInCheck(std::string color) const;
-    //bool isCheckmate(std::string color);
+    bool isKingInCheck(std::string color) const;
+    bool isCheckmate(std::string color) const;
 
     // ピン判定用
     void filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& moves) const;
