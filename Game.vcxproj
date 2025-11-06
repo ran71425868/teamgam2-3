@@ -119,7 +119,6 @@
     <ClInclude Include="External\imgui-docking\imstb_rectpack.h" />
     <ClInclude Include="External\imgui-docking\imstb_textedit.h" />
     <ClInclude Include="External\imgui-docking\imstb_truetype.h" />
-    <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="Source\Bishop.h" />
     <ClInclude Include="Source\Board.h" />
     <ClInclude Include="Source\Camera.h" />
@@ -133,6 +132,7 @@
     <ClInclude Include="Source\King.h" />
     <ClInclude Include="Source\Knight.h" />
     <ClInclude Include="Source\MathUtils.h" />
+    <ClInclude Include="Source\NetworkManager.h" />
     <ClInclude Include="Source\Pawn.h" />
     <ClInclude Include="Source\Player.h" />
     <ClInclude Include="Source\Queen.h" />
@@ -173,7 +173,6 @@
     <ClCompile Include="External\imgui-docking\imgui_impl_dx11.cpp" />
     <ClCompile Include="External\imgui-docking\imgui_impl_win32.cpp" />
     <ClCompile Include="External\imgui-docking\imgui_widgets.cpp" />
-    <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="Source\Bishop.cpp" />
     <ClCompile Include="Source\Board.cpp" />
     <ClCompile Include="Source\Camera.cpp" />
@@ -188,6 +187,7 @@
     <ClCompile Include="Source\Knight.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\MathUtils.cpp" />
+    <ClCompile Include="Source\NetworkManager.cpp" />
     <ClCompile Include="Source\Pawn.cpp" />
     <ClCompile Include="Source\Player.cpp" />
     <ClCompile Include="Source\Queen.cpp" />

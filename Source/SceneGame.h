@@ -9,6 +9,7 @@
 #include <vector>
 #include "CameraController.h"
 #include "Scene.h"
+#include "NetworkManager.h"
 
 // ÉQÅ[ÉÄÉVÅ[Éì
 class SceneGame:public Scene
@@ -41,7 +42,9 @@ private:
 	//Player* player = nullptr;
 	CameraController* cameraController = nullptr;
 
-	
+	NetworkManager network;
+	bool isServer = false;
+
 
 	Position selectedPos = { -1, -1 };
 	std::vector<Position> legalMoves;
