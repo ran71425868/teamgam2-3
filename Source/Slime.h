@@ -14,7 +14,8 @@ public:
     Position GetBoardPosition() const;
 
 private:
-    Model* model = nullptr;
+    Model* white_pawn = nullptr;
+    Model* black_pawn = nullptr;
     Model* black_bord = nullptr;
     Model* white_bord = nullptr;
     DirectX::XMFLOAT3  scale = { 1,1,1 };
