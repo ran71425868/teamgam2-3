@@ -90,51 +90,131 @@ void SceneGame::Finalize()
 void SceneGame::Update(float elapsedTime)
 {
 	Mouse& mouseCursor = Input::Instance().GetMouse();
-	//mouseCursor.Update(); // 毎フレーム更新
 
 	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
 		POINT cursor = mouseCursor.GetPosition();
 
-
-		// 今はざつい
+		// 1. ボード座標への変換とボード外チェック
 		Position clicked = ScreenToBoard(cursor.x, cursor.y);
-		if (!board->isInsideBoard(clicked)) return;
-
-
+		if (!board->isInsideBoard(clicked)) return; // ボード外なら何もしない
 
 		auto clickedPiece = board->getPieceAt(clicked);
 
+		// --- 2. 駒が選択されていない場合 (selectedPos.x == -1) ---
 		if (selectedPos.x == -1) {
-			// 駒を選択
-			if (clickedPiece) 
-			{
+			// 自分の駒をクリックした場合、それを選択する
+			if (clickedPiece) {
 				auto color = clickedPiece->getColor();
 				auto currentTurn = board->getCurrentTurn();
 
-				if ( color == currentTurn ) {
-					/*if (clickedPiece->getColor() == "black") return;*/
+				// クリックした駒が現在のターンプレイヤーの駒であれば選択
+				if (color == currentTurn) {
 					selectedPos = clicked;
 					legalMoves = clickedPiece->getLegalMoves(*board);
-
-					// 移動先として合法か判定
-					board->movePiece(selectedPos, clicked);
-
-					auto slime = FindSlimeAt(selectedPos);
-					if (slime) slime->SetBoardPosition(clicked);
-
-					selectedPos = { -1, -1 };
-					legalMoves.clear();
-					board->switchTurn();
+					// この時点で処理を終了し、選択状態を維持
 					return;
 				}
 			}
 		}
+		// --- 3. 駒が既に選択されている場合 (else) ---
 		else {
-			// 不正な場所 → 選択解除
-			selectedPos = { -1, -1 };
-			legalMoves.clear();
+			// 移動先として合法か判定
+			bool isLegalMove = false;
+			for (auto& move : legalMoves) {
+				if (move.x == clicked.x && move.y == clicked.y) {
+					isLegalMove = true;
+					break; // 合法な移動先を見つけたのでループを抜ける
+				}
+			}
+
+			
+			if (isLegalMove) {
+				// 🟢 合法な移動を実行
+				board->movePiece(selectedPos, clicked);
+
+				// slime の位置も更新
+				auto slime = FindSlimeAt(selectedPos);
+				if (slime) slime->SetBoardPosition(clicked);
+
+				// 選択を解除し、ターンを切り替える
+				selectedPos = { -1, -1 };
+				legalMoves.clear();
+				board->switchTurn();
+				return;
+			}
+			else {
+				// 🔴 不正な場所をクリックした場合
+
+				// パターンA: 別の自分の駒をクリック → 選択を切り替える
+				// パターンB: 何もないマスや敵の駒をクリック → 選択解除
+
+				// 別の自分の駒をクリックしたかチェックし、選択を切り替えるロジックをここに追加できます。
+
+				// シンプルに選択解除のみを行う
+				selectedPos = { -1, -1 };
+				legalMoves.clear();
+
+			}
 		}
 	}
+	//Mouse& mouseCursor = Input::Instance().GetMouse();
+	////mouseCursor.Update(); // 毎フレーム更新
+	//
+	//if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
+	//	POINT cursor = mouseCursor.GetPosition();
+	//
+	//	// 今はざつい
+	//	Position clicked = ScreenToBoard(cursor.x, cursor.y);
+	//	if (!board->isInsideBoard(clicked)) return;
+	//
+	//	auto clickedPiece = board->getPieceAt(clicked);
+	//
+	//	if (selectedPos.x == -1) {
+	//		// 駒を選択
+	//		if (clickedPiece) 
+	//		{
+	//			auto color = clickedPiece->getColor();
+	//			auto currentTurn = board->getCurrentTurn();
+	//
+	//			if ( color == currentTurn ) {
+	//				/*if (clickedPiece->getColor() == "black") return;*/
+	//				selectedPos = clicked;
+	//				legalMoves = clickedPiece->getLegalMoves(*board);
+	//
+	//				// 移動先として合法か判定
+	//				/*board->movePiece(selectedPos, clicked);
+	//
+	//				auto slime = FindSlimeAt(selectedPos);
+	//
+	//				if (slime) slime->SetBoardPosition(clicked);
+	//
+	//				selectedPos = { -1, -1 };
+	//				legalMoves.clear();
+	//				board->switchTurn();
+	//				return;*/
+	//			}
+	//		}
+	//	}
+	//	else {
+	//		// 移動先として合法か判定
+	//		for (auto& move : legalMoves) {
+	//			if (move.x == clicked.x && move.y == clicked.y) {
+	//				board->movePiece(selectedPos, clicked);
+	//				// slime の位置も更新
+	//				auto slime = FindSlimeAt(selectedPos);
+	//				if (slime) slime->SetBoardPosition(clicked);
+	//
+	//				selectedPos = { -1, -1 };
+	//				legalMoves.clear();
+	//				board->switchTurn();
+	//				return;
+	//			}
+	//		}
+	//		// 不正な場所 → 選択解除
+	//		selectedPos = { -1, -1 };
+	//		legalMoves.clear();
+	//	}
+	//}
 
 
 	stage->Update(elapsedTime);

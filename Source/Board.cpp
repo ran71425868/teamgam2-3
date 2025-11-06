@@ -174,7 +174,10 @@ void Board::switchTurn() {
 //}
 
 void Board::filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& moves) const {
+   
+    // ‚±‚ê‚ª moves ‚ğã‘‚«‚·‚é‚Ì‚Å“r’†‚Å moves ‚É push_back ‚µ‚Ä‚¢‚æ‚¤‚ª0‚É‚È‚é
     std::vector<Position> legal;
+
     Position original = piece.getPosition();
 
     for (auto& m : moves) {
@@ -204,7 +207,7 @@ void Board::filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& mo
         //grid[original.y][original.x]->setPosition(original);
 
         //if (!inCheck)
-        //    legal.push_back(m);
+         legal.push_back(m);
     }
 
     moves = legal;

@@ -15,8 +15,11 @@ std::vector<Position> Pawn::getLegalMoves(const Board& board) const {
     // 初期位置なら2マス進める
     Position twoStep = { pos.x, pos.y + 2 * dir };
     if ((color == "white" && pos.y == 1) || (color == "black" && pos.y == 6)) {
-        if (!board.getPieceAt(oneStep) && !board.getPieceAt(twoStep))
+        if (board.isInsideBoard(twoStep) && // ★ボード内チェックを追加
+            !board.getPieceAt(oneStep) && !board.getPieceAt(twoStep))
+        {
             moves.push_back(twoStep);
+        }
     }
 
     // 斜めの取り
