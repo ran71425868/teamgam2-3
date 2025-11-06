@@ -25,6 +25,9 @@
     <Filter Include="Source\ヘッダーファイル">
       <UniqueIdentifier>{d6644b55-ccae-4b08-8f21-99cc3f774eab}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\ChessPiece">
+      <UniqueIdentifier>{790e8b73-e790-41a9-8de8-ea202dfdd7bc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External\imgui-docking\imconfig.h">
@@ -114,9 +117,6 @@
     <ClInclude Include="Source\System\Sprite.h">
       <Filter>Source\System</Filter>
     </ClInclude>
-    <ClInclude Include="Source\ChessPiece.h">
-      <Filter>Source\ヘッダーファイル</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Camera.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
@@ -167,6 +167,27 @@
     </ClInclude>
     <ClInclude Include="Source\Slime.h">
       <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\King.h">
+      <Filter>Source\ChessPiece</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ChessPiece.h">
+      <Filter>Source\ChessPiece</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Rook.h">
+      <Filter>Source\ChessPiece</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Bishop.h">
+      <Filter>Source\ChessPiece</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Knight.h">
+      <Filter>Source\ChessPiece</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Pawn.h">
+      <Filter>Source\ChessPiece</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Queen.h">
+      <Filter>Source\ChessPiece</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -239,9 +260,6 @@
     <ClCompile Include="Source\System\Sprite.cpp">
       <Filter>Source\System</Filter>
     </ClCompile>
-    <ClCompile Include="Source\ChessPiece.cpp">
-      <Filter>Source\ソースファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Camera.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
@@ -292,6 +310,27 @@
     </ClCompile>
     <ClCompile Include="Source\Slime.cpp">
       <Filter>Source\ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ChessPiece.cpp">
+      <Filter>Source\ChessPiece</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\King.cpp">
+      <Filter>Source\ChessPiece</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Rook.cpp">
+      <Filter>Source\ChessPiece</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Bishop.cpp">
+      <Filter>Source\ChessPiece</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Knight.cpp">
+      <Filter>Source\ChessPiece</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Pawn.cpp">
+      <Filter>Source\ChessPiece</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Queen.cpp">
+      <Filter>Source\ChessPiece</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -6,6 +6,11 @@
 
 struct Position {
     int x, y;
+
+    bool isValid() const {
+        return x >= 0 && x < 8 && y >= 0 && y < 8;
+    }
+
 };
 
 class Board; // ‘O•ûéŒ¾
@@ -25,46 +30,4 @@ public:
     void setPosition(Position p);
     Position getPosition() const;
     std::string getColor() const;
-};
-
-class King : public ChessPiece {
-public:
-    King(std::string c, Position p);
-    std::string getType() const override;
-    std::vector<Position> getLegalMoves(const Board& board) const override;
-};
-
-class Rook : public ChessPiece {
-public:
-    Rook(std::string c, Position p);
-    std::string getType() const override;
-    std::vector<Position> getLegalMoves(const Board& board) const override;
-};
-
-class Bishop : public ChessPiece {
-public:
-    Bishop(std::string c, Position p);
-    std::string getType() const override;
-    std::vector<Position> getLegalMoves(const Board& board) const override;
-};
-
-class Knight : public ChessPiece {
-public:
-    Knight(std::string c, Position p);
-    std::string getType() const override;
-    std::vector<Position> getLegalMoves(const Board& board) const override;
-};
-
-class Queen : public ChessPiece {
-public:
-    Queen(std::string c, Position p);
-    std::string getType() const override;
-    std::vector<Position> getLegalMoves(const Board& board) const override;
-};
-
-class Pawn : public ChessPiece {
-public:
-    Pawn(std::string c, Position p);
-    std::string getType() const override;
-    std::vector<Position> getLegalMoves(const Board& board) const override;
 };

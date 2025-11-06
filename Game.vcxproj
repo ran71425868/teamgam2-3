@@ -119,6 +119,7 @@
     <ClInclude Include="External\imgui-docking\imstb_rectpack.h" />
     <ClInclude Include="External\imgui-docking\imstb_textedit.h" />
     <ClInclude Include="External\imgui-docking\imstb_truetype.h" />
+    <ClInclude Include="Source\Bishop.h" />
     <ClInclude Include="Source\Board.h" />
     <ClInclude Include="Source\Camera.h" />
     <ClInclude Include="Source\CameraController.h" />
@@ -128,8 +129,13 @@
     <ClInclude Include="Source\Effect.h" />
     <ClInclude Include="Source\EffectManager.h" />
     <ClInclude Include="Source\Framework.h" />
+    <ClInclude Include="Source\King.h" />
+    <ClInclude Include="Source\Knight.h" />
     <ClInclude Include="Source\MathUtils.h" />
+    <ClInclude Include="Source\Pawn.h" />
     <ClInclude Include="Source\Player.h" />
+    <ClInclude Include="Source\Queen.h" />
+    <ClInclude Include="Source\Rook.h" />
     <ClInclude Include="Source\Scene.h" />
     <ClInclude Include="Source\SceneGame.h" />
     <ClInclude Include="Source\SceneLoading.h" />
@@ -166,6 +172,7 @@
     <ClCompile Include="External\imgui-docking\imgui_impl_dx11.cpp" />
     <ClCompile Include="External\imgui-docking\imgui_impl_win32.cpp" />
     <ClCompile Include="External\imgui-docking\imgui_widgets.cpp" />
+    <ClCompile Include="Source\Bishop.cpp" />
     <ClCompile Include="Source\Board.cpp" />
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\CameraController.cpp" />
@@ -175,9 +182,14 @@
     <ClCompile Include="Source\Effect.cpp" />
     <ClCompile Include="Source\EffectManager.cpp" />
     <ClCompile Include="Source\Framework.cpp" />
+    <ClCompile Include="Source\King.cpp" />
+    <ClCompile Include="Source\Knight.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\MathUtils.cpp" />
+    <ClCompile Include="Source\Pawn.cpp" />
     <ClCompile Include="Source\Player.cpp" />
+    <ClCompile Include="Source\Queen.cpp" />
+    <ClCompile Include="Source\Rook.cpp" />
     <ClCompile Include="Source\SceneGame.cpp" />
     <ClCompile Include="Source\SceneLoading.cpp" />
     <ClCompile Include="Source\SceneManager.cpp" />
