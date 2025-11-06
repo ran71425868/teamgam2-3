@@ -1,7 +1,8 @@
 #include "Slime.h"
 
 Slime::Slime(std::string c, Position boardPos) : color(c), boardPosition(boardPos) {
-    model = new Model("Data/Model/Slime/Slime.mdl");
+    white_pawn = new Model("Data/Model/Slime/white_pawn.mdl");
+    black_pawn = new Model("Data/Model/Slime/black_pawn.mdl");
     black_bord = new Model("Data/Model/Stage/black_bord.mdl");
     white_bord = new Model("Data/Model/Stage/white_bord.mdl");
     //モデルが大きいのでスケーリング
@@ -9,7 +10,8 @@ Slime::Slime(std::string c, Position boardPos) : color(c), boardPosition(boardPo
 }
 
 Slime::~Slime() {
-    delete model;
+    delete white_pawn;
+    delete black_pawn;
 }
 
 void Slime::Update(float elapsedTime) {
@@ -26,7 +28,11 @@ void Slime::Render(const RenderContext& rc, ModelRenderer* renderer) {
         )
     );
 
-    renderer->Render(rc, transform, model, ShaderId::Lambert);
+    if(color=="white")
+    renderer->Render(rc, transform, white_pawn, ShaderId::Lambert);
+
+    else
+        renderer->Render(rc, transform, black_pawn, ShaderId::Lambert);
 
     for (int i = 0; i <= 7; i++)
     {
