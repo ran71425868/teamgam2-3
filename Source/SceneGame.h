@@ -9,7 +9,7 @@
 #include <vector>
 #include "CameraController.h"
 #include "Scene.h"
-#include "NetworkManager.h"
+//#include "NetworkManager.h"
 
 // ÉQÅ[ÉÄÉVÅ[Éì
 class SceneGame:public Scene
@@ -46,8 +46,10 @@ private:
 	Position selectedPos = { -1, -1 };
 	std::vector<Position> legalMoves;
 
-	NetworkManager network;
+	//NetworkManager network;
 	bool isServer = false;
+
+	void RemoveSlimeAt(Position pos);
 
 	Position ScreenToBoard(int screenX, int screenY);
 	Slime* FindSlimeAt(Position pos);
