@@ -49,7 +49,7 @@ void SceneGame::Initialize()
 	pieces.push_back(new Slime("black", { 0, 7 },"rook"));
 	pieces.push_back(new Slime("black", { 7, 7 },"rook"));
 	//knight
-	pieces.push_back(new Slime("black", { 1, 7 },"kinght"));
+	pieces.push_back(new Slime("black", { 1, 7 },"knight"));
 	pieces.push_back(new Slime("black", { 6, 7 },"knight"));
 	//bishop
 	pieces.push_back(new Slime("black", { 2, 7 },"bishop"));
