@@ -1,7 +1,9 @@
 #pragma once
-
-#include <vector>
 #include <Windows.h>
+#include <mmsystem.h>   // WAVEFORMATEX, WAVE_FORMAT_PCM 定義
+#include <mmreg.h>      // 拡張WAVEフォーマット定義
+#include <vector>
+#pragma comment(lib, "winmm.lib")
 
 // オーディオリソース
 class AudioResource

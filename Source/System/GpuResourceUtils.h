@@ -1,5 +1,5 @@
 #pragma once
-
+#include <winsock2.h>
 #include <d3d11.h>
 
 // GPUリソースユーティリティ
