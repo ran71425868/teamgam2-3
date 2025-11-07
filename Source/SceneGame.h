@@ -50,6 +50,10 @@ private:
 	NetworkManager network;
 	bool isServer = false;
 
+	// ゲーム終了処理変数
+	bool isGameOver = false;
+	std::string winnerColor = ""; // 勝利したプレイヤーの色
+
 	void RemoveSlimeAt(Position pos);
 
 	Position ScreenToBoard(int screenX, int screenY);

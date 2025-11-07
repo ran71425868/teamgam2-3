@@ -192,6 +192,9 @@
     <ClInclude Include="Source\NetworkManager.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Source\SceneResult.h">
+      <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui-docking\imgui.cpp">
@@ -336,6 +339,9 @@
       <Filter>Source\ChessPiece</Filter>
     </ClCompile>
     <ClCompile Include="Source\NetworkManager.cpp">
+      <Filter>Source\ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SceneResult.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
   </ItemGroup>

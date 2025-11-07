@@ -205,6 +205,35 @@ bool Board::isCheckmate(std::string color) const { // ★const を付け、盤面を書き
     return true;
 }
 
+bool Board::isKingPresent(std::string color) const
+{
+    // 8x8のボード全体を走査
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+
+            // 現在のマスにある駒を取得 (grid[y][x] が駒のポインタだと仮定)
+            auto piece = grid[y][x];
+
+            // 1. 駒が存在するか (nullptrでないか)
+            if (piece) {
+                // 2. その駒のタイプが "King" であるか
+                bool isKing = (piece->getType() == "King");
+
+                // 3. その駒の色が探している色と一致するか
+                bool isTargetColor = (piece->getColor() == color);
+
+                // 駒が存在し、キングであり、色が一致すれば、キングは生き残っている
+                if (isKing && isTargetColor) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    // ボード全体を走査してもキングが見つからなかった場合
+    return false;
+}
+
 void Board::filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& moves) const {
    
     //// これが moves を上書きするので途中で moves に push_back していようが0になる

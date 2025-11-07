@@ -31,6 +31,9 @@ public:
     bool isKingInCheck(std::string color) const;
     bool isCheckmate(std::string color) const;
 
+    // 指定された色のキングがボード上に存在するかをチェックする
+    bool isKingPresent(std::string color) const;
+
     // ピン判定用
     void filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& moves) const;
 
