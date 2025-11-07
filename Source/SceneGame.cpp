@@ -16,6 +16,8 @@ void SceneGame::Initialize()
 	board = new Board();
 	board->initialize();
 
+	highlightModel = new Model("Data/Model/Stage/yellow_bord.mdl");
+
 	//プレイヤー初期化
 	Player::Instance().Initializa();
 
@@ -297,7 +299,29 @@ void SceneGame::Render()
 		//プレイヤー描画
 		Player::Instance().Render(rc, modelRenderer);
 
-		/*slime->Render(rc, modelRenderer);*/
+		
+
+		// 選択された駒があり、合法手リストが空でなければハイライトを描画
+		if (selectedPos.x != -1 && !legalMoves.empty()) {
+
+			for (const auto& move : legalMoves) {
+
+				// 盤面座標 (move.x, move.y) をワールド座標に変換
+				// Slime::Render で使っている変換ロジックと同様
+				DirectX::XMFLOAT4X4 transform;
+				DirectX::XMStoreFloat4x4(&transform,
+					DirectX::XMMatrixTranslation(
+						move.x * 100.0f, // X座標
+						2.0f,            // 駒より少し高い位置 (ZよりYが適切)
+						move.y * 100.0f  // Z座標
+					)
+				);
+
+				// ハイライトモデルを描画
+				// ※ highlightModel が SceneGame 内のメンバー変数だと仮定
+				renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
+			}
+		}
 
 		for (auto p : pieces) {
 			p->Render(rc, renderer);

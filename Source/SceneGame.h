@@ -38,6 +38,8 @@ private:
 	Board* board = nullptr;
 	Slime* slime = nullptr;
 
+	Model* highlightModel = nullptr;
+
 	std::vector<Slime*> pieces;
 	//Player* player = nullptr;
 	CameraController* cameraController = nullptr;
