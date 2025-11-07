@@ -35,15 +35,5 @@ std::vector<Position> Pawn::getLegalMoves(const Board& board, bool isForCheck) c
     if (!isForCheck) {
         board.filterPinnedMoves(*this, moves);
     }
-
-    //int direction = (color == "white") ? 1 : -1;
-    //moves.push_back({ pos.x, pos.y + direction });
-    //// 初期位置なら2マス進める（例：y == 1 for white, y == 6 for black）
-    //if ((color == "white" && pos.y == 1) || (color == "black" && pos.y == 6)) {
-    //    moves.push_back({ pos.x, pos.y + 2 * direction });
-    //}
-    //// 斜めの取り
-    //moves.push_back({ pos.x + 1, pos.y + direction });
-    //moves.push_back({ pos.x - 1, pos.y + direction });
     return moves;
 }

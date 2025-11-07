@@ -22,15 +22,5 @@ std::vector<Position> Queen::getLegalMoves(const Board& board, bool isForCheck) 
     if (!isForCheck) {
         board.filterPinnedMoves(*this, moves);
     }
-    /*for (int i = 1; i < 8; ++i) {
-        moves.push_back({ pos.x + i, pos.y });
-        moves.push_back({ pos.x - i, pos.y });
-        moves.push_back({ pos.x, pos.y + i });
-        moves.push_back({ pos.x, pos.y - i });
-        moves.push_back({ pos.x + i, pos.y + i });
-        moves.push_back({ pos.x - i, pos.y - i });
-        moves.push_back({ pos.x + i, pos.y - i });
-        moves.push_back({ pos.x - i, pos.y + i });
-    }*/
     return moves;
 }
