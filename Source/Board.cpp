@@ -217,7 +217,10 @@ void Board::filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& mo
         Board tempBoard = *this;
 
         // ‹î‚ð‰¼ˆÚ“®
-        tempBoard.setPieceAt(m, tempBoard.getPieceAt(original));
+        auto movingPiece = tempBoard.getPieceAt(original);
+        if (!movingPiece) continue;
+
+        tempBoard.setPieceAt(m, movingPiece);
         tempBoard.setPieceAt(original, nullptr);
         tempBoard.getPieceAt(m)->setPosition(m);
 
