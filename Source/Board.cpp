@@ -207,42 +207,66 @@ bool Board::isCheckmate(std::string color) const { // ★const を付け、盤面を書き
 
 void Board::filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& moves) const {
    
-    // これが moves を上書きするので途中で moves に push_back していようが0になる
-    std::vector<Position> legal;
+    //// これが moves を上書きするので途中で moves に push_back していようが0になる
+    //std::vector<Position> legal;
 
+    //Position original = piece.getPosition();
+
+    //for (auto& m : moves) {
+    //    // Board を一時コピー
+    //    Board tempBoard = *this;
+
+    //    // 駒を仮移動
+    //    auto movingPiece = tempBoard.getPieceAt(original);
+    //    if (!movingPiece) continue;
+
+    //    tempBoard.setPieceAt(m, movingPiece);
+    //    tempBoard.setPieceAt(original, nullptr);
+    //    tempBoard.getPieceAt(m)->setPosition(m);
+
+    //    // チェック判定
+    //    /*if (!tempBoard.isKingInCheck(piece.getColor())) {
+    //        legal.push_back(m);
+    //    }*/
+
+    //    /*auto backup = grid[m.y][m.x];
+    //    grid[m.y][m.x] = grid[original.y][original.x];
+    //    grid[original.y][original.x] = nullptr;
+    //    grid[m.y][m.x]->setPosition(m);*/
+
+    //    //bool inCheck = isKingInCheck(piece.getColor());
+
+    //    // 元に戻す
+    //    /*grid[original.y][original.x] = grid[m.y][m.x];
+    //    grid[m.y][m.x] = backup;
+    //    grid[original.y][original.x]->setPosition(original);*/
+
+    //    //if (!inCheck)
+    //     legal.push_back(m);
+
+
+    //}
+
+    //moves = legal;
+    std::vector<Position> legal;
     Position original = piece.getPosition();
 
+    auto originalPiece = getPieceAt(original);
+
     for (auto& m : moves) {
-        // Board を一時コピー
-        Board tempBoard = *this;
+        // 仮に移動（コピーしない）
+        auto captured = getPieceAt(m);
+        const_cast<Board*>(this)->setPieceAt(m, originalPiece);
+        const_cast<Board*>(this)->setPieceAt(original, nullptr);
 
-        // 駒を仮移動
-        auto movingPiece = tempBoard.getPieceAt(original);
-        if (!movingPiece) continue;
+        // チェック判定（仮実行）
+        bool safe = !isKingInCheck(piece.getColor());
 
-        tempBoard.setPieceAt(m, movingPiece);
-        tempBoard.setPieceAt(original, nullptr);
-        tempBoard.getPieceAt(m)->setPosition(m);
+        // 戻す
+        const_cast<Board*>(this)->setPieceAt(original, originalPiece);
+        const_cast<Board*>(this)->setPieceAt(m, captured);
 
-        // チェック判定
-        /*if (!tempBoard.isKingInCheck(piece.getColor())) {
-            legal.push_back(m);
-        }*/
-
-        /*auto backup = grid[m.y][m.x];
-        grid[m.y][m.x] = grid[original.y][original.x];
-        grid[original.y][original.x] = nullptr;
-        grid[m.y][m.x]->setPosition(m);*/
-
-        //bool inCheck = isKingInCheck(piece.getColor());
-
-        // 元に戻す
-        /*grid[original.y][original.x] = grid[m.y][m.x];
-        grid[m.y][m.x] = backup;
-        grid[original.y][original.x]->setPosition(original);*/
-
-        //if (!inCheck)
-         legal.push_back(m);
+        if (safe) legal.push_back(m);
     }
 
     moves = legal;
