@@ -11,14 +11,12 @@ using namespace DirectX;
 // 初期化
 void SceneGame::Initialize()
 {
-	//ステージ初期化
-	/*stage = new Stage();*/
 
+	//ステージ初期化
 	board = new Board();
 	board->initialize();
 
 	//プレイヤー初期化
-	//player = new Player();
 	Player::Instance().Initializa();
 
 	// 駒を初期配置（例：白と黒のスライム）
@@ -56,11 +54,20 @@ void SceneGame::Initialize()
 	pieces.push_back(new Slime("black", { 5, 7 },"bishop"));
 	//queen
 	pieces.push_back(new Slime("black", { 3, 7 },"queen"));
-	isServer = true; // ← サーバー側なら true / クライアントなら false に設定
-	if (isServer)
-		network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
-	else
-		network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);
+	//isServer = true; // ← サーバー側なら true / クライアントなら false に設定
+	//if (isServer)
+	//	network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
+	//else
+	//	network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);
+
+
+	
+	//isServer = true; // ← サーバー側なら true / クライアントなら false に設定
+	//if (isServer)
+	//	network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
+	//else
+	//	network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);
+
 
 
 	//カメラ初期設定
@@ -94,12 +101,6 @@ void SceneGame::Finalize()
 		cameraController = nullptr;
 	}
 
-	//プレイヤー終了化
-	/*if (player != nullptr)
-	{
-		delete player;
-		player = nullptr;
-	}*/
 	Player::Instance().Finalize();
 
 	//ステージ終了化
@@ -118,7 +119,7 @@ void SceneGame::Finalize()
 	for (auto p : pieces) delete p;
 	pieces.clear();
 
-	network.Finalize();
+	//network.Finalize();
 
 }
 
@@ -154,6 +155,15 @@ void SceneGame::Update(float elapsedTime)
 		}
 		// --- 3. 駒が既に選択されている場合 (else) ---
 		else {
+
+			// 修正ロジック 1: 自己移動の禁止
+			if (selectedPos.x == clicked.x && selectedPos.y == clicked.y) {
+				// 同じ駒を連打した場合 → 選択解除
+				selectedPos = { -1, -1 };
+				legalMoves.clear();
+				return;
+			}
+
 			// 移動先として合法か判定
 			bool isLegalMove = false;
 			for (auto& move : legalMoves) {
@@ -165,15 +175,23 @@ void SceneGame::Update(float elapsedTime)
 
 			
 			if (isLegalMove) {
-				// 🟢 合法な移動を実行
-				board->movePiece(selectedPos, clicked);
-
 				// slime の位置も更新
 				auto slime = FindSlimeAt(selectedPos);
+
+				// 取られる駒があれば、その slime を削除
+				auto captured_piece = board->getPieceAt(clicked); // 移動先の駒を取得
+				if (captured_piece) {
+					// 修正: 取られる駒に対応する Slime オブジェクトをリストから削除する処理を呼び出す
+					RemoveSlimeAt(clicked);
+				}
+				// 合法な移動を実行
+				board->movePiece(selectedPos, clicked);
+
+
 				if (slime) slime->SetBoardPosition(clicked);
 
-				MoveData move{ 1, selectedPos.x, selectedPos.y, clicked.x, clicked.y };
-				network.SendMove(move);
+				/*MoveData move{ 1, selectedPos.x, selectedPos.y, clicked.x, clicked.y };
+				network.SendMove(move);*/
 
 
 				// 選択を解除し、ターンを切り替える
@@ -183,87 +201,39 @@ void SceneGame::Update(float elapsedTime)
 				return;
 			}
 			else {
-				// 🔴 不正な場所をクリックした場合
-
-				// パターンA: 別の自分の駒をクリック → 選択を切り替える
-				// パターンB: 何もないマスや敵の駒をクリック → 選択解除
+				// 不正な場所をクリックした場合
 
 				// 別の自分の駒をクリックしたかチェックし、選択を切り替えるロジックをここに追加できます。
+				// 修正ロジック 2: 別の自分の駒をクリックしたかチェック
+				auto currentTurn = board->getCurrentTurn();
 
-				// シンプルに選択解除のみを行う
-				selectedPos = { -1, -1 };
-				legalMoves.clear();
+				if (clickedPiece && clickedPiece->getColor() == currentTurn) {
+					// パターンA: 別の自分の駒をクリックした場合 → 選択を切り替える
+					selectedPos = clicked;
+					legalMoves = clickedPiece->getLegalMoves(*board);
+					// 選択を切り替えたので、ここで関数を終了
+					return;
+				}
+				else {
+					// パターンB: 何もないマスや敵の駒をクリック → 選択解除
+					// シンプルに選択解除のみを行う
+					selectedPos = { -1, -1 };
+					legalMoves.clear();
 
+				}
 			}
+			
 		}
 	}
-	//Mouse& mouseCursor = Input::Instance().GetMouse();
-	////mouseCursor.Update(); // 毎フレーム更新
-	//
-	//if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
-	//	POINT cursor = mouseCursor.GetPosition();
-	//
-	//	// 今はざつい
-	//	Position clicked = ScreenToBoard(cursor.x, cursor.y);
-	//	if (!board->isInsideBoard(clicked)) return;
-	//
-	//	auto clickedPiece = board->getPieceAt(clicked);
-	//
-	//	if (selectedPos.x == -1) {
-	//		// 駒を選択
-	//		if (clickedPiece) 
-	//		{
-	//			auto color = clickedPiece->getColor();
-	//			auto currentTurn = board->getCurrentTurn();
-	//
-	//			if ( color == currentTurn ) {
-	//				/*if (clickedPiece->getColor() == "black") return;*/
-	//				selectedPos = clicked;
-	//				legalMoves = clickedPiece->getLegalMoves(*board);
-	//
-	//				// 移動先として合法か判定
-	//				/*board->movePiece(selectedPos, clicked);
-	//
-	//				auto slime = FindSlimeAt(selectedPos);
-	//
-	//				if (slime) slime->SetBoardPosition(clicked);
-	//
-	//				selectedPos = { -1, -1 };
-	//				legalMoves.clear();
-	//				board->switchTurn();
-	//				return;*/
-	//			}
-	//		}
-	//	}
-	//	else {
-	//		// 移動先として合法か判定
-	//		for (auto& move : legalMoves) {
-	//			if (move.x == clicked.x && move.y == clicked.y) {
-	//				board->movePiece(selectedPos, clicked);
-	//				// slime の位置も更新
-	//				auto slime = FindSlimeAt(selectedPos);
-	//				if (slime) slime->SetBoardPosition(clicked);
-	//
-	//				selectedPos = { -1, -1 };
-	//				legalMoves.clear();
-	//				board->switchTurn();
-	//				return;
-	//			}
-	//		}
-	//		// 不正な場所 → 選択解除
-	//		selectedPos = { -1, -1 };
-	//		legalMoves.clear();
-	//	}
-	//}
-
-	MoveData recvMove{};
+	
+	/*MoveData recvMove{};
 	if (network.ReceiveMove(recvMove)) {
 		Position from{ recvMove.fromX, recvMove.fromY };
 		Position to{ recvMove.toX, recvMove.toY };
 		board->movePiece(from, to);
 		auto slime = FindSlimeAt(from);
 		if (slime) slime->SetBoardPosition(to);
-	}
+	}*/
 
 	stage->Update(elapsedTime);
 	for (auto p : pieces) p->Update(elapsedTime);
@@ -357,6 +327,22 @@ void SceneGame::DrawGUI()
 	Player::Instance().DrawDebugGUI();
 }
 
+void SceneGame::RemoveSlimeAt(Position pos)
+{
+	// Slimeオブジェクトのリストを走査し、posと一致するものを削除する
+	for (auto it = pieces.begin(); it != pieces.end(); ++it) {
+		if ((*it)->GetBoardPosition().x == pos.x && (*it)->GetBoardPosition().y == pos.y) {
+
+			// 削除前にメモリを解放（ヒープ領域で確保している場合）
+			delete (*it);
+
+			// リストから要素を削除
+			pieces.erase(it);
+			return; // 駒は一つしか存在しないので、見つけたら終了
+		}
+	}
+}
+
 //マウス座標 → 盤面座標変換
 Position SceneGame::ScreenToBoard(int screenX, int screenY)
 {
@@ -397,81 +383,23 @@ Position SceneGame::ScreenToBoard(int screenX, int screenY)
 	float x = XMVectorGetX(hitPos);
 	float z = XMVectorGetZ(hitPos);
 
-	// ✅ 原点補正（盤面の描画開始位置）
+	// 原点補正（盤面の描画開始位置）
 	constexpr float boardOriginX = -50.0f; // ← 必要に応じて -50.0f などに調整
 	constexpr float boardOriginZ = 0.0f;
 
 	float localX = x - boardOriginX;
 	float localZ = z - boardOriginZ;
 
-	// ✅ 範囲チェック（盤面サイズ 8x8, 1マス100）
+	// 範囲チェック（盤面サイズ 8x8, 1マス100）
 	if (localX < 0 || localX >= 800 || localZ < 0 || localZ >= 800)
 		return { -1, -1 };
 
-	// ✅ floorで丸め誤差を防止
+	// floorで丸め誤差を防止
 	int boardX = static_cast<int>(std::floor(localX / 100.0f));
 	int boardY = static_cast<int>(std::floor(localZ / 100.0f));
 
 	return { boardX, boardY };
 }
-//Position SceneGame::ScreenToBoard(int screenX, int screenY)
-//{
-//	// スクリーンサイズ
-//	int screenWidth = Graphics::Instance().GetScreenWidth();
-//	int screenHeight = Graphics::Instance().GetScreenHeight();
-//
-//	// スクリーン座標 → NDC（-1〜+1）
-//	float ndcX = (2.0f * screenX / screenWidth) - 1.0f;
-//	float ndcY = 1.0f - (2.0f * screenY / screenHeight); // Y反転
-//
-//	// ビュー・プロジェクション行列
-//	XMMATRIX view = XMLoadFloat4x4(&Camera::Instance().GetView());
-//	XMMATRIX proj = XMLoadFloat4x4(&Camera::Instance().GetProjection());
-//	XMMATRIX invViewProj = XMMatrixInverse(nullptr, view * proj);
-//
-//	// NDC → ワールド座標（near/far）
-//	XMVECTOR nearPoint = XMVectorSet(ndcX, ndcY, 0.0f, 1.0f);
-//	XMVECTOR farPoint = XMVectorSet(ndcX, ndcY, 1.0f, 1.0f);
-//
-//	nearPoint = XMVector3TransformCoord(nearPoint, invViewProj);
-//	farPoint = XMVector3TransformCoord(farPoint, invViewProj);
-//
-//	// レイの原点と方向
-//	XMVECTOR rayOrigin = nearPoint;
-//	XMVECTOR rayDir = XMVector3Normalize(farPoint - nearPoint);
-//
-//	// レイと盤面（Y=0）との交差判定
-//	float rayY = XMVectorGetY(rayDir);
-//	if (fabs(rayY) < 1e-5f) return { -1, -1 }; // 水平レイは無効
-//
-//	float t = -XMVectorGetY(rayOrigin) / rayY;
-//	if (t < 0) return { -1, -1 }; // 盤面の下に向かっていない
-//
-//	XMVECTOR hitPos = rayOrigin + rayDir * t;
-//
-//	float x = XMVectorGetX(hitPos);
-//	float z = XMVectorGetZ(hitPos);
-//
-//	// 盤面の範囲チェック（0〜800）
-//	float boardOriginX = 0.0f;
-//	float boardOriginZ = 0.0f;
-//
-//	float localX = x - boardOriginX;
-//	float localZ = z - boardOriginZ;
-//
-//	if (localX < 0 || localX >= 800 || localZ < 0 || localZ >= 800)
-//		return { -1, -1 };
-//
-//	int boardX = static_cast<int>(std::floor(localX / 100.0f));
-//	int boardY = static_cast<int>(std::floor(localZ / 100.0f));
-//
-//
-//	// マス座標に変換（1マス = 100）
-//	/*int boardX = static_cast<int>(std::floor(x / 100.0f));
-//	int boardY = static_cast<int>(std::floor(z / 100.0f));*/
-//
-//	return { boardX, boardY };
-//}
 
 //Slime を盤面座標から取得
 Slime* SceneGame::FindSlimeAt(Position pos) {
