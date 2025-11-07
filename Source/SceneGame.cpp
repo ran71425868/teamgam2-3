@@ -1,11 +1,14 @@
 ﻿#include "System/Graphics.h"
 #include <iostream>
 #include "SceneGame.h"
+#include "SceneResult.h"
+#include "SceneManager.h"
 #include "Camera.h"
 #include "Player.h"
 #include "Slime.h"
 #include "EffectManager.h"
 #include <DirectXMath.h>
+
 using namespace DirectX;
 
 // 初期化
@@ -56,12 +59,6 @@ void SceneGame::Initialize()
 	pieces.push_back(new Slime("black", { 5, 7 },"bishop"));
 	//queen
 	pieces.push_back(new Slime("black", { 3, 7 },"queen"));
-	//isServer = true; // ← サーバー側なら true / クライアントなら false に設定
-	//if (isServer)
-	//	network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
-	//else
-	//	network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);
-
 
 	
 	isServer = true; // ← サーバー側なら true / クライアントなら false に設定
@@ -69,7 +66,6 @@ void SceneGame::Initialize()
 		network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
 	else
 		network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);
-
 
 
 	//カメラ初期設定
@@ -128,6 +124,13 @@ void SceneGame::Finalize()
 // 更新処理
 void SceneGame::Update(float elapsedTime)
 {
+	// ガード処理：ゲーム終了時は処理を停止
+	if (isGameOver) {
+		// ここに結果表示のロジック（未作成）が入る
+		// シーン遷移がないため、結果表示（例：テキスト表示）のみを行う
+		SceneManager::Instance().ChangeScene(new SceneResult);
+		return;
+	}
 	Mouse& mouseCursor = Input::Instance().GetMouse();
 
 	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
@@ -199,7 +202,20 @@ void SceneGame::Update(float elapsedTime)
 				// 選択を解除し、ターンを切り替える
 				selectedPos = { -1, -1 };
 				legalMoves.clear();
-				board->switchTurn();
+				// ゲーム終了判定
+					if (!board->isKingPresent("white")) {
+						isGameOver = true;
+						winnerColor = "black";
+					}
+					else if (!board->isKingPresent("black")) {
+						isGameOver = true;
+						winnerColor = "white";
+					}
+
+				// ゲームが終了していなければ、ターンを切り替える
+				if (!isGameOver) {
+					board->switchTurn();
+				}
 				return;
 			}
 			else {
@@ -409,7 +425,7 @@ Position SceneGame::ScreenToBoard(int screenX, int screenY)
 
 	// 原点補正（盤面の描画開始位置）
 	constexpr float boardOriginX = -50.0f; // ← 必要に応じて -50.0f などに調整
-	constexpr float boardOriginZ = 0.0f;
+	constexpr float boardOriginZ = -50.0f;
 
 	float localX = x - boardOriginX;
 	float localZ = z - boardOriginZ;
