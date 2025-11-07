@@ -1,7 +1,7 @@
 #include "Slime.h"
 #include <Pawn.h>
 
-Slime::Slime(std::string c, Position boardPos) : color(c), boardPosition(boardPos) {
+Slime::Slime(std::string c, Position boardPos,std::string pType) : color(c), boardPosition(boardPos), pieceType(pType) {
     //”’‹î
     white_bishop = new Model("Data/Model/Slime/white_bishop.mdl");
     white_pawn = new Model("Data/Model/Slime/white_pawn.mdl");
@@ -60,22 +60,34 @@ void Slime::Render(const RenderContext& rc, ModelRenderer* renderer) {
 
     if (color == "white")
     {
-        //renderer->Render(rc, transform, white_bishop, ShaderId::Lambert);
+        if(pieceType=="bishop")
+        renderer->Render(rc, transform, white_bishop, ShaderId::Lambert);
+        if (pieceType == "pawn")
         renderer->Render(rc, transform, white_pawn, ShaderId::Lambert);
-        //renderer->Render(rc, transform, white_king, ShaderId::Lambert);
-        //renderer->Render(rc, transform, white_knight, ShaderId::Lambert);
-        //renderer->Render(rc, transform, white_queen, ShaderId::Lambert);
-       // renderer->Render(rc, transform, white_rook, ShaderId::Lambert);
+        if (pieceType == "king")
+        renderer->Render(rc, transform, white_king, ShaderId::Lambert);
+        if (pieceType == "knight")
+        renderer->Render(rc, transform, white_knight, ShaderId::Lambert);
+        if (pieceType == "queen")
+        renderer->Render(rc, transform, white_queen, ShaderId::Lambert);
+        if (pieceType == "rook")
+        renderer->Render(rc, transform, white_rook, ShaderId::Lambert);
 
     }
     else
     {
-        //renderer->Render(rc, transform, black_bishop, ShaderId::Lambert);
+        if (pieceType == "bishop")
+        renderer->Render(rc, transform, black_bishop, ShaderId::Lambert);
+        if (pieceType == "pawn")
         renderer->Render(rc, transform, black_pawn, ShaderId::Lambert);
-        //renderer->Render(rc, transform, black_king, ShaderId::Lambert);
-        //renderer->Render(rc, transform, black_knight, ShaderId::Lambert);
-        //renderer->Render(rc, transform, black_queen, ShaderId::Lambert);
-        //renderer->Render(rc, transform, black_rook, ShaderId::Lambert);
+        if (pieceType == "king")
+        renderer->Render(rc, transform, black_king, ShaderId::Lambert);
+        if (pieceType == "knight")
+        renderer->Render(rc, transform, black_knight, ShaderId::Lambert);
+        if (pieceType == "queen")
+        renderer->Render(rc, transform, black_queen, ShaderId::Lambert);
+        if (pieceType == "rook")
+        renderer->Render(rc, transform, black_rook, ShaderId::Lambert);
 
     }
 

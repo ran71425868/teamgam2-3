@@ -4,7 +4,7 @@
 
 class Slime {
 public:
-    Slime(std::string color, Position boardPos);
+    Slime(std::string color, Position boardPos,std::string pieceType);
     ~Slime();
 
     void Update(float elapsedTime);
@@ -37,4 +37,6 @@ private:
     DirectX::XMFLOAT3  scale = { 1,1,1 };
     std::string color;
     Position boardPosition; // 盤面上の座標（0〜7）
+    std::string pieceType;
+
 };

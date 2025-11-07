@@ -24,38 +24,38 @@ void SceneGame::Initialize()
 	// 駒を初期配置（例：白と黒のスライム）
 	for (int i = 0; i <= 7; i++)
 	{
-		pieces.push_back(new Slime("white", { i, 1 }));//白　手前
-		pieces.push_back(new Slime("black", { i, 6 }));//黒　奥
+		pieces.push_back(new Slime("white", { i, 1 },"pawn"));//白　手前
+		pieces.push_back(new Slime("black", { i, 6 },"pawn"));//黒　奥
 	}
 	
 	//king
-	//pieces.push_back(new Slime("white", { 4, 0 }));
-	////rook
-	//pieces.push_back(new Slime("white", { 0, 0 }));
-	//pieces.push_back(new Slime("white", { 7, 0 }));
-	////knight
-	//pieces.push_back(new Slime("white", { 1, 0 }));
-	//pieces.push_back(new Slime("white", { 6, 0 }));
-	////bishop
-	//pieces.push_back(new Slime("white", { 2, 0 }));
-	//pieces.push_back(new Slime("white", { 5, 0 }));
-	////queen
-	//pieces.push_back(new Slime("white", { 3, 0 }));
+	pieces.push_back(new Slime("white", { 4, 0 },"king"));
+	//rook
+	pieces.push_back(new Slime("white", { 0, 0 },"rook"));
+	pieces.push_back(new Slime("white", { 7, 0 },"rook"));
+	//knight
+	pieces.push_back(new Slime("white", { 1, 0 },"knight"));
+	pieces.push_back(new Slime("white", { 6, 0 },"knight"));
+	//bishop
+	pieces.push_back(new Slime("white", { 2, 0 },"bishop"));
+	pieces.push_back(new Slime("white", { 5, 0 },"bishop"));
+	//queen
+	pieces.push_back(new Slime("white", { 3, 0 },"queen"));
 
 
 	//king
-	//pieces.push_back(new Slime("black", { 4, 7 }));
-	////rook
-	//pieces.push_back(new Slime("black", { 0, 7 }));
-	//pieces.push_back(new Slime("black", { 7, 7 }));
-	////knight
-	//pieces.push_back(new Slime("black", { 1, 7 }));
-	//pieces.push_back(new Slime("black", { 6, 7 }));
-	////bishop
-	//pieces.push_back(new Slime("black", { 2, 7 }));
-	//pieces.push_back(new Slime("black", { 5, 7 }));
-	////queen
-	//pieces.push_back(new Slime("black", { 3, 7 }));
+	pieces.push_back(new Slime("black", { 4, 7 },"king"));
+	//rook
+	pieces.push_back(new Slime("black", { 0, 7 },"rook"));
+	pieces.push_back(new Slime("black", { 7, 7 },"rook"));
+	//knight
+	pieces.push_back(new Slime("black", { 1, 7 },"kinght"));
+	pieces.push_back(new Slime("black", { 6, 7 },"knight"));
+	//bishop
+	pieces.push_back(new Slime("black", { 2, 7 },"bishop"));
+	pieces.push_back(new Slime("black", { 5, 7 },"bishop"));
+	//queen
+	pieces.push_back(new Slime("black", { 3, 7 },"queen"));
 	isServer = true; // ← サーバー側なら true / クライアントなら false に設定
 	if (isServer)
 		network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
