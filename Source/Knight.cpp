@@ -21,11 +21,6 @@ std::vector<Position> Knight::getLegalMoves(const Board& board, bool isForCheck)
     if (!isForCheck) {
         board.filterPinnedMoves(*this, moves);
     }
-    /*= {
-        {pos.x + 1, pos.y + 2}, {pos.x + 1, pos.y - 2},
-        {pos.x - 1, pos.y + 2}, {pos.x - 1, pos.y - 2},
-        {pos.x + 2, pos.y + 1}, {pos.x + 2, pos.y - 1},
-        {pos.x - 2, pos.y + 1}, {pos.x - 2, pos.y - 1}
-    };*/
+    
     return moves;
 }
