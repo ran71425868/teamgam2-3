@@ -183,12 +183,55 @@ void SceneGame::Update(float elapsedTime)
 				// slime の位置も更新
 				auto slime = FindSlimeAt(selectedPos);
 
+				// 修正: 移動する駒を取得（自傷と死亡判定のため）
+				auto movingPiece = board->getPieceAt(selectedPos);
 				// 取られる駒があれば、その slime を削除
-				auto captured_piece = board->getPieceAt(clicked); // 移動先の駒を取得
-				if (captured_piece) {
-					// 修正: 取られる駒に対応する Slime オブジェクトをリストから削除する処理を呼び出す
-					RemoveSlimeAt(clicked);
+
+				auto attacker = board->getPieceAt(selectedPos);
+				auto defender = board->getPieceAt(clicked); // 取られる駒（nullptrの場合もある）
+
+				// --- 🚨 新規追加ロジック: 体力ベースの戦闘判定 ---
+				if (defender) {
+
+					// 1. 体力を比較
+					int attackerHealth = attacker->getHealth();
+					int defenderHealth = defender->getHealth();
+
+					// 2. 攻撃側の体力が防御側の体力未満の場合 (負け)
+					if (attackerHealth < defenderHealth) {
+						// 負け：攻撃側は消滅し、防御側にダメージを与える
+
+						// 描画オブジェクトの削除 (攻撃側)
+						RemoveSlimeAt(selectedPos);
+
+						// 盤面からの駒の削除 (攻撃側)
+						board->setPieceAt(selectedPos, nullptr);
+
+						// 防御側に自駒の体力分のダメージを与える
+						defender->takeDamage(attackerHealth);
+
+						// 🚨 負けたため、移動処理をスキップし、ターンを終了
+						// 負けの場合は移動処理(board->movePiece)は不要
+
+						// 選択を解除し、ターンを切り替える
+						selectedPos = { -1, -1 };
+						legalMoves.clear();
+						board->switchTurn();
+						return; // 処理を終了
+					}
+
+					// 3. 攻撃側の体力が防御側の体力以上の場合 (勝ち)
+					// 勝利：通常通り相手の駒を取得（通常移動のロジックに任せる）
+					// 勝利時は、防御側のSlimeを削除する必要があるため、以下の処理を実行
+					else {
+						RemoveSlimeAt(clicked); // 取られる駒の Slime を削除
+					}
 				}
+				//auto captured_piece = board->getPieceAt(clicked); // 移動先の駒を取得
+				//if (captured_piece) {
+				//	// 修正: 取られる駒に対応する Slime オブジェクトをリストから削除する処理を呼び出す
+				//	RemoveSlimeAt(clicked);
+				//}
 				// 合法な移動を実行
 				board->movePiece(selectedPos, clicked);
 
@@ -197,6 +240,27 @@ void SceneGame::Update(float elapsedTime)
 
 				MoveData move{ 1, selectedPos.x, selectedPos.y, clicked.x, clicked.y };
 				network.SendMove(move);
+
+				// ----------------------------------------------------
+				// 新規追加ロジック: 自傷と死亡判定
+				// ----------------------------------------------------
+				if (movingPiece) {
+					// 1. 1ダメージを与える
+					movingPiece->takeDamage(1);
+
+					// 2. 体力が0になったら死亡とみなし、盤面から削除
+					if (movingPiece->getHealth() <= 0) {
+						// 死亡: 盤面（Board）から駒を削除
+						board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
+
+						// 死亡した駒に対応する Slime も描画リストから削除
+						// ※ RemoveSlimeAt は既に実装しているはず
+						RemoveSlimeAt(clicked);
+
+						// 死亡メッセージ（デバッグ用）
+						// DebugLog("駒が自傷により死亡しました"); 
+					}
+				}
 
 
 				// 選択を解除し、ターンを切り替える

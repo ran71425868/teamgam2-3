@@ -2,7 +2,7 @@
 #include "Knight.h"
 
 // Knight
-Knight::Knight(std::string c, Position p) : ChessPiece(c, p) {}
+Knight::Knight(std::string c, Position p) : ChessPiece(c, p, 5) {}
 std::string Knight::getType() const { return "Knight"; }
 std::vector<Position> Knight::getLegalMoves(const Board& board, bool isForCheck) const {
     std::vector<Position> moves;

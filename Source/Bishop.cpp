@@ -2,7 +2,7 @@
 #include "Bishop.h"
 
 // Bishop
-Bishop::Bishop(std::string c, Position p) : ChessPiece(c, p) {}
+Bishop::Bishop(std::string c, Position p) : ChessPiece(c, p, 5) {}
 std::string Bishop::getType() const { return "Bishop"; }
 std::vector<Position> Bishop::getLegalMoves(const Board& board, bool isForCheck) const {
     std::vector<Position> moves;

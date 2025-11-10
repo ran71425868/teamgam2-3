@@ -2,7 +2,8 @@
 #include "Board.h"
 
 // Pawn
-Pawn::Pawn(std::string c, Position p) : ChessPiece(c, p) {}
+// —á: Pawn‚Ì‰Šú‘Ì—Í‚ğ3‚Éİ’è
+Pawn::Pawn(std::string c, Position p) : ChessPiece(c, p, 5) {}
 std::string Pawn::getType() const { return "Pawn"; }
 std::vector<Position> Pawn::getLegalMoves(const Board& board, bool isForCheck) const {
     std::vector<Position> moves;

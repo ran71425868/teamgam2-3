@@ -4,7 +4,7 @@
 
 
 //Rook
-Rook::Rook(std::string c, Position p) : ChessPiece(c, p) {}
+Rook::Rook(std::string c, Position p) : ChessPiece(c, p, 5) {}
 std::string Rook::getType() const { return "Rook"; }
 std::vector<Position> Rook::getLegalMoves(const Board& board, bool isForCheck) const {
     std::vector<Position> moves;
