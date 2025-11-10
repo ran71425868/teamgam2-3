@@ -8,7 +8,7 @@
 //初期化
 void SceneTitle::Initialize()
 {
-	sprite = new Sprite("Data/Sprite/Title.png");
+	sprite = new Sprite("Data/Sprite/仮タイトル.png");
 }
 
 //終了化

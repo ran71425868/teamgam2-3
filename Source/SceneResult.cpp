@@ -7,7 +7,7 @@
 //‰Šú‰»
 void SceneResult::Initialize()
 {
-	sprite = new Sprite("Data/Sprite/result_1.png");
+	sprite = new Sprite("Data/Sprite/‰¼ƒŠƒUƒ‹ƒg.png");
 }
 
 //I—¹‰»
