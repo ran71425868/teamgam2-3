@@ -1,0 +1,167 @@
+#include "Piece.h"
+
+Piece::Piece(std::string c, Position boardPos, std::string pType) : color(c), boardPosition(boardPos), pieceType(pType) {
+    //白駒
+    white_bishop = new Model("Data/Model/Chesspiece/white_bishop.mdl");
+    white_pawn = new Model("Data/Model/Chesspiece/white_pawn.mdl");
+    white_king = new Model("Data/Model/Chesspiece/white_king.mdl");
+    white_knight = new Model("Data/Model/Chesspiece/white_knight.mdl");
+    white_queen = new Model("Data/Model/Chesspiece/white_queen.mdl");
+    white_rook = new Model("Data/Model/Chesspiece/white_rook.mdl");
+
+    //黒駒
+    black_bishop = new Model("Data/Model/Chesspiece/black_bishop.mdl");
+    black_pawn = new Model("Data/Model/Chesspiece/black_pawn.mdl");
+    black_king = new Model("Data/Model/Chesspiece/black_king.mdl");
+    black_knight = new Model("Data/Model/Chesspiece/black_knight.mdl");
+    black_queen = new Model("Data/Model/Chesspiece/black_queen.mdl");
+    black_rook = new Model("Data/Model/Chesspiece/black_rook.mdl");
+
+    //ボード
+    black_bord = new Model("Data/Model/Stage/black_bord.mdl");
+    white_bord = new Model("Data/Model/Stage/white_bord.mdl");
+
+}
+
+Piece::~Piece() {
+    //白駒
+    delete white_bishop;
+    delete white_pawn;
+    delete white_king;
+    delete white_knight;
+    delete white_queen;
+    delete white_rook;
+
+    //黒駒
+    delete black_bishop;
+    delete black_pawn;
+    delete black_king;
+    delete black_knight;
+    delete black_queen;
+    delete black_rook;
+}
+
+void Piece::Update(float elapsedTime) {
+    // アニメーションや移動補間があればここに
+}
+
+void Piece::Render(const RenderContext& rc, ModelRenderer* renderer) {
+    DirectX::XMFLOAT4X4 transform;
+    DirectX::XMStoreFloat4x4(&transform,
+        DirectX::XMMatrixTranslation(
+            boardPosition.x * 100.0f, // 盤面1マス = 100ユニット
+            0.0f,
+            boardPosition.y * 100.0f
+        )
+    );
+
+    if (color == "white")
+    {
+        if (pieceType == "bishop")
+            renderer->Render(rc, transform, white_bishop, ShaderId::Lambert);
+        if (pieceType == "pawn")
+            renderer->Render(rc, transform, white_pawn, ShaderId::Lambert);
+        if (pieceType == "king")
+            renderer->Render(rc, transform, white_king, ShaderId::Lambert);
+        if (pieceType == "knight")
+            renderer->Render(rc, transform, white_knight, ShaderId::Lambert);
+        if (pieceType == "queen")
+            renderer->Render(rc, transform, white_queen, ShaderId::Lambert);
+        if (pieceType == "rook")
+            renderer->Render(rc, transform, white_rook, ShaderId::Lambert);
+
+    }
+    else
+    {
+        if (pieceType == "bishop")
+            renderer->Render(rc, transform, black_bishop, ShaderId::Lambert);
+        if (pieceType == "pawn")
+            renderer->Render(rc, transform, black_pawn, ShaderId::Lambert);
+        if (pieceType == "king")
+            renderer->Render(rc, transform, black_king, ShaderId::Lambert);
+        if (pieceType == "knight")
+            renderer->Render(rc, transform, black_knight, ShaderId::Lambert);
+        if (pieceType == "queen")
+            renderer->Render(rc, transform, black_queen, ShaderId::Lambert);
+        if (pieceType == "rook")
+            renderer->Render(rc, transform, black_rook, ShaderId::Lambert);
+
+    }
+
+    // ---  体力バーの描画ロジック (選択時のみ) ---
+    if (isSelected) {
+
+        // 1. 体力比率を計算 (0.0 から 1.0)
+        float healthRatio = (float)currentHealth / maxHealth;
+
+        // 2. 体力バーの描画定数
+        const float barWidth = 80.0f;
+        const float barHeight = 8.0f;
+        const float barYOffset = 60.0f; // 駒の上部に表示するためのオフセット
+
+        // 3. 背景バー (最大体力) の描画
+        DirectX::XMFLOAT4X4 bgTransform;
+        DirectX::XMStoreFloat4x4(&bgTransform,
+            DirectX::XMMatrixScaling(barWidth, barHeight, 1.0f) * // スケーリング
+            DirectX::XMMatrixTranslation(
+                boardPosition.x * 100.0f,
+                barYOffset,
+                boardPosition.y * 100.0f
+            )
+        );
+        // renderer->Render(rc, bgTransform, healthBarBackground, ShaderId::UnlitRed); 
+
+        // 4. 現在の体力バーの描画
+        float currentBarWidth = barWidth * healthRatio;
+
+        DirectX::XMFLOAT4X4 fillTransform;
+        DirectX::XMStoreFloat4x4(&fillTransform,
+            DirectX::XMMatrixScaling(currentBarWidth, barHeight, 1.0f) * DirectX::XMMatrixTranslation(
+                // X軸のオフセットを計算 (左端を揃えるために、描画幅の半分だけ移動)
+                boardPosition.x * 100.0f - (barWidth - currentBarWidth) / 2.0f,
+                barYOffset,
+                boardPosition.y * 100.0f
+            )
+        );
+        // renderer->Render(rc, fillTransform, healthBarModel, ShaderId::UnlitGreen);
+
+        // 暫定的な描画: モデルが未定義の場合、デバッグとして四角を描画するなどしてください。
+        // モデルを描画する場合は、上記のコメントアウトを外し、適切な Model* と ShaderId を設定してください。
+    }
+
+    for (int i = 0; i <= 7; i++)
+    {
+        for (int j = 0; j <= 7; j++)
+        {
+            DirectX::XMFLOAT4X4 bord_transform;
+            DirectX::XMStoreFloat4x4(&bord_transform,
+                DirectX::XMMatrixTranslation(
+                    i * 100.0f, // 盤面1マス = 100ユニット
+                    0.0f,
+                    j * 100.0f
+                )
+            );
+
+            if ((static_cast<int>(i) + static_cast<int>(j)) % 2 == 1)
+                renderer->Render(rc, bord_transform, white_bord, ShaderId::Lambert);
+            else
+                renderer->Render(rc, bord_transform, black_bord, ShaderId::Lambert);
+        }
+    }
+}
+
+
+
+void Piece::SetBoardPosition(Position pos) {
+    boardPosition = pos;
+}
+
+Position Piece::GetBoardPosition() const {
+    return boardPosition;
+}
+
+void Piece::setDisplayInfo(bool isSelected, int currentHealth, int maxHealth) {
+    this->isSelected = isSelected;
+    this->currentHealth = currentHealth;
+    this->maxHealth = maxHealth > 0 ? maxHealth : 1; // 0割りを防ぐ
+}

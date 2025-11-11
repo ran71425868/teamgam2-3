@@ -134,6 +134,7 @@
     <ClInclude Include="Source\MathUtils.h" />
     <ClInclude Include="Source\NetworkManager.h" />
     <ClInclude Include="Source\Pawn.h" />
+    <ClInclude Include="Source\Piece.h" />
     <ClInclude Include="Source\Player.h" />
     <ClInclude Include="Source\Queen.h" />
     <ClInclude Include="Source\Rook.h" />
@@ -143,7 +144,6 @@
     <ClInclude Include="Source\SceneManager.h" />
     <ClInclude Include="Source\SceneResult.h" />
     <ClInclude Include="Source\SceneTitle.h" />
-    <ClInclude Include="Source\Slime.h" />
     <ClInclude Include="Source\Stage.h" />
     <ClInclude Include="Source\System\Audio.h" />
     <ClInclude Include="Source\System\AudioResource.h" />
@@ -190,6 +190,7 @@
     <ClCompile Include="Source\MathUtils.cpp" />
     <ClCompile Include="Source\NetworkManager.cpp" />
     <ClCompile Include="Source\Pawn.cpp" />
+    <ClCompile Include="Source\Piece.cpp" />
     <ClCompile Include="Source\Player.cpp" />
     <ClCompile Include="Source\Queen.cpp" />
     <ClCompile Include="Source\Rook.cpp" />
@@ -198,7 +199,6 @@
     <ClCompile Include="Source\SceneManager.cpp" />
     <ClCompile Include="Source\SceneResult.cpp" />
     <ClCompile Include="Source\SceneTitle.cpp" />
-    <ClCompile Include="Source\Slime.cpp" />
     <ClCompile Include="Source\Stage.cpp" />
     <ClCompile Include="Source\System\Audio.cpp" />
     <ClCompile Include="Source\System\AudioResource.cpp" />

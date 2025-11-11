@@ -2,10 +2,10 @@
 #include "System/ModelRenderer.h"
 #include "Board.h"
 
-class Slime {
+class Piece {
 public:
-    Slime(std::string color, Position boardPos,std::string pieceType);
-    ~Slime();
+    Piece(std::string color, Position boardPos, std::string pieceType);
+    ~Piece();
 
     void Update(float elapsedTime);
     void Render(const RenderContext& rc, ModelRenderer* renderer);
@@ -13,6 +13,7 @@ public:
     void SetBoardPosition(Position pos);
     Position GetBoardPosition() const;
 
+    void setDisplayInfo(bool isSelected, int currentHealth, int maxHealth);
 private:
     //白駒
     Model* white_bishop = nullptr;
@@ -34,9 +35,12 @@ private:
     Model* black_bord = nullptr;
     Model* white_bord = nullptr;
 
-    DirectX::XMFLOAT3  scale = { 1,1,1 };
     std::string color;
     Position boardPosition; // 盤面上の座標（0〜7）
     std::string pieceType;
 
+    // 体力バー表示用の情報
+    bool isSelected = false;
+    int currentHealth = 0;
+    int maxHealth = 1;
 };

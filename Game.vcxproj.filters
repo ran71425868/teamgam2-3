@@ -165,9 +165,6 @@
     <ClInclude Include="Source\Board.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Slime.h">
-      <Filter>Source\ヘッダーファイル</Filter>
-    </ClInclude>
     <ClInclude Include="Source\King.h">
       <Filter>Source\ChessPiece</Filter>
     </ClInclude>
@@ -193,6 +190,9 @@
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\SceneResult.h">
+      <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Piece.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -314,9 +314,6 @@
     <ClCompile Include="Source\Board.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Slime.cpp">
-      <Filter>Source\ソースファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Source\ChessPiece.cpp">
       <Filter>Source\ChessPiece</Filter>
     </ClCompile>
@@ -342,6 +339,9 @@
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
     <ClCompile Include="Source\SceneResult.cpp">
+      <Filter>Source\ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Piece.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
   </ItemGroup>
