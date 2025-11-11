@@ -3,7 +3,7 @@
 #include "System/Mouse.h"
 #include "System/Input.h"
 #include "Stage.h"
-#include "Slime.h"
+#include "Piece.h"
 #include "Board.h"
 #include <vector>
 #include "CameraController.h"
@@ -35,11 +35,14 @@ public:
 private:
 	Stage* stage = nullptr;
 	Board* board = nullptr;
-	Slime* slime = nullptr;
+	Piece* piece = nullptr;
 
 	Model* highlightModel = nullptr;
 
-	std::vector<Slime*> pieces;
+	// ワールド座標 → スクリーン座標変換
+	DirectX::XMFLOAT2 WorldToScreen(const DirectX::XMFLOAT3& worldPos) const;
+
+	std::vector<Piece*> pieces;
 	//Player* player = nullptr;
 	CameraController* cameraController = nullptr;
 
@@ -57,7 +60,7 @@ private:
 	void RemoveSlimeAt(Position pos);
 
 	Position ScreenToBoard(int screenX, int screenY);
-	Slime* FindSlimeAt(Position pos);
+	Piece* FindSlimeAt(Position pos);
 
 
 };

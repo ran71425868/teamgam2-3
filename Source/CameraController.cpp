@@ -1,7 +1,7 @@
 #include "System/Input.h"
 #include "CameraController.h"
 #include "Camera.h"
-#include "Slime.h"
+#include "Piece.h"
 
 //XVˆ—
 void CameraController::Update(float elapsedTime) 

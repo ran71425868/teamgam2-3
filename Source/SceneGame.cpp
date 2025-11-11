@@ -5,7 +5,7 @@
 #include "SceneManager.h"
 #include "Camera.h"
 #include "Player.h"
-#include "Slime.h"
+#include "Piece.h"
 #include "EffectManager.h"
 #include <DirectXMath.h>
 
@@ -27,38 +27,38 @@ void SceneGame::Initialize()
 	// 駒を初期配置（例：白と黒のスライム）
 	for (int i = 0; i <= 7; i++)
 	{
-		pieces.push_back(new Slime("white", { i, 1 },"pawn"));//白　手前
-		pieces.push_back(new Slime("black", { i, 6 },"pawn"));//黒　奥
+		pieces.push_back(new Piece("white", { i, 1 },"pawn"));//白　手前
+		pieces.push_back(new Piece("black", { i, 6 },"pawn"));//黒　奥
 	}
 	
 	//king
-	pieces.push_back(new Slime("white", { 4, 0 },"king"));
+	pieces.push_back(new Piece("white", { 4, 0 },"king"));
 	//rook
-	pieces.push_back(new Slime("white", { 0, 0 },"rook"));
-	pieces.push_back(new Slime("white", { 7, 0 },"rook"));
+	pieces.push_back(new Piece("white", { 0, 0 },"rook"));
+	pieces.push_back(new Piece("white", { 7, 0 },"rook"));
 	//knight
-	pieces.push_back(new Slime("white", { 1, 0 },"knight"));
-	pieces.push_back(new Slime("white", { 6, 0 },"knight"));
+	pieces.push_back(new Piece("white", { 1, 0 },"knight"));
+	pieces.push_back(new Piece("white", { 6, 0 },"knight"));
 	//bishop
-	pieces.push_back(new Slime("white", { 2, 0 },"bishop"));
-	pieces.push_back(new Slime("white", { 5, 0 },"bishop"));
+	pieces.push_back(new Piece("white", { 2, 0 },"bishop"));
+	pieces.push_back(new Piece("white", { 5, 0 },"bishop"));
 	//queen
-	pieces.push_back(new Slime("white", { 3, 0 },"queen"));
+	pieces.push_back(new Piece("white", { 3, 0 },"queen"));
 
 
 	//king
-	pieces.push_back(new Slime("black", { 4, 7 },"king"));
+	pieces.push_back(new Piece("black", { 4, 7 },"king"));
 	//rook
-	pieces.push_back(new Slime("black", { 0, 7 },"rook"));
-	pieces.push_back(new Slime("black", { 7, 7 },"rook"));
+	pieces.push_back(new Piece("black", { 0, 7 },"rook"));
+	pieces.push_back(new Piece("black", { 7, 7 },"rook"));
 	//knight
-	pieces.push_back(new Slime("black", { 1, 7 },"knight"));
-	pieces.push_back(new Slime("black", { 6, 7 },"knight"));
+	pieces.push_back(new Piece("black", { 1, 7 },"knight"));
+	pieces.push_back(new Piece("black", { 6, 7 },"knight"));
 	//bishop
-	pieces.push_back(new Slime("black", { 2, 7 },"bishop"));
-	pieces.push_back(new Slime("black", { 5, 7 },"bishop"));
+	pieces.push_back(new Piece("black", { 2, 7 },"bishop"));
+	pieces.push_back(new Piece("black", { 5, 7 },"bishop"));
 	//queen
-	pieces.push_back(new Slime("black", { 3, 7 },"queen"));
+	pieces.push_back(new Piece("black", { 3, 7 },"queen"));
 
 	
 	isServer = true; // ← サーバー側なら true / クライアントなら false に設定
@@ -190,7 +190,7 @@ void SceneGame::Update(float elapsedTime)
 				auto attacker = board->getPieceAt(selectedPos);
 				auto defender = board->getPieceAt(clicked); // 取られる駒（nullptrの場合もある）
 
-				// --- 🚨 新規追加ロジック: 体力ベースの戦闘判定 ---
+				// --- 新規追加ロジック: 体力ベースの戦闘判定 ---
 				if (defender) {
 
 					// 1. 体力を比較
@@ -210,7 +210,7 @@ void SceneGame::Update(float elapsedTime)
 						// 防御側に自駒の体力分のダメージを与える
 						defender->takeDamage(attackerHealth);
 
-						// 🚨 負けたため、移動処理をスキップし、ターンを終了
+						// 負けたため、移動処理をスキップし、ターンを終了
 						// 負けの場合は移動処理(board->movePiece)は不要
 
 						// 選択を解除し、ターンを切り替える
@@ -227,11 +227,13 @@ void SceneGame::Update(float elapsedTime)
 						RemoveSlimeAt(clicked); // 取られる駒の Slime を削除
 					}
 				}
-				//auto captured_piece = board->getPieceAt(clicked); // 移動先の駒を取得
-				//if (captured_piece) {
-				//	// 修正: 取られる駒に対応する Slime オブジェクトをリストから削除する処理を呼び出す
-				//	RemoveSlimeAt(clicked);
-				//}
+
+				/*auto captured_piece = board->getPieceAt(clicked); // 移動先の駒を取得
+				if (captured_piece) {
+					// 修正: 取られる駒に対応する Slime オブジェクトをリストから削除する処理を呼び出す
+					RemoveSlimeAt(clicked);
+				}*/
+
 				// 合法な移動を実行
 				board->movePiece(selectedPos, clicked);
 
@@ -363,9 +365,10 @@ void SceneGame::Render()
 	rc.renderState = graphics.GetRenderState();
 
 	ModelRenderer* renderer = graphics.GetModelRenderer(); // ←環境に応じて取得方法を調整
-	stage->Render(rc, renderer);
-	for (auto p : pieces) p->Render(rc, renderer);
+	/*stage->Render(rc, renderer);
+	for (auto p : pieces) p->Render(rc, renderer);*/
 
+	
 
 	//カメラパラメータ設定
 	Camera& camera = Camera::Instance();
@@ -379,7 +382,7 @@ void SceneGame::Render()
 		//プレイヤー描画
 		Player::Instance().Render(rc, modelRenderer);
 
-		
+		for (auto p : pieces) p->Render(rc, renderer);
 
 		// 選択された駒があり、合法手リストが空でなければハイライトを描画
 		if (selectedPos.x != -1 && !legalMoves.empty()) {
@@ -403,9 +406,7 @@ void SceneGame::Render()
 			}
 		}
 
-		for (auto p : pieces) {
-			p->Render(rc, renderer);
-		}
+		
 		
 		//エフェクトマネージャー描画
 		EffectManager::Instance().Render(rc.view, rc.projection);
@@ -420,7 +421,73 @@ void SceneGame::Render()
 
 	// 2Dスプライト描画
 	{
+		for (auto p : pieces) {
+			Position piecePos = p->GetBoardPosition();
 
+			// 1. 選択状態の判定
+			bool isSelected = (piecePos.x == selectedPos.x && piecePos.y == selectedPos.y);
+
+			if (isSelected) {
+				// 2. 体力情報の取得
+				auto chessPiece = board->getPieceAt(piecePos);
+				if (!chessPiece) continue;
+
+				int currentHealth = chessPiece->getHealth();
+				int maxHealth = chessPiece->getMaxHealth();
+				float healthRatio = (float)currentHealth / maxHealth;
+
+				// 3. 3D位置を計算 (駒の頭上に出現させるためのワールド座標)
+				DirectX::XMFLOAT3 worldPos = {
+					piecePos.x * 100.0f,
+					60.0f, // 駒の頭上の高さ (Y軸オフセット)
+					piecePos.y * 100.0f
+				};
+
+				// 4. ワールド座標をスクリーン座標に変換
+				DirectX::XMFLOAT2 screenPos = WorldToScreen(worldPos);
+
+				// 画面外なら描画しない
+				if (screenPos.x < 0 || screenPos.y < 0) continue;
+
+				// --- 体力バーの描画パラメータ ---
+				const float barWidth = 80.0f;  // スクリーン上のピクセル幅 (最大)
+				const float barHeight = 10.0f; // スクリーン上のピクセル高さ
+
+				// 矩形の描画開始座標 (中央揃えのため、中央位置から幅/高さを引く)
+				float startX = screenPos.x - barWidth / 2.0f;
+				float startY = screenPos.y - barHeight / 2.0f;
+
+				// 5. 体力バーの**背景（枠）**を描画
+				// 既に実装した DrawRect を使用
+				shapeRenderer->DrawRect(
+					rc,
+					startX,
+					startY,
+					barWidth,
+					barHeight,
+					DirectX::XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f) // 黒い背景色
+				);
+
+				// 6. 現在の体力（塗りつぶし）を描画
+				float currentBarWidth = barWidth * healthRatio;
+
+				// 体力に応じた色を設定
+				DirectX::XMFLOAT4 barColor;
+				if (healthRatio > 0.6f) barColor = DirectX::XMFLOAT4(0.0f, 0.8f, 0.0f, 1.0f);     // 緑
+				else if (healthRatio > 0.3f) barColor = DirectX::XMFLOAT4(0.8f, 0.6f, 0.0f, 1.0f);  // オレンジ
+				else barColor = DirectX::XMFLOAT4(0.8f, 0.0f, 0.0f, 1.0f);                          // 赤
+
+				// バーは左から右へ満たされるように描画（startXから開始）
+				shapeRenderer->DrawRect(
+					rc,
+					startX,
+					startY,
+					currentBarWidth,
+					barHeight,
+					barColor
+				);
+			}
+		}
 	}
 }
 
@@ -505,12 +572,40 @@ Position SceneGame::ScreenToBoard(int screenX, int screenY)
 	return { boardX, boardY };
 }
 
-//Slime を盤面座標から取得
-Slime* SceneGame::FindSlimeAt(Position pos) {
+//Piece を盤面座標から取得
+Piece* SceneGame::FindSlimeAt(Position pos) {
 	for (auto slime : pieces) {
 		if (slime->GetBoardPosition().x == pos.x &&
 			slime->GetBoardPosition().y == pos.y)
 			return slime;
 	}
 	return nullptr;
+}
+
+DirectX::XMFLOAT2 SceneGame::WorldToScreen(const DirectX::XMFLOAT3& worldPos) const {
+	using namespace DirectX;
+	Graphics& graphics = Graphics::Instance();
+	Camera& camera = Camera::Instance();
+
+	// 1. ワールド座標をビュー・プロジェクション変換
+	XMVECTOR worldVec = XMLoadFloat3(&worldPos);
+	XMMATRIX view = XMLoadFloat4x4(&camera.GetView());
+	XMMATRIX proj = XMLoadFloat4x4(&camera.GetProjection());
+
+	// ワールド座標 → クリップ座標 (NDC)
+	XMVECTOR clipVec = XMVector3TransformCoord(worldVec, view * proj);
+
+	// 2. 視錐台の外部チェック (Z < 0 または W < 0 の場合は描画しない)
+	float w = XMVectorGetW(clipVec);
+	if (w <= 0) return { -9999.0f, -9999.0f }; // 画面外を示す無効な座標
+
+	// 3. クリップ座標 → NDC (正規化デバイス座標)
+	float ndcX = XMVectorGetX(clipVec) / w;
+	float ndcY = XMVectorGetY(clipVec) / w;
+
+	// 4. NDC → スクリーン座標
+	float screenX = (ndcX + 1.0f) * 0.5f * graphics.GetScreenWidth();
+	float screenY = (1.0f - ndcY) * 0.5f * graphics.GetScreenHeight(); // Y軸反転
+
+	return { screenX, screenY };
 }

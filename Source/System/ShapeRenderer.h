@@ -43,6 +43,12 @@ public:
 		float height,
 		const DirectX::XMFLOAT4& color) const;
 
+	// 2D矩形描画
+	void DrawRect(
+		const RenderContext& rc,
+		float x, float y, float w, float h,
+		const DirectX::XMFLOAT4& color) const;
+
 private:
 	struct Mesh
 	{
@@ -78,8 +84,15 @@ private:
 	Mesh										sphereMesh;
 	Mesh										halfSphereMesh;
 	Mesh										cylinderMesh;
+
+	// 2D矩形メッシュ
+	Mesh rectMesh;
+
 	Microsoft::WRL::ComPtr<ID3D11VertexShader>	vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11PixelShader>	pixelShader;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>	inputLayout;
 	Microsoft::WRL::ComPtr<ID3D11Buffer>		constantBuffer;
+
+	// 矩形メッシュ生成メソッド
+	void CreateRectMesh(ID3D11Device* device, float width, float height);
 };

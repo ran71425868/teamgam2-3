@@ -32,11 +32,14 @@ public:
 
     void setPosition(Position p);
 
+    // ★新規追加：最大体力を取得するメソッド
+    int getMaxHealth() const;
+
     int getHealth() const { return health; }
     void takeDamage(int damage);
 
     // 最大体力を設定するメソッド（各駒のコンストラクタで呼び出す）
-    void setMaxHealth(int maxH) { maxHealth = maxH; }
+    //void setMaxHealth(int maxH) { maxHealth = maxH; }
 
     Position getPosition() const;
     std::string getColor() const;
