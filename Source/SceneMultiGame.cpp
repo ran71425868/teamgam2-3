@@ -1,0 +1,814 @@
+﻿#include <random>
+#include <algorithm> // std::shuffle用
+#include "System/Graphics.h"
+#include <iostream>
+#include "SceneMultiGame.h"
+#include "SceneResult.h"
+#include "SceneManager.h"
+#include "Camera.h"
+#include "Player.h"
+#include "Piece.h"
+#include "EffectManager.h"
+#include <DirectXMath.h>
+
+using namespace DirectX;
+
+// 初期化
+void SceneMultiGame::Initialize()
+{
+
+	//ステージ初期化
+	board = new Board();
+	board->initialize();
+
+	highlightModel = new Model("Data/Model/Stage/yellow_bord.mdl");
+	healSpotModel = new Model("Data/Model/Stage/heal_bord.mdl");
+
+	//プレイヤー初期化
+	Player::Instance().Initializa();
+
+	// 駒を初期配置（例：白と黒のスライム）
+	for (int i = 0; i <= 7; i++)
+	{
+		pieces.push_back(new Piece("white", { i, 1 }, "pawn"));//白　手前
+		pieces.push_back(new Piece("black", { i, 6 }, "pawn"));//黒　奥
+	}
+
+	//king
+	pieces.push_back(new Piece("white", { 4, 0 }, "king"));
+	//rook
+	pieces.push_back(new Piece("white", { 0, 0 }, "rook"));
+	pieces.push_back(new Piece("white", { 7, 0 }, "rook"));
+	//knight
+	pieces.push_back(new Piece("white", { 1, 0 }, "knight"));
+	pieces.push_back(new Piece("white", { 6, 0 }, "knight"));
+	//bishop
+	pieces.push_back(new Piece("white", { 2, 0 }, "bishop"));
+	pieces.push_back(new Piece("white", { 5, 0 }, "bishop"));
+	//queen
+	pieces.push_back(new Piece("white", { 3, 0 }, "queen"));
+
+
+	//king
+	pieces.push_back(new Piece("black", { 4, 7 }, "king"));
+	//rook
+	pieces.push_back(new Piece("black", { 0, 7 }, "rook"));
+	pieces.push_back(new Piece("black", { 7, 7 }, "rook"));
+	//knight
+	pieces.push_back(new Piece("black", { 1, 7 }, "knight"));
+	pieces.push_back(new Piece("black", { 6, 7 }, "knight"));
+	//bishop
+	pieces.push_back(new Piece("black", { 2, 7 }, "bishop"));
+	pieces.push_back(new Piece("black", { 5, 7 }, "bishop"));
+	//queen
+	pieces.push_back(new Piece("black", { 3, 7 }, "queen"));
+
+
+	isServer = true; // ← サーバー側なら true / クライアントなら false に設定
+	if (isServer)
+		network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
+	else
+		network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);
+
+	//カメラ初期設定
+	Graphics& graphics = Graphics::Instance();
+	Camera& camera = Camera::Instance();
+	camera.SetLookAt(
+		DirectX::XMFLOAT3(0, 10, -10),//視点
+		DirectX::XMFLOAT3(0, 0, 0),//注視点
+		DirectX::XMFLOAT3(0, 1, 0)//上方向
+	);
+
+	camera.SetPerspectiveFov(
+		DirectX::XMConvertToRadians(45),//視野角
+		graphics.GetScreenWidth() / graphics.GetScreenHeight(),//画面アスペクト比
+		0.1f,//クリップ距離(近)
+		10000.0f//クリップ距離(遠)
+	);
+
+	cameraController = new CameraController;
+
+	SetReady();
+
+}
+
+// 終了化
+void SceneMultiGame::Finalize()
+{
+
+	if (cameraController != nullptr) {
+		delete cameraController;
+		cameraController = nullptr;
+	}
+
+	Player::Instance().Finalize();
+
+	//ステージ終了化
+	if (stage != nullptr)
+	{
+		delete stage;
+		stage = nullptr;
+	}
+
+	if (board != nullptr)
+	{
+		delete board;
+		board = nullptr;
+	}
+
+	for (auto p : pieces) delete p;
+	pieces.clear();
+
+	network.Finalize();
+
+}
+
+// 更新処理
+void SceneMultiGame::Update(float elapsedTime)
+{
+	// ガード処理：ゲーム終了時は処理を停止
+	if (isGameOver) {
+		// ここに結果表示のロジック（未作成）が入る
+		// シーン遷移がないため、結果表示（例：テキスト表示）のみを行う
+		SceneManager::Instance().ChangeScene(new SceneResult);
+		return;
+	}
+	Mouse& mouseCursor = Input::Instance().GetMouse();
+
+	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
+		POINT cursor = mouseCursor.GetPosition();
+
+		// 1. ボード座標への変換とボード外チェック
+		Position clicked = ScreenToBoard(cursor.x, cursor.y);
+		if (!board->isInsideBoard(clicked)) return; // ボード外なら何もしない
+
+		auto clickedPiece = board->getPieceAt(clicked);
+
+		// --- 2. 駒が選択されていない場合 (selectedPos.x == -1) ---
+		if (selectedPos.x == -1) {
+			// 自分の駒をクリックした場合、それを選択する
+			if (clickedPiece) {
+				auto color = clickedPiece->getColor();
+				auto currentTurn = board->getCurrentTurn();
+
+				// クリックした駒が現在のターンプレイヤーの駒であれば選択
+				if (color == currentTurn) {
+					selectedPos = clicked;
+					legalMoves = clickedPiece->getLegalMoves(*board);
+					// この時点で処理を終了し、選択状態を維持
+					return;
+				}
+			}
+		}
+		// --- 3. 駒が既に選択されている場合 (else) ---
+		else {
+
+			// 修正ロジック 1: 自己移動の禁止
+			if (selectedPos.x == clicked.x && selectedPos.y == clicked.y) {
+				// 同じ駒を連打した場合 → 選択解除
+				selectedPos = { -1, -1 };
+				legalMoves.clear();
+				return;
+			}
+
+			// 移動先として合法か判定
+			bool isLegalMove = false;
+			for (auto& move : legalMoves) {
+				if (move.x == clicked.x && move.y == clicked.y) {
+					isLegalMove = true;
+					break; // 合法な移動先を見つけたのでループを抜ける
+				}
+			}
+
+
+			if (isLegalMove) {
+				// piece の位置も更新
+				auto piece = FindSlimeAt(selectedPos);
+
+				// 修正: 移動する駒を取得（自傷と死亡判定のため）
+				auto movingPiece = board->getPieceAt(selectedPos);
+				// 取られる駒があれば、その slime を削除
+
+				auto attacker = board->getPieceAt(selectedPos);
+				auto defender = board->getPieceAt(clicked); // 取られる駒（nullptrの場合もある）
+
+				// --- 新規追加ロジック: 体力ベースの戦闘判定 ---
+				if (defender) {
+
+					// 1. 体力を比較
+					int attackerHealth = attacker->getHealth();
+					int defenderHealth = defender->getHealth();
+
+					// 2. 攻撃側の体力が防御側の体力未満の場合 (負け)
+					if (attackerHealth < defenderHealth) {
+						// 負け：攻撃側は消滅し、防御側にダメージを与える
+
+						// 描画オブジェクトの削除 (攻撃側)
+						RemoveSlimeAt(selectedPos);
+
+						// 盤面からの駒の削除 (攻撃側)
+						board->setPieceAt(selectedPos, nullptr);
+
+						// 防御側に自駒の体力分のダメージを与える
+						defender->takeDamage(attackerHealth);
+
+						// 負けたため、移動処理をスキップし、ターンを終了
+						// 負けの場合は移動処理(board->movePiece)は不要
+
+						// 選択を解除し、ターンを切り替える
+						selectedPos = { -1, -1 };
+						legalMoves.clear();
+						board->switchTurn();
+						return; // 処理を終了
+					}
+
+					// 3. 攻撃側の体力が防御側の体力以上の場合 (勝ち)
+					// 勝利：通常通り相手の駒を取得（通常移動のロジックに任せる）
+					// 勝利時は、防御側のSlimeを削除する必要があるため、以下の処理を実行
+					else {
+						RemoveSlimeAt(clicked); // 取られる駒の Slime を削除
+					}
+				}
+
+				/*auto captured_piece = board->getPieceAt(clicked); // 移動先の駒を取得
+				if (captured_piece) {
+					// 修正: 取られる駒に対応する Slime オブジェクトをリストから削除する処理を呼び出す
+					RemoveSlimeAt(clicked);
+				}*/
+
+				// 合法な移動を実行
+				board->movePiece(selectedPos, clicked);
+
+				{
+					Position currentPos = clicked;
+					HealSpot& spot = healSpots[currentPos.y][currentPos.x];
+					auto movingPiece = board->getPieceAt(currentPos); // 移動後の駒を取得
+
+					if (movingPiece && spot.isGenerated) {
+						std::string pieceColor = movingPiece->getColor();
+						bool shouldHeal = false;
+
+						// 1. 回復条件の判定
+						if (spot.type == HealType::COMMON) {
+							shouldHeal = true;
+						}
+						else if (spot.type == HealType::BLACK_ONLY && pieceColor == "white") {
+							shouldHeal = true;
+						}
+						else if (spot.type == HealType::WHITE_ONLY && pieceColor == "black") {
+							shouldHeal = true;
+						}
+
+						if (shouldHeal) {
+							int maxHealth = movingPiece->getMaxHealth();
+							int currentHealth = movingPiece->getHealth();
+
+							// 回復量の計算 (max(1, maxHealth / 2) の代替)
+							int healAmount = maxHealth / 2;
+							if (healAmount < 1) {
+								healAmount = 1;
+							}
+
+							//　setHealth/newHealthの代わりに heal メソッドを使用
+							movingPiece->heal(healAmount);
+
+							// 回復マスの消滅（一度使ったら消える場合）
+							spot.isGenerated = false;
+							spot.type = HealType::NONE;
+						}
+					}
+				}
+
+				if (piece) piece->SetBoardPosition(clicked);
+
+				MoveData move{ 1, selectedPos.x, selectedPos.y, clicked.x, clicked.y };
+				network.SendMove(move);
+
+				// ----------------------------------------------------
+				// 新規追加ロジック: 自傷と死亡判定
+				// ----------------------------------------------------
+				if (movingPiece) {
+					// 1. 1ダメージを与える
+					movingPiece->takeDamage(1);
+
+					// 2. 体力が0になったら死亡とみなし、盤面から削除
+					if (movingPiece->getHealth() <= 0) {
+						// 死亡: 盤面（Board）から駒を削除
+						board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
+
+						// 死亡した駒に対応する Slime も描画リストから削除
+						// ※ RemoveSlimeAt は既に実装しているはず
+						RemoveSlimeAt(clicked);
+					}
+				}
+
+				// 動的な回復マス生成ロジック
+				{
+					Position movedTo = clicked;
+					auto movingPiece = board->getPieceAt(movedTo);
+
+					// 1. 共通マス (y=2 から y=5) への移動チェック
+					bool isCommonSpot = (movedTo.y >= 2 && movedTo.y <= 5);
+
+					if (movingPiece && isCommonSpot && !isDynamicHealSpotActive) {
+
+						// 2. 駒の色に基づいてカウンターをインクリメント
+						std::string color = movingPiece->getColor();
+
+						if (color == "black") {
+							// 移動元の駒の色で判定すべきなので、移動前の駒情報を保持している必要がありますが、
+							// 簡略化のため、ここでは移動後の駒の色でカウントします。
+							blackMovedToCommonCount++;
+						}
+						else if (color == "white") {
+							whiteMovedToCommonCount++;
+						}
+
+						// 3. 生成条件の判定 (黒2回、白2回以上)
+						if (blackMovedToCommonCount >= 2 && whiteMovedToCommonCount >= 2) {
+
+							// 4. 生成場所をランダムに決定
+							Position targetPos = FindRandomEmptyCommonSpot();
+
+							// 5. 空きマスが見つかり、有効な座標であれば生成
+							if (board->isInsideBoard(targetPos)) {
+
+								// HealSpotを生成（共通タイプ）
+								GenerateHealSpots();
+								isDynamicHealSpotActive = true;
+
+								// カウンターをリセットして、次回の生成条件を待つ
+								blackMovedToCommonCount = 0;
+								whiteMovedToCommonCount = 0;
+							}
+						}
+					}
+				}
+
+				// 選択を解除し、ターンを切り替える
+				selectedPos = { -1, -1 };
+				legalMoves.clear();
+				// ゲーム終了判定
+				if (!board->isKingPresent("white")) {
+					isGameOver = true;
+					winnerColor = "black";
+				}
+				else if (!board->isKingPresent("black")) {
+					isGameOver = true;
+					winnerColor = "white";
+				}
+
+				// ゲームが終了していなければ、ターンを切り替える
+				if (!isGameOver) {
+					board->switchTurn();
+				}
+				return;
+			}
+			else {
+				// 不正な場所をクリックした場合
+
+				// 別の自分の駒をクリックしたかチェックし、選択を切り替えるロジックをここに追加できます。
+				// 修正ロジック 2: 別の自分の駒をクリックしたかチェック
+				auto currentTurn = board->getCurrentTurn();
+
+				if (clickedPiece && clickedPiece->getColor() == currentTurn) {
+					// パターンA: 別の自分の駒をクリックした場合 → 選択を切り替える
+					selectedPos = clicked;
+					legalMoves = clickedPiece->getLegalMoves(*board);
+					// 選択を切り替えたので、ここで関数を終了
+					return;
+				}
+				else {
+					// パターンB: 何もないマスや敵の駒をクリック → 選択解除
+					// シンプルに選択解除のみを行う
+					selectedPos = { -1, -1 };
+					legalMoves.clear();
+
+				}
+			}
+
+		}
+	}
+
+	MoveData recvMove{};
+	if (network.ReceiveMove(recvMove)) {
+		Position from{ recvMove.fromX, recvMove.fromY };
+		Position to{ recvMove.toX, recvMove.toY };
+		board->movePiece(from, to);
+		auto slime = FindSlimeAt(from);
+		if (slime) slime->SetBoardPosition(to);
+	}
+
+	stage->Update(elapsedTime);
+	for (auto p : pieces) p->Update(elapsedTime);
+
+
+	//カメラコントローラー更新処理
+
+	DirectX::XMFLOAT3 Poswhite{ 400.0f,0.0f,300.0f };
+	DirectX::XMFLOAT3 Posblack{ 400.0f,0.0f,600.0f };
+
+
+	DirectX::XMFLOAT3 target = Player::Instance().GetPosition();
+
+	//DirectX::XMFLOAT3 target;
+	target.x = Poswhite.x;
+	target.y = 0.0f;
+	target.z = Posblack.z - Poswhite.z;
+
+	target.y += 0.5f;
+	cameraController->SetTarget(target);
+	cameraController->Update(elapsedTime);
+
+	//ステージ更新処理
+	//stage->Update(elapsedTime);
+
+	//プレイヤー更新処理
+	Player::Instance().Update(elapsedTime);
+
+	//エフェクトマネージャー更新処理
+	EffectManager::Instance().Update(elapsedTime);
+}
+
+// 描画処理
+void SceneMultiGame::Render()
+{
+	Graphics& graphics = Graphics::Instance();
+	ID3D11DeviceContext* dc = graphics.GetDeviceContext();
+	ShapeRenderer* shapeRenderer = graphics.GetShapeRenderer();
+	ModelRenderer* modelRenderer = graphics.GetModelRenderer();
+
+	// 描画準備
+	RenderContext rc;
+	rc.deviceContext = dc;
+	rc.lightDirection = { 0.0f, -1.0f, 0.0f };	// ライト方向（下方向）
+	rc.renderState = graphics.GetRenderState();
+
+	ModelRenderer* renderer = graphics.GetModelRenderer(); // ←環境に応じて取得方法を調整
+	/*stage->Render(rc, renderer);
+	for (auto p : pieces) p->Render(rc, renderer);*/
+
+
+
+	//カメラパラメータ設定
+	Camera& camera = Camera::Instance();
+	rc.view = camera.GetView();
+	rc.projection = camera.GetProjection();
+
+	// 3Dモデル描画
+	{
+		//ステージ描画
+		stage->Render(rc, modelRenderer);
+		//プレイヤー描画
+		Player::Instance().Render(rc, modelRenderer);
+
+		for (auto p : pieces) p->Render(rc, renderer);
+
+		// 選択された駒があり、合法手リストが空でなければハイライトを描画
+		if (selectedPos.x != -1 && !legalMoves.empty()) {
+
+			for (const auto& move : legalMoves) {
+
+				// 盤面座標 (move.x, move.y) をワールド座標に変換
+				// Slime::Render で使っている変換ロジックと同様
+				DirectX::XMFLOAT4X4 transform;
+				DirectX::XMStoreFloat4x4(&transform,
+					DirectX::XMMatrixTranslation(
+						move.x * 100.0f, // X座標
+						2.0f,            // 駒より少し高い位置 (ZよりYが適切)
+						move.y * 100.0f  // Z座標
+					)
+				);
+
+				// ハイライトモデルを描画
+				// ※ highlightModel が SceneGame 内のメンバー変数だと仮定
+				renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
+			}
+		}
+
+		// 回復マスの描画 (仮のロジック)
+		for (int y = 0; y < 8; ++y) {
+			for (int x = 0; x < 8; ++x) {
+				if (healSpots[y][x].isGenerated) {
+					// 回復マスのモデルをボード上に描画
+					DirectX::XMFLOAT4X4 transform;
+					DirectX::XMStoreFloat4x4(&transform,
+						DirectX::XMMatrixTranslation(
+							x * 100.0f,
+							2.0f, // 盤面の高さ
+							y * 100.0f
+						)
+					);
+					// マスのタイプに応じて異なるテクスチャや色で描画しても良い
+					modelRenderer->Render(rc, transform, healSpotModel, ShaderId::Lambert);
+				}
+			}
+
+		}
+		//エフェクトマネージャー描画
+		EffectManager::Instance().Render(rc.view, rc.projection);
+	}
+
+	// 3Dデバッグ描画
+	{
+		//プレイヤーデバッグプリミティブ描画
+		Player::Instance().RenderDebugPrimitive(rc, shapeRenderer);
+
+	}
+
+	// 2Dスプライト描画
+	{
+		for (auto p : pieces) {
+			Position piecePos = p->GetBoardPosition();
+
+			// 1. 選択状態の判定
+			bool isSelected = (piecePos.x == selectedPos.x && piecePos.y == selectedPos.y);
+
+			if (isSelected) {
+				// 2. 体力情報の取得
+				auto chessPiece = board->getPieceAt(piecePos);
+				if (!chessPiece) continue;
+
+				int currentHealth = chessPiece->getHealth();
+				int maxHealth = chessPiece->getMaxHealth();
+				float healthRatio = (float)currentHealth / maxHealth;
+
+				// 3. 3D位置を計算 (駒の頭上に出現させるためのワールド座標)
+				DirectX::XMFLOAT3 worldPos = {
+					piecePos.x * 100.0f,
+					60.0f, // 駒の頭上の高さ (Y軸オフセット)
+					piecePos.y * 100.0f
+				};
+
+				// 4. ワールド座標をスクリーン座標に変換
+				DirectX::XMFLOAT2 screenPos = WorldToScreen(worldPos);
+
+				// 画面外なら描画しない
+				if (screenPos.x < 0 || screenPos.y < 0) continue;
+
+				// --- 体力バーの描画パラメータ ---
+				const float barWidth = 80.0f;  // スクリーン上のピクセル幅 (最大)
+				const float barHeight = 10.0f; // スクリーン上のピクセル高さ
+
+				// 矩形の描画開始座標 (中央揃えのため、中央位置から幅/高さを引く)
+				float startX = screenPos.x - barWidth / 2.0f;
+				float startY = screenPos.y - barHeight / 2.0f;
+
+				// 5. 体力バーの**背景（枠）**を描画
+				// 既に実装した DrawRect を使用
+				shapeRenderer->DrawRect(
+					rc,
+					startX,
+					startY,
+					barWidth,
+					barHeight,
+					DirectX::XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f) // 黒い背景色
+				);
+
+				// 6. 現在の体力（塗りつぶし）を描画
+				float currentBarWidth = barWidth * healthRatio;
+
+				// 体力に応じた色を設定
+				DirectX::XMFLOAT4 barColor;
+				if (healthRatio > 0.6f) barColor = DirectX::XMFLOAT4(0.0f, 0.8f, 0.0f, 1.0f);     // 緑
+				else if (healthRatio > 0.3f) barColor = DirectX::XMFLOAT4(0.8f, 0.6f, 0.0f, 1.0f);  // オレンジ
+				else barColor = DirectX::XMFLOAT4(0.8f, 0.0f, 0.0f, 1.0f);                          // 赤
+
+				// バーは左から右へ満たされるように描画（startXから開始）
+				shapeRenderer->DrawRect(
+					rc,
+					startX,
+					startY,
+					currentBarWidth,
+					barHeight,
+					barColor
+				);
+			}
+		}
+	}
+}
+
+// GUI描画
+void SceneMultiGame::DrawGUI()
+{
+	//プレイヤーデバッグ描画
+	Player::Instance().DrawDebugGUI();
+}
+
+void SceneMultiGame::RemoveSlimeAt(Position pos)
+{
+	// Slimeオブジェクトのリストを走査し、posと一致するものを削除する
+	for (auto it = pieces.begin(); it != pieces.end(); ++it) {
+		if ((*it)->GetBoardPosition().x == pos.x && (*it)->GetBoardPosition().y == pos.y) {
+
+			// 削除前にメモリを解放（ヒープ領域で確保している場合）
+			delete (*it);
+
+			// リストから要素を削除
+			pieces.erase(it);
+			return; // 駒は一つしか存在しないので、見つけたら終了
+		}
+	}
+}
+
+//マウス座標 → 盤面座標変換
+Position SceneMultiGame::ScreenToBoard(int screenX, int screenY)
+{
+	using namespace DirectX;
+
+	// スクリーンサイズ
+	int screenWidth = Graphics::Instance().GetScreenWidth();
+	int screenHeight = Graphics::Instance().GetScreenHeight();
+
+	// スクリーン座標 → NDC（-1〜+1）
+	float ndcX = (2.0f * screenX / screenWidth) - 1.0f;
+	float ndcY = 1.0f - (2.0f * screenY / screenHeight); // Y反転
+
+	// ビュー・プロジェクション行列
+	XMMATRIX view = XMLoadFloat4x4(&Camera::Instance().GetView());
+	XMMATRIX proj = XMLoadFloat4x4(&Camera::Instance().GetProjection());
+	XMMATRIX invViewProj = XMMatrixInverse(nullptr, view * proj);
+
+	// NDC → ワールド空間レイ
+	XMVECTOR nearPoint = XMVectorSet(ndcX, ndcY, 0.0f, 1.0f);
+	XMVECTOR farPoint = XMVectorSet(ndcX, ndcY, 1.0f, 1.0f);
+
+	nearPoint = XMVector3TransformCoord(nearPoint, invViewProj);
+	farPoint = XMVector3TransformCoord(farPoint, invViewProj);
+
+	XMVECTOR rayOrigin = nearPoint;
+	XMVECTOR rayDir = XMVector3Normalize(farPoint - nearPoint);
+
+	// レイと盤面（Y=0）との交点を求める
+	float rayY = XMVectorGetY(rayDir);
+	if (fabs(rayY) < 1e-5f) return { -1, -1 };
+
+	float t = -XMVectorGetY(rayOrigin) / rayY;
+	if (t < 0) return { -1, -1 };
+
+	XMVECTOR hitPos = rayOrigin + rayDir * t;
+
+	float x = XMVectorGetX(hitPos);
+	float z = XMVectorGetZ(hitPos);
+
+	// 原点補正（盤面の描画開始位置）
+	constexpr float boardOriginX = -50.0f; // ← 必要に応じて -50.0f などに調整
+	constexpr float boardOriginZ = -50.0f;
+
+	float localX = x - boardOriginX;
+	float localZ = z - boardOriginZ;
+
+	// 範囲チェック（盤面サイズ 8x8, 1マス100）
+	if (localX < 0 || localX >= 800 || localZ < 0 || localZ >= 800)
+		return { -1, -1 };
+
+	// floorで丸め誤差を防止
+	int boardX = static_cast<int>(std::floor(localX / 100.0f));
+	int boardY = static_cast<int>(std::floor(localZ / 100.0f));
+
+	return { boardX, boardY };
+}
+
+//Piece を盤面座標から取得
+Piece* SceneMultiGame::FindSlimeAt(Position pos) {
+	for (auto slime : pieces) {
+		if (slime->GetBoardPosition().x == pos.x &&
+			slime->GetBoardPosition().y == pos.y)
+			return slime;
+	}
+	return nullptr;
+}
+
+DirectX::XMFLOAT2 SceneMultiGame::WorldToScreen(const DirectX::XMFLOAT3& worldPos) const {
+	using namespace DirectX;
+	Graphics& graphics = Graphics::Instance();
+	Camera& camera = Camera::Instance();
+
+	// 1. ワールド座標をビュー・プロジェクション変換
+	XMVECTOR worldVec = XMLoadFloat3(&worldPos);
+	XMMATRIX view = XMLoadFloat4x4(&camera.GetView());
+	XMMATRIX proj = XMLoadFloat4x4(&camera.GetProjection());
+
+	// ワールド座標 → クリップ座標 (NDC)
+	XMVECTOR clipVec = XMVector3TransformCoord(worldVec, view * proj);
+
+	// 2. 視錐台の外部チェック (Z < 0 または W < 0 の場合は描画しない)
+	float w = XMVectorGetW(clipVec);
+	if (w <= 0) return { -9999.0f, -9999.0f }; // 画面外を示す無効な座標
+
+	// 3. クリップ座標 → NDC (正規化デバイス座標)
+	float ndcX = XMVectorGetX(clipVec) / w;
+	float ndcY = XMVectorGetY(clipVec) / w;
+
+	// 4. NDC → スクリーン座標
+	float screenX = (ndcX + 1.0f) * 0.5f * graphics.GetScreenWidth();
+	float screenY = (1.0f - ndcY) * 0.5f * graphics.GetScreenHeight(); // Y軸反転
+
+	return { screenX, screenY };
+}
+
+void SceneMultiGame::GenerateHealSpots() {
+
+	// 乱数生成器の準備
+	std::random_device rd;
+	std::mt19937 g(rd());
+
+	// ----------------------------------------------------
+	// 1. 各ゾーンのマス座標をリストアップ
+	// ----------------------------------------------------
+
+	// <y=0, 1> 黒陣地側 (白駒専用回復マスを生成)
+	std::vector<Position> blackTerritorySpots;
+	// <y=6, 7> 白陣地側 (黒駒専用回復マスを生成)
+	std::vector<Position> whiteTerritorySpots;
+	// <y=2, 3, 4, 5> 共通マス (共通回復マスを生成)
+	std::vector<Position> commonSpots;
+
+	for (int y = 0; y < 8; ++y) {
+		for (int x = 0; x < 8; ++x) {
+			Position pos = { x, y };
+
+			if (y <= 1) { // y=0, 1: 黒陣地側
+				blackTerritorySpots.push_back(pos);
+			}
+			else if (y >= 6) { // y=6, 7: 白陣地側
+				whiteTerritorySpots.push_back(pos);
+			}
+			else { // y=2, 3, 4, 5: 共通マス
+				commonSpots.push_back(pos);
+			}
+		}
+	}
+
+	// ----------------------------------------------------
+	// 2. 各ゾーンで指定された数の回復マスをランダムに生成
+	// ----------------------------------------------------
+
+	// A. 黒陣地側 (白専用回復マス: 8個)
+	// マスをシャッフル
+	std::shuffle(blackTerritorySpots.begin(), blackTerritorySpots.end(), g);
+	// 8個選択して設定
+	int countA = (blackTerritorySpots.size() < 8) ? (int)blackTerritorySpots.size() : 8;
+	for (int i = 0; i < countA; ++i) {
+		Position pos = blackTerritorySpots[i];
+		healSpots[pos.y][pos.x] = { HealType::WHITE_ONLY, true };
+	}
+
+	// B. 白陣地側 (黒専用回復マス: 8個)
+	// マスをシャッフル
+	std::shuffle(whiteTerritorySpots.begin(), whiteTerritorySpots.end(), g);
+	// 8個選択して設定
+	int countB = (whiteTerritorySpots.size() < 8) ? (int)whiteTerritorySpots.size() : 8;
+	for (int i = 0; i < countB; ++i) {
+		Position pos = whiteTerritorySpots[i];
+		healSpots[pos.y][pos.x] = { HealType::BLACK_ONLY, true };
+	}
+
+	// C. 共通マス (共通回復マス: 16個)
+	// マスをシャッフル
+	std::shuffle(commonSpots.begin(), commonSpots.end(), g);
+	// 16個選択して設定
+	int countC = (commonSpots.size() < 16) ? (int)commonSpots.size() : 16;
+	for (int i = 0; i < countC; ++i) {
+		Position pos = commonSpots[i];
+		healSpots[pos.y][pos.x] = { HealType::COMMON, true };
+	}
+
+}
+
+//　駒が置かれておらず、かつ回復マスが生成されていない共通マスをランダムに選ぶ
+Position SceneMultiGame::FindRandomEmptyCommonSpot() const
+{
+	// 1. 候補となる空いている共通マスの座標を収集
+	std::vector<Position> candidates;
+
+	for (int y = 2; y <= 5; ++y) {
+		for (int x = 0; x < 8; ++x) {
+			Position pos = { x, y };
+
+			// 共通マスに駒が置かれていないか？ (nullptr)
+			bool isSpotEmpty = (board->getPieceAt(pos) == nullptr);
+
+			// 共通マスにまだ回復マスが生成されていないか？ (!isGenerated)
+			bool isHealSpotEmpty = !healSpots[y][x].isGenerated;
+
+			if (isSpotEmpty && isHealSpotEmpty) {
+				candidates.push_back(pos);
+			}
+		}
+	}
+
+	// 2. 候補マスが一つもない場合の処理
+	if (candidates.empty()) {
+		return { -1, -1 };
+	}
+
+	// 3. 候補の中から一つをランダムに選択
+	std::random_device rd;
+	std::mt19937 g(rd());
+
+	std::uniform_int_distribution<> distrib(0, candidates.size() - 1);
+	int randomIndex = distrib(g);
+
+	return candidates[randomIndex];
+}

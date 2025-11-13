@@ -195,7 +195,12 @@
     <ClInclude Include="Source\Piece.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Card.h" />
+    <ClInclude Include="Source\CardManager.h">
+      <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SceneMultiGame.h">
+      <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui-docking\imgui.cpp">
@@ -345,8 +350,11 @@
     <ClCompile Include="Source\Piece.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Card.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="Source\CardManager.cpp">
+      <Filter>Source\ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SceneMultiGame.cpp">
+      <Filter>Source\ソースファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

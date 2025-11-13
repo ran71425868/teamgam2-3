@@ -123,7 +123,7 @@
     <ClInclude Include="Source\Board.h" />
     <ClInclude Include="Source\Camera.h" />
     <ClInclude Include="Source\CameraController.h" />
-    <ClInclude Include="Source\Card.h" />
+    <ClInclude Include="Source\CardManager.h" />
     <ClInclude Include="Source\Character.h" />
     <ClInclude Include="Source\ChessPiece.h" />
     <ClInclude Include="Source\Collision.h" />
@@ -143,6 +143,7 @@
     <ClInclude Include="Source\SceneGame.h" />
     <ClInclude Include="Source\SceneLoading.h" />
     <ClInclude Include="Source\SceneManager.h" />
+    <ClInclude Include="Source\SceneMultiGame.h" />
     <ClInclude Include="Source\SceneResult.h" />
     <ClInclude Include="Source\SceneTitle.h" />
     <ClInclude Include="Source\Stage.h" />
@@ -179,7 +180,7 @@
     <ClCompile Include="Source\Board.cpp" />
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\CameraController.cpp" />
-    <ClCompile Include="Source\Card.cpp" />
+    <ClCompile Include="Source\CardManager.cpp" />
     <ClCompile Include="Source\Character.cpp" />
     <ClCompile Include="Source\ChessPiece.cpp" />
     <ClCompile Include="Source\Collision.cpp" />
@@ -199,6 +200,7 @@
     <ClCompile Include="Source\SceneGame.cpp" />
     <ClCompile Include="Source\SceneLoading.cpp" />
     <ClCompile Include="Source\SceneManager.cpp" />
+    <ClCompile Include="Source\SceneMultiGame.cpp" />
     <ClCompile Include="Source\SceneResult.cpp" />
     <ClCompile Include="Source\SceneTitle.cpp" />
     <ClCompile Include="Source\Stage.cpp" />
