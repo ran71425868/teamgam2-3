@@ -3,6 +3,19 @@
 #include <vector>
 #include "ChessPiece.h"
 
+enum class HealType {
+    NONE,       // 回復マスではない
+    WHITE_ONLY, // 白駒専用（黒陣地側に生成）
+    BLACK_ONLY, // 黒駒専用（白陣地側に生成）
+    COMMON      // 共通マス（両方回復可能）
+};
+
+// 回復マスの情報を保持する構造体
+struct HealSpot {
+    HealType type = HealType::NONE;
+    bool isGenerated = false; // マスが生成済みかどうか
+};
+
 class Board {
 private:
     std::vector<std::vector<std::shared_ptr<ChessPiece>>> grid;

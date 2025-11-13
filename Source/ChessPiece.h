@@ -32,8 +32,11 @@ public:
 
     void setPosition(Position p);
 
-    // ★新規追加：最大体力を取得するメソッド
+    // 最大体力を取得するメソッド
     int getMaxHealth() const;
+
+    // 体力を回復させるメソッド
+    void heal(int amount);
 
     int getHealth() const { return health; }
     void takeDamage(int damage);

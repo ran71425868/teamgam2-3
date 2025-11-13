@@ -38,17 +38,28 @@ private:
 	Piece* piece = nullptr;
 
 	Model* highlightModel = nullptr;
+	Model* healSpotModel = nullptr;
 
 	// ワールド座標 → スクリーン座標変換
 	DirectX::XMFLOAT2 WorldToScreen(const DirectX::XMFLOAT3& worldPos) const;
 
 	std::vector<Piece*> pieces;
-	//Player* player = nullptr;
+
 	CameraController* cameraController = nullptr;
 
 
 	Position selectedPos = { -1, -1 };
 	std::vector<Position> legalMoves;
+
+	// 動的な回復マス生成のためのカウンター
+	int blackMovedToCommonCount = 0;
+	int whiteMovedToCommonCount = 0;
+
+	// 動的に生成された回復マスが既に存在するかどうか
+	bool isDynamicHealSpotActive = false;
+
+	// 空いている共通マスをランダムに探す関数 (以前作成したもの)
+	Position FindRandomEmptyCommonSpot() const;
 
 	NetworkManager network;
 	bool isServer = false;
@@ -62,5 +73,9 @@ private:
 	Position ScreenToBoard(int screenX, int screenY);
 	Piece* FindSlimeAt(Position pos);
 
+	// 8x8のボードに対応する回復マス配列
+	HealSpot healSpots[8][8];
 
+	// ランダムで回復マスを生成するメソッド
+	void GenerateHealSpots();
 };

@@ -1,4 +1,6 @@
-﻿#include "System/Graphics.h"
+﻿#include <random>
+#include <algorithm> // std::shuffle用
+#include "System/Graphics.h"
 #include <iostream>
 #include "SceneGame.h"
 #include "SceneResult.h"
@@ -20,6 +22,7 @@ void SceneGame::Initialize()
 	board->initialize();
 
 	highlightModel = new Model("Data/Model/Stage/yellow_bord.mdl");
+	healSpotModel = new Model("Data/Model/Stage/heal_bord.mdl");
 
 	//プレイヤー初期化
 	Player::Instance().Initializa();
@@ -66,7 +69,6 @@ void SceneGame::Initialize()
 		network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
 	else
 		network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);
-
 
 	//カメラ初期設定
 	Graphics& graphics = Graphics::Instance();
@@ -181,7 +183,7 @@ void SceneGame::Update(float elapsedTime)
 			
 			if (isLegalMove) {
 				// slime の位置も更新
-				auto slime = FindSlimeAt(selectedPos);
+				auto piece = FindSlimeAt(selectedPos);
 
 				// 修正: 移動する駒を取得（自傷と死亡判定のため）
 				auto movingPiece = board->getPieceAt(selectedPos);
@@ -237,8 +239,47 @@ void SceneGame::Update(float elapsedTime)
 				// 合法な移動を実行
 				board->movePiece(selectedPos, clicked);
 
+				{
+					Position currentPos = clicked;
+					HealSpot& spot = healSpots[currentPos.y][currentPos.x];
+					auto movingPiece = board->getPieceAt(currentPos); // 移動後の駒を取得
 
-				if (slime) slime->SetBoardPosition(clicked);
+					if (movingPiece && spot.isGenerated) {
+						std::string pieceColor = movingPiece->getColor();
+						bool shouldHeal = false;
+
+						// 1. 回復条件の判定
+						if (spot.type == HealType::COMMON) {
+							shouldHeal = true;
+						}
+						else if (spot.type == HealType::BLACK_ONLY && pieceColor == "white") {
+							shouldHeal = true;
+						}
+						else if (spot.type == HealType::WHITE_ONLY && pieceColor == "black") {
+							shouldHeal = true;
+						}
+
+						if (shouldHeal) {
+							int maxHealth = movingPiece->getMaxHealth();
+							int currentHealth = movingPiece->getHealth();
+
+							// 回復量の計算 (max(1, maxHealth / 2) の代替)
+							int healAmount = maxHealth / 2;
+							if (healAmount < 1) {
+								healAmount = 1;
+							}
+
+							//　setHealth/newHealthの代わりに heal メソッドを使用
+							movingPiece->heal(healAmount);
+
+							// 回復マスの消滅（一度使ったら消える場合）
+							spot.isGenerated = false;
+							spot.type = HealType::NONE;
+						}
+					}
+				}
+				
+				if (piece) piece->SetBoardPosition(clicked);
 
 				MoveData move{ 1, selectedPos.x, selectedPos.y, clicked.x, clicked.y };
 				network.SendMove(move);
@@ -258,12 +299,51 @@ void SceneGame::Update(float elapsedTime)
 						// 死亡した駒に対応する Slime も描画リストから削除
 						// ※ RemoveSlimeAt は既に実装しているはず
 						RemoveSlimeAt(clicked);
-
-						// 死亡メッセージ（デバッグ用）
-						// DebugLog("駒が自傷により死亡しました"); 
 					}
 				}
 
+				// 動的な回復マス生成ロジック
+				{
+					Position movedTo = clicked;
+					auto movingPiece = board->getPieceAt(movedTo);
+
+					// 1. 共通マス (y=2 から y=5) への移動チェック
+					bool isCommonSpot = (movedTo.y >= 2 && movedTo.y <= 5);
+
+					if (movingPiece && isCommonSpot && !isDynamicHealSpotActive) {
+
+						// 2. 駒の色に基づいてカウンターをインクリメント
+						std::string color = movingPiece->getColor();
+
+						if (color == "black") {
+							// 移動元の駒の色で判定すべきなので、移動前の駒情報を保持している必要がありますが、
+							// 簡略化のため、ここでは移動後の駒の色でカウントします。
+							blackMovedToCommonCount++;
+						}
+						else if (color == "white") {
+							whiteMovedToCommonCount++;
+						}
+
+						// 3. 生成条件の判定 (黒2回、白2回以上)
+						if (blackMovedToCommonCount >= 2 && whiteMovedToCommonCount >= 2) {
+
+							// 4. 生成場所をランダムに決定
+							Position targetPos = FindRandomEmptyCommonSpot();
+
+							// 5. 空きマスが見つかり、有効な座標であれば生成
+							if (board->isInsideBoard(targetPos)) {
+
+								// HealSpotを生成（共通タイプ）
+								GenerateHealSpots();
+								isDynamicHealSpotActive = true;
+
+								// カウンターをリセットして、次回の生成条件を待つ
+								blackMovedToCommonCount = 0;
+								whiteMovedToCommonCount = 0;
+							}
+						}
+					}
+				}
 
 				// 選択を解除し、ターンを切り替える
 				selectedPos = { -1, -1 };
@@ -406,8 +486,25 @@ void SceneGame::Render()
 			}
 		}
 
-		
-		
+		// 回復マスの描画 (仮のロジック)
+		for (int y = 0; y < 8; ++y) {
+			for (int x = 0; x < 8; ++x) {
+				if (healSpots[y][x].isGenerated) {
+					// 回復マスのモデルをボード上に描画
+					DirectX::XMFLOAT4X4 transform;
+					DirectX::XMStoreFloat4x4(&transform,
+						DirectX::XMMatrixTranslation(
+							x * 100.0f,
+							2.0f, // 盤面の高さ
+							y * 100.0f
+						)
+					);
+					// マスのタイプに応じて異なるテクスチャや色で描画しても良い
+					 modelRenderer->Render(rc, transform, healSpotModel, ShaderId::Lambert);
+				}
+			}
+
+		}
 		//エフェクトマネージャー描画
 		EffectManager::Instance().Render(rc.view, rc.projection);
 	}
@@ -608,4 +705,110 @@ DirectX::XMFLOAT2 SceneGame::WorldToScreen(const DirectX::XMFLOAT3& worldPos) co
 	float screenY = (1.0f - ndcY) * 0.5f * graphics.GetScreenHeight(); // Y軸反転
 
 	return { screenX, screenY };
+}
+
+void SceneGame::GenerateHealSpots() {
+
+	// 乱数生成器の準備
+	std::random_device rd;
+	std::mt19937 g(rd());
+
+	// ----------------------------------------------------
+	// 1. 各ゾーンのマス座標をリストアップ
+	// ----------------------------------------------------
+
+	// <y=0, 1> 黒陣地側 (白駒専用回復マスを生成)
+	std::vector<Position> blackTerritorySpots;
+	// <y=6, 7> 白陣地側 (黒駒専用回復マスを生成)
+	std::vector<Position> whiteTerritorySpots;
+	// <y=2, 3, 4, 5> 共通マス (共通回復マスを生成)
+	std::vector<Position> commonSpots;
+
+	for (int y = 0; y < 8; ++y) {
+		for (int x = 0; x < 8; ++x) {
+			Position pos = { x, y };
+
+			if (y <= 1) { // y=0, 1: 黒陣地側
+				blackTerritorySpots.push_back(pos);
+			}
+			else if (y >= 6) { // y=6, 7: 白陣地側
+				whiteTerritorySpots.push_back(pos);
+			}
+			else { // y=2, 3, 4, 5: 共通マス
+				commonSpots.push_back(pos);
+			}
+		}
+	}
+
+	// ----------------------------------------------------
+	// 2. 各ゾーンで指定された数の回復マスをランダムに生成
+	// ----------------------------------------------------
+
+	// A. 黒陣地側 (白専用回復マス: 8個)
+	// マスをシャッフル
+	std::shuffle(blackTerritorySpots.begin(), blackTerritorySpots.end(), g);
+	// 8個選択して設定
+	int countA = (blackTerritorySpots.size() < 8) ? (int)blackTerritorySpots.size() : 8;
+	for (int i = 0; i < countA; ++i) {
+		Position pos = blackTerritorySpots[i];
+		healSpots[pos.y][pos.x] = { HealType::WHITE_ONLY, true };
+	}
+
+	// B. 白陣地側 (黒専用回復マス: 8個)
+	// マスをシャッフル
+	std::shuffle(whiteTerritorySpots.begin(), whiteTerritorySpots.end(), g);
+	// 8個選択して設定
+	int countB = (whiteTerritorySpots.size() < 8) ? (int)whiteTerritorySpots.size() : 8;
+	for (int i = 0; i < countB; ++i) {
+		Position pos = whiteTerritorySpots[i];
+		healSpots[pos.y][pos.x] = { HealType::BLACK_ONLY, true };
+	}
+
+	// C. 共通マス (共通回復マス: 16個)
+	// マスをシャッフル
+	std::shuffle(commonSpots.begin(), commonSpots.end(), g);
+	// 16個選択して設定
+	int countC = (commonSpots.size() < 16) ? (int)commonSpots.size() : 16;
+	for (int i = 0; i < countC; ++i) {
+		Position pos = commonSpots[i];
+		healSpots[pos.y][pos.x] = { HealType::COMMON, true };
+	}
+
+}
+
+//　駒が置かれておらず、かつ回復マスが生成されていない共通マスをランダムに選ぶ
+Position SceneGame::FindRandomEmptyCommonSpot() const
+{
+	// 1. 候補となる空いている共通マスの座標を収集
+	std::vector<Position> candidates;
+
+	for (int y = 2; y <= 5; ++y) {
+		for (int x = 0; x < 8; ++x) {
+			Position pos = { x, y };
+
+			// 共通マスに駒が置かれていないか？ (nullptr)
+			bool isSpotEmpty = (board->getPieceAt(pos) == nullptr);
+
+			// 共通マスにまだ回復マスが生成されていないか？ (!isGenerated)
+			bool isHealSpotEmpty = !healSpots[y][x].isGenerated;
+
+			if (isSpotEmpty && isHealSpotEmpty) {
+				candidates.push_back(pos);
+			}
+		}
+	}
+
+	// 2. 候補マスが一つもない場合の処理
+	if (candidates.empty()) {
+		return { -1, -1 };
+	}
+
+	// 3. 候補の中から一つをランダムに選択
+	std::random_device rd;
+	std::mt19937 g(rd());
+
+	std::uniform_int_distribution<> distrib(0, candidates.size() - 1);
+	int randomIndex = distrib(g);
+
+	return candidates[randomIndex];
 }

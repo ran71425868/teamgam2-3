@@ -195,6 +195,7 @@
     <ClInclude Include="Source\Piece.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Card.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui-docking\imgui.cpp">
@@ -343,6 +344,9 @@
     </ClCompile>
     <ClCompile Include="Source\Piece.cpp">
       <Filter>Source\ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Card.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
