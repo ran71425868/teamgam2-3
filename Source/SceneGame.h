@@ -9,6 +9,7 @@
 #include "CameraController.h"
 #include "Scene.h"
 #include "NetworkManager.h"
+#include "ChessAI.h"
 
 // ゲームシーン
 class SceneGame:public Scene
@@ -78,4 +79,6 @@ private:
 
 	// ランダムで回復マスを生成するメソッド
 	void GenerateHealSpots();
+
+	ChessAI* ai = nullptr;
 };

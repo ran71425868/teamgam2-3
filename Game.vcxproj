@@ -125,6 +125,7 @@
     <ClInclude Include="Source\CameraController.h" />
     <ClInclude Include="Source\Card.h" />
     <ClInclude Include="Source\Character.h" />
+    <ClInclude Include="Source\ChessAI.h" />
     <ClInclude Include="Source\ChessPiece.h" />
     <ClInclude Include="Source\Collision.h" />
     <ClInclude Include="Source\Effect.h" />
@@ -181,6 +182,7 @@
     <ClCompile Include="Source\CameraController.cpp" />
     <ClCompile Include="Source\Card.cpp" />
     <ClCompile Include="Source\Character.cpp" />
+    <ClCompile Include="Source\ChessAI.cpp" />
     <ClCompile Include="Source\ChessPiece.cpp" />
     <ClCompile Include="Source\Collision.cpp" />
     <ClCompile Include="Source\Effect.cpp" />

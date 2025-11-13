@@ -13,6 +13,7 @@
 
 using namespace DirectX;
 
+
 // 初期化
 void SceneGame::Initialize()
 {
@@ -87,7 +88,18 @@ void SceneGame::Initialize()
 		);
 
 	cameraController = new CameraController;
-
+	ai = new ChessAI();
+	ai->onMoveCallback = [this](Position from, Position to, bool wasCapture) {
+		// 1) 視覚オブジェクトを移動
+		auto slime = this->FindSlimeAt(from);
+		if (slime) {
+		
+			if (wasCapture) {
+				this->RemoveSlimeAt(to); 
+			}
+			slime->SetBoardPosition(to);
+		}
+		};
 	SetReady();
 
 }
@@ -121,6 +133,9 @@ void SceneGame::Finalize()
 
 	network.Finalize();
 
+	delete ai;
+	ai = nullptr;
+
 }
 
 // 更新処理
@@ -135,8 +150,14 @@ void SceneGame::Update(float elapsedTime)
 	}
 	Mouse& mouseCursor = Input::Instance().GetMouse();
 
+
+
+
 	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
 		POINT cursor = mouseCursor.GetPosition();
+
+		if (board->getCurrentTurn() == "black")
+			return;
 
 		// 1. ボード座標への変換とボード外チェック
 		Position clicked = ScreenToBoard(cursor.x, cursor.y);
@@ -345,6 +366,9 @@ void SceneGame::Update(float elapsedTime)
 					}
 				}
 
+
+
+
 				// 選択を解除し、ターンを切り替える
 				selectedPos = { -1, -1 };
 				legalMoves.clear();
@@ -383,7 +407,6 @@ void SceneGame::Update(float elapsedTime)
 					// シンプルに選択解除のみを行う
 					selectedPos = { -1, -1 };
 					legalMoves.clear();
-
 				}
 			}
 			
@@ -428,6 +451,20 @@ void SceneGame::Update(float elapsedTime)
 	
 	//エフェクトマネージャー更新処理
 	EffectManager::Instance().Update(elapsedTime);
+
+	if (!isGameOver) {
+		ai->Update(board);
+		blackMovedToCommonCount++;
+	}
+
+	if (!board->isKingPresent("white")) {
+		isGameOver = true;
+		winnerColor = "black";
+	}
+	else if (!board->isKingPresent("black")) {
+		isGameOver = true;
+		winnerColor = "white";
+	}
 }
 
 // 描画処理

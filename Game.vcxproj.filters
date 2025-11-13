@@ -196,6 +196,9 @@
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\Card.h" />
+    <ClInclude Include="Source\ChessAI.h">
+      <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui-docking\imgui.cpp">
@@ -347,6 +350,9 @@
     </ClCompile>
     <ClCompile Include="Source\Card.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ChessAI.cpp">
+      <Filter>Source\ソースファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
