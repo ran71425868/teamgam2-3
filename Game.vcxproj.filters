@@ -195,10 +195,15 @@
     <ClInclude Include="Source\Piece.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
+<<<<<<< HEAD
     <ClInclude Include="Source\CardManager.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\SceneMultiGame.h">
+=======
+    <ClInclude Include="Source\Card.h" />
+    <ClInclude Include="Source\ChessAI.h">
+>>>>>>> AI
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -354,6 +359,9 @@
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
     <ClCompile Include="Source\SceneMultiGame.cpp">
+      <Filter>Source\ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ChessAI.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
   </ItemGroup>
