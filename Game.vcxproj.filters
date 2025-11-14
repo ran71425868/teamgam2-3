@@ -206,6 +206,9 @@
 >>>>>>> AI
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Card.h">
+      <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui-docking\imgui.cpp">
@@ -361,7 +364,11 @@
     <ClCompile Include="Source\SceneMultiGame.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
+<<<<<<< Updated upstream
     <ClCompile Include="Source\ChessAI.cpp">
+=======
+    <ClCompile Include="Source\Card.cpp">
+>>>>>>> Stashed changes
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
   </ItemGroup>
