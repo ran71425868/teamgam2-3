@@ -1,26 +1,9 @@
 ﻿#pragma once
+#include "Card.h"
 #include <iostream>
 #include <vector>
-#include <string>
-#include <cstdlib>
-#include <ctime>
 #include <random> // std::mt19937とstd::random_deviceのために必要
 
-
-enum class CardType
-{
-    Buff, // 自分を強化する
-    Debuff,// 敵を弱体化させる
-    Trap // トラップ効果
-};
-
-struct Card
-{
-    std::string name;// カード名
-    CardType type;// 属性（バフ、デバフ、トラップ）
-    std::string effect; // 効果説明
-    int effectId;// カードの効果番号
-};
 
 class CardManager
 {
@@ -44,8 +27,8 @@ public:
     //カードをドロー
     void DrawCard();
 
-    //カードの効果番号を返す
-    int UseCard(int handIndex);
+    // カードの効果情報（IDと持続性）を返す
+    UsedCardInfo UseCard(int handIndex);
 
     //カードの使用状況をリセットして一枚引く(ターンの最初)
     void StartTurn();

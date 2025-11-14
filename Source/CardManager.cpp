@@ -13,19 +13,23 @@ CardManager::CardManager()
 
     // デッキの初期化 (10枚)
     // 効果ID 0〜9 (既存)
-    deck = {
-        {"運命の反転", CardType::Debuff, "前ターンの相手のカード効果を打ち消し", 0},
-        {"焦土の罠", CardType::Trap, "指定した場所の前方2x3マスの駒に1ダメージ", 1},
-        {"生命の祝福", CardType::Buff, "自身の駒単体の体力を3回復", 2},
-        {"悠久の盟約", CardType::Buff, "自身の駒全体の体力を4ターン経過後に2回復", 3},
-        {"石化の鎖", CardType::Debuff, "相手の駒単体の移動を制限(キングには使用不可)", 4},
-        {"沈黙の呪文", CardType::Debuff, "相手のカードを1ターン使用不可", 5},
-        {"破滅の刻印", CardType::Trap, "自身の駒単体に付与、3ターン後に自身を中心とする周囲8マスに2ダメージ", 6},
-        {"次元の扉", CardType::Buff, "共有マス内で自身の駒単体をワープ、相手の駒取得・ワープ後の駒移動不可", 7},
-        {"背水の魔弾", CardType::Debuff, "相手の駒全体に1ダメージ、カード使用後自身をターン終了", 8},
-        {"叡智の探求", CardType::Buff, "カードをランダムでドロー", 9}
-    };
+    // -----------------------------------------------------------------
+    //  Cardコンストラクタを使用し、持続効果フラグを設定
+    // -----------------------------------------------------------------
 
+    deck = {
+        //                名前              タイプ      効果説明                                            ID  持続性
+        Card("運命の反転", CardType::Debuff, "前ターンの相手のカード効果を打ち消し", 0, false), // 打ち消しは即時
+        Card("焦土の罠", CardType::Trap, "指定した場所の前方2x3マスの駒に1ダメージ", 1, false), // トラップ設置は即時
+        Card("生命の祝福", CardType::Buff, "自身の駒単体の体力を3回復", 2, false), // 即時回復
+        Card("悠久の盟約", CardType::Buff, "自身の駒全体の体力を4ターン経過後に2回復", 3, true), // ★持続効果
+        Card("石化の鎖", CardType::Debuff, "相手の駒単体の移動を制限(キングには使用不可)", 4, false), // 即時適用（移動制限）
+        Card("沈黙の呪文", CardType::Debuff, "相手のカードを1ターン使用不可", 5, false), // 即時適用（ターン限定）
+        Card("破滅の刻印", CardType::Trap, "自身の駒単体に付与、3ターン後に自身を中心とする周囲8マスに2ダメージ", 6, true), // ★持続効果
+        Card("次元の扉", CardType::Buff, "共有マス内で自身の駒単体をワープ、相手の駒取得・ワープ後の駒移動不可", 7, false), // 即時ワープ
+        Card("背水の魔弾", CardType::Debuff, "相手の駒全体に1ダメージ、カード使用後自身をターン終了", 8, false), // 即時ダメージ
+        Card("叡智の探求", CardType::Buff, "カードをランダムでドロー", 9, false) // 即時ドロー
+    };
     // デッキをシャッフル
     std::shuffle(deck.begin(), deck.end(), generator);
 
@@ -51,25 +55,29 @@ void CardManager::DrawCard()
     hand.push_back(drawn);
 }
 
-int CardManager::UseCard(int handIndex)
+// -----------------------------------------------------------------
+// UseCard の戻り値を UsedCardInfo に変更
+// -----------------------------------------------------------------
+UsedCardInfo CardManager::UseCard(int handIndex)
 {
-    if (isUsedCard) {
-        return -1; // 使用不可
+    UsedCardInfo result; // デフォルトは失敗情報
+
+    if (isUsedCard || handIndex < 0 || handIndex >= hand.size()) {
+        // 使用不可な場合は失敗情報（effectId = -1）を返す
+        return result;
     }
 
-    /*if (handIndex < 0 || handIndex >= hand.size()) {
-        return -1;
-    }*/
+    const Card& used = hand[handIndex];
 
-    Card used = hand[handIndex];
+    // 結果に情報を格納
+    result.effectId = used.effectId;
+    result.isPersistent = used.isPersistent;
 
     // 手札から削除
     hand.erase(hand.begin() + handIndex);
     isUsedCard = true;
 
-    // 使用したカードは山札に戻さない (シンプルにするため)
-
-    return used.effectId;
+    return result;
 }
 
 void CardManager::StartTurn()
