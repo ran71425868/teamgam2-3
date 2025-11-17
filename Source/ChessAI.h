@@ -18,4 +18,12 @@ private:
     std::mt19937 gen;
 
     void MakeRandomMove(Board* board);
+
+    bool ChessAI::isMoveSafe(Board* board, Position from, Position to) {
+        Board temp = *board;  // 盤面コピー（浅いコピーでOK）
+        temp.movePiece(from, to);
+
+        return !temp.isKingInCheck("black");
+    }
+
 };
