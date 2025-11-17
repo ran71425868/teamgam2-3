@@ -26,30 +26,61 @@ void ChessAI::MakeRandomMove(Board* board)
 {
     std::vector<std::pair<Position, Position>> moves;
 
+    bool otherPieceHasMoves = false;
+
+    for (int y = 0; y < 8; ++y)
+    {
+        for (int x = 0; x < 8; ++x)
+        {
+            Position pos = { x, y };
+            auto piece = board->getPieceAt(pos);
+            if (!piece) continue;
+
+            if (piece->getColor() == "black" && piece->getType() != "king")
+            {
+                auto legalMoves = piece->getLegalMoves(*board);
+                for (auto& to : legalMoves)
+                {
+                    if (to.isValid())
+                    {
+                        otherPieceHasMoves = true;
+                        break;
+                    }
+                }
+            }
+            if (otherPieceHasMoves) break;
+        }
+        if (otherPieceHasMoves) break;
+    }
+
     for (int y = 0; y < 8; ++y)
     {
         for (int x = 0; x < 8; ++x)
         {
             Position from = { x, y };
             auto piece = board->getPieceAt(from);
-            if (piece && piece->getColor() == "black")
+            if (!piece) continue;
+
+            if (piece->getColor() != "black") continue;
+
+            // ★ キング除外条件
+            if (otherPieceHasMoves && piece->getType() == "king")
+                continue;
+
+            auto legalMoves = piece->getLegalMoves(*board);
+            for (auto& to : legalMoves)
             {
-                auto legalMoves = piece->getLegalMoves(*board);
-                for (auto& to : legalMoves)
-                {
-                    if (to.isValid())
-                        moves.push_back({ from, to });
-                }
+                if (to.isValid())
+                    moves.push_back({ from, to });
             }
         }
     }
-
     if (moves.empty()) return;
 
     std::uniform_int_distribution<int> dist(0, (int)moves.size() - 1);
     auto [from, to] = moves[dist(gen)];
 
-    // キャプチャ対象を事前に取得（視覚オブジェクトの削除に使うため）
+    
     auto capturedBefore = board->getPieceAt(to) != nullptr;
 
     // 盤面を動かす
