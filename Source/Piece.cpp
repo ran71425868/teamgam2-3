@@ -2,20 +2,20 @@
 
 Piece::Piece(std::string c, Position boardPos, std::string pType) : color(c), boardPosition(boardPos), pieceType(pType) {
     //îíãÓ
-    white_bishop = new Model("Data/Model/Chesspiece/white_bishop.mdl");
-    white_pawn = new Model("Data/Model/Chesspiece/white_pawn.mdl");
-    white_king = new Model("Data/Model/Chesspiece/white_king.mdl");
-    white_knight = new Model("Data/Model/Chesspiece/white_knight.mdl");
-    white_queen = new Model("Data/Model/Chesspiece/white_queen.mdl");
-    white_rook = new Model("Data/Model/Chesspiece/white_rook.mdl");
+    white_bishop = new Model("Data/Model/Chesspiece/bishop_white.mdl");
+    white_pawn = new Model("Data/Model/Chesspiece/pown_white.mdl");
+    white_king = new Model("Data/Model/Chesspiece/king_white.mdl");
+    white_knight = new Model("Data/Model/Chesspiece/knight_white.mdl");
+    white_queen = new Model("Data/Model/Chesspiece/queen_white.mdl");
+    white_rook = new Model("Data/Model/Chesspiece/rook_white.mdl");
 
     //çïãÓ
-    black_bishop = new Model("Data/Model/Chesspiece/black_bishop.mdl");
-    black_pawn = new Model("Data/Model/Chesspiece/black_pawn.mdl");
-    black_king = new Model("Data/Model/Chesspiece/black_king.mdl");
-    black_knight = new Model("Data/Model/Chesspiece/black_knight.mdl");
-    black_queen = new Model("Data/Model/Chesspiece/black_queen.mdl");
-    black_rook = new Model("Data/Model/Chesspiece/black_rook.mdl");
+    black_bishop = new Model("Data/Model/Chesspiece/bishop_black.mdl");
+    black_pawn = new Model("Data/Model/Chesspiece/pown_black.mdl");
+    black_king = new Model("Data/Model/Chesspiece/king_black.mdl");
+    black_knight = new Model("Data/Model/Chesspiece/knight_black.mdl");
+    black_queen = new Model("Data/Model/Chesspiece/queen_black.mdl");
+    black_rook = new Model("Data/Model/Chesspiece/rook_black.mdl");
 
     //É{Å[Éh
     black_bord = new Model("Data/Model/Stage/black_bord.mdl");
