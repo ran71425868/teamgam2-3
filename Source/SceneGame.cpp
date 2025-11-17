@@ -318,7 +318,6 @@ void SceneGame::Update(float elapsedTime)
 						board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
 
 						// 死亡した駒に対応する Slime も描画リストから削除
-						// ※ RemoveSlimeAt は既に実装しているはず
 						RemoveSlimeAt(clicked);
 					}
 				}
@@ -811,6 +810,75 @@ void SceneGame::GenerateHealSpots() {
 		healSpots[pos.y][pos.x] = { HealType::COMMON, true };
 	}
 
+}
+
+bool SceneGame::ApplyCardEffect(int effectId, Position targetPos)
+{
+	// 現在のターンの色
+	std::string currentTurn = board->getCurrentTurn();
+
+	// ターゲット駒 (このカードは空きマスにも打てる可能性があるため、ここではターゲット駒の存在は必須ではない)
+	// auto targetPiece = board->getPieceAt(targetPos);
+
+	// 乱数生成器 (他の効果用)
+	// ...
+
+	switch (effectId) {
+		// ... (既存の case 0, 2, 3, 4, 5, 6, 7, 8, 9) ...
+
+	case 1: // 焦土の罠 (Trap): 指定した場所の前方 2x3 マスの駒に 1 ダメージ
+	{
+		// ターゲット位置がボード内か確認
+		if (!board->isInsideBoard(targetPos)) {
+			return false; // 無効な位置
+		}
+
+		// 1. ダメージエリアの定義
+		int damage = 1;
+
+		// 進行方向の定義 (白: y軸減少方向へ前方, 黒: y軸増加方向へ前方)
+		// 白 (y=7, 6 から y=0, 1 へ移動) の場合、前方マスは y - 1, y - 2
+		// 黒 (y=0, 1 から y=7, 6 へ移動) の場合、前方マスは y + 1, y + 2
+		const int direction = (currentTurn == "white") ? -1 : 1;
+
+		// 展開エリア: 前方2マス (y+direction*1, y+direction*2)、横幅3マス (x-1, x, x+1)
+		// 前方 2 マス (dy = 1, 2)
+		for (int dy = 1; dy <= 2; ++dy) {
+			// 横幅 3 マス (dx = -1, 0, 1)
+			for (int dx = -1; dx <= 1; ++dx) {
+
+				// ダメージを与えるマスの座標を計算
+				Position damagePos = {
+					targetPos.x + dx,
+					targetPos.y + (direction * dy) // 進行方向へ展開
+				};
+
+				// 2. ボード内チェックとダメージ適用
+				if (board->isInsideBoard(damagePos)) {
+					auto victim = board->getPieceAt(damagePos);
+
+					if (victim) {
+						// 駒が存在する場合、ダメージを与える
+						victim->takeDamage(damage);
+
+						// 死亡チェック (takeDamage後に health <= 0 になったら、リストから削除する処理が必要)
+						// if (victim->getHealth() <= 0) { 
+						//     board->removePiece(victim); 
+						// }
+
+						// DebugLog(victim->getColor() + victim->getType() + "が焦土の罠で1ダメージを受けました。");
+					}
+				}
+			}
+		}
+
+		// トラップ設置は成功したとみなす
+		return true;
+	}
+
+	default:
+		return false;
+	}
 }
 
 //　駒が置かれておらず、かつ回復マスが生成されていない共通マスをランダムに選ぶ

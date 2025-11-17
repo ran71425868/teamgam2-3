@@ -80,5 +80,7 @@ private:
 	// ランダムで回復マスを生成するメソッド
 	void GenerateHealSpots();
 
+	bool ApplyCardEffect(int effectId, Position targetPos);
+
 	ChessAI* ai = nullptr;
 };
