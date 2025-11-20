@@ -29,6 +29,8 @@ public:
 
     virtual std::string getType() const = 0;
     virtual std::vector<Position> getLegalMoves(const Board& board, bool isForCheck = false) const=0;
+    virtual std::shared_ptr<ChessPiece> clone() const = 0;
+
 
     void setPosition(Position p);
 

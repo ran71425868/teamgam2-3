@@ -25,9 +25,28 @@ private:
 public:
     Board();
     Board::Board(const Board& other) {
-        // grid の浅いコピー（shared_ptr をそのままコピー）
-        grid = other.grid;
-        // 他のメンバーも必要に応じてコピー
+        currentTurn = other.currentTurn;
+
+        grid.resize(8, std::vector<std::shared_ptr<ChessPiece>>(8));
+
+        for (int y = 0; y < 8; ++y) {
+            for (int x = 0; x < 8; ++x) {
+                if (other.grid[y][x]) {
+                    grid[y][x] = other.grid[y][x]->clone();
+                }
+                else {
+                    grid[y][x] = nullptr;
+                }
+            }
+        }
+
+        for (int y = 0; y < 8; ++y) {
+            for (int x = 0; x < 8; ++x) {
+                if (grid[y][x]) {
+                    grid[y][x]->setPosition({ x, y });
+                }
+            }
+        }
     }
     void initialize(); // 初期配置
     void printBoard() const;

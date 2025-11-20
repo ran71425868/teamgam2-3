@@ -226,7 +226,6 @@ void SceneGame::Update(float elapsedTime)
 
 						// 描画オブジェクトの削除 (攻撃側)
 						RemoveSlimeAt(selectedPos);
-
 						// 盤面からの駒の削除 (攻撃側)
 						board->setPieceAt(selectedPos, nullptr);
 
@@ -248,6 +247,8 @@ void SceneGame::Update(float elapsedTime)
 					// 勝利時は、防御側のSlimeを削除する必要があるため、以下の処理を実行
 					else {
 						RemoveSlimeAt(clicked); // 取られる駒の Slime を削除
+
+						board->setPieceAt(clicked, nullptr);
 					}
 				}
 
@@ -319,6 +320,7 @@ void SceneGame::Update(float elapsedTime)
 
 						// 死亡した駒に対応する Slime も描画リストから削除
 						RemoveSlimeAt(clicked);
+						board->setPieceAt(clicked, nullptr);
 					}
 				}
 
@@ -633,16 +635,33 @@ void SceneGame::DrawGUI()
 
 void SceneGame::RemoveSlimeAt(Position pos)
 {
-	// Slimeオブジェクトのリストを走査し、posと一致するものを削除する
-	for (auto it = pieces.begin(); it != pieces.end(); ++it) {
-		if ((*it)->GetBoardPosition().x == pos.x && (*it)->GetBoardPosition().y == pos.y) {
+	//// Slimeオブジェクトのリストを走査し、posと一致するものを削除する
+	//for (auto it = pieces.begin(); it != pieces.end(); ++it) {
+	//	if ((*it)->GetBoardPosition().x == pos.x && (*it)->GetBoardPosition().y == pos.y) {
+	//
+	//		// 削除前にメモリを解放（ヒープ領域で確保している場合）
+	//		delete (*it);
+	//
+	//		// リストから要素を削除
+	//		pieces.erase(it);
+	//		return; // 駒は一つしか存在しないので、見つけたら終了
+	//	}
+	//}
 
-			// 削除前にメモリを解放（ヒープ領域で確保している場合）
-			delete (*it);
+	board->setPieceAt(pos, nullptr);
 
-			// リストから要素を削除
-			pieces.erase(it);
-			return; // 駒は一つしか存在しないので、見つけたら終了
+	// 描画用リストからも削除
+	for (auto it = pieces.begin(); it != pieces.end(); )
+	{
+		if ((*it)->GetBoardPosition().x == pos.x &&
+			(*it)->GetBoardPosition().y == pos.y)
+		{
+			delete* it; // rawポインタなら delete
+			it = pieces.erase(it);
+		}
+		else
+		{
+			++it;
 		}
 	}
 }
