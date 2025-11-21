@@ -140,7 +140,6 @@
     <ClInclude Include="Source\NetworkManager.h" />
     <ClInclude Include="Source\Pawn.h" />
     <ClInclude Include="Source\Piece.h" />
-    <ClInclude Include="Source\Player.h" />
     <ClInclude Include="Source\Queen.h" />
     <ClInclude Include="Source\Rook.h" />
     <ClInclude Include="Source\Scene.h" />
@@ -201,7 +200,6 @@
     <ClCompile Include="Source\NetworkManager.cpp" />
     <ClCompile Include="Source\Pawn.cpp" />
     <ClCompile Include="Source\Piece.cpp" />
-    <ClCompile Include="Source\Player.cpp" />
     <ClCompile Include="Source\Queen.cpp" />
     <ClCompile Include="Source\Rook.cpp" />
     <ClCompile Include="Source\SceneGame.cpp" />

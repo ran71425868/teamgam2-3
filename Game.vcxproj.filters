@@ -168,9 +168,6 @@
     <ClCompile Include="Source\Piece.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Player.cpp">
-      <Filter>Source\ソースファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Source\SceneGame.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
@@ -348,9 +345,6 @@
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\Piece.h">
-      <Filter>Source\ヘッダーファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Player.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\Scene.h">

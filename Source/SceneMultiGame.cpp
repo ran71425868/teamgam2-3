@@ -6,7 +6,6 @@
 #include "SceneResult.h"
 #include "SceneManager.h"
 #include "Camera.h"
-#include "Player.h"
 #include "Piece.h"
 #include "EffectManager.h"
 #include <DirectXMath.h>
@@ -23,9 +22,6 @@ void SceneMultiGame::Initialize()
 
 	highlightModel = new Model("Data/Model/Stage/yellow_bord.mdl");
 	healSpotModel = new Model("Data/Model/Stage/heal_bord.mdl");
-
-	//プレイヤー初期化
-	Player::Instance().Initializa();
 
 	// 駒を初期配置（例：白と黒のスライム）
 	for (int i = 0; i <= 7; i++)
@@ -100,8 +96,6 @@ void SceneMultiGame::Finalize()
 		delete cameraController;
 		cameraController = nullptr;
 	}
-
-	Player::Instance().Finalize();
 
 	//ステージ終了化
 	if (stage != nullptr)
@@ -409,7 +403,7 @@ void SceneMultiGame::Update(float elapsedTime)
 	DirectX::XMFLOAT3 Posblack{ 400.0f,0.0f,600.0f };
 
 
-	DirectX::XMFLOAT3 target = Player::Instance().GetPosition();
+	DirectX::XMFLOAT3 target;
 
 	//DirectX::XMFLOAT3 target;
 	target.x = Poswhite.x;
@@ -422,9 +416,6 @@ void SceneMultiGame::Update(float elapsedTime)
 
 	//ステージ更新処理
 	//stage->Update(elapsedTime);
-
-	//プレイヤー更新処理
-	Player::Instance().Update(elapsedTime);
 
 	//エフェクトマネージャー更新処理
 	EffectManager::Instance().Update(elapsedTime);
@@ -459,9 +450,7 @@ void SceneMultiGame::Render()
 	{
 		//ステージ描画
 		stage->Render(rc, modelRenderer);
-		//プレイヤー描画
-		Player::Instance().Render(rc, modelRenderer);
-
+	
 		for (auto p : pieces) p->Render(rc, renderer);
 
 		// 選択された駒があり、合法手リストが空でなければハイライトを描画
@@ -511,8 +500,6 @@ void SceneMultiGame::Render()
 
 	// 3Dデバッグ描画
 	{
-		//プレイヤーデバッグプリミティブ描画
-		Player::Instance().RenderDebugPrimitive(rc, shapeRenderer);
 
 	}
 
@@ -591,8 +578,7 @@ void SceneMultiGame::Render()
 // GUI描画
 void SceneMultiGame::DrawGUI()
 {
-	//プレイヤーデバッグ描画
-	Player::Instance().DrawDebugGUI();
+
 }
 
 void SceneMultiGame::RemoveSlimeAt(Position pos)
