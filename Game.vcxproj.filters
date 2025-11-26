@@ -192,6 +192,9 @@
     <ClCompile Include="Source\ActiveEffectManager.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Source\SceneSelect.cpp">
+      <Filter>Source\ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External\imgui-docking\imconfig.h">
@@ -372,6 +375,9 @@
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\ActiveEffectManager.h">
+      <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SceneSelect.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
   </ItemGroup>

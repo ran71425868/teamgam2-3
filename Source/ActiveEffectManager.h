@@ -3,7 +3,7 @@
 #include "ActiveEffect.h"
 #include <vector>
 #include <string>
-#include <memory> // std::unique_ptr用
+//#include <memory> // std::unique_ptr用
 
 /**
  * @brief ゲーム内の持続的なカード効果を一元管理するシングルトンクラス

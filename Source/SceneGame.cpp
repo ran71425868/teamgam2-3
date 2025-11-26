@@ -208,7 +208,7 @@ void SceneGame::Update(float elapsedTime)
 				auto attacker = board->getPieceAt(selectedPos);
 				auto defender = board->getPieceAt(clicked); // 取られる駒（nullptrの場合もある）
 
-				// --- 新規追加ロジック: 体力ベースの戦闘判定 ---
+				// --- 体力ベースの戦闘判定 ---
 				if (defender) {
 
 					// 1. 体力を比較
@@ -226,6 +226,13 @@ void SceneGame::Update(float elapsedTime)
 
 						// 防御側に自駒の体力分のダメージを与える
 						defender->takeDamage(attackerHealth);
+
+						//  防御側の死亡チェックと削除
+						if (defender->getHealth() <= 0) {
+							// 防御側も死亡した場合、描画と盤面から削除
+							RemoveSlimeAt(clicked);
+							board->setPieceAt(clicked, nullptr);
+						}
 
 						// 負けたため、移動処理をスキップし、ターンを終了
 						// 負けの場合は移動処理(board->movePiece)は不要
@@ -302,7 +309,7 @@ void SceneGame::Update(float elapsedTime)
 				network.SendMove(move);
 
 				// ----------------------------------------------------
-				// 新規追加ロジック: 自傷と死亡判定
+				// 自傷と死亡判定
 				// ----------------------------------------------------
 				if (movingPiece) {
 					// 1. 1ダメージを与える
@@ -818,6 +825,13 @@ void SceneGame::GenerateHealSpots() {
 
 }
 
+bool SceneGame::IsTargetPiece(Position pos, const std::string& requiredColor) const
+{
+	auto piece = board->getPieceAt(pos);
+	if (!piece) return false;
+	return piece->getColor() == requiredColor;
+}
+
 bool SceneGame::ApplyCardEffect(int effectId, Position targetPos)
 {
 	// 現在のターンの色
@@ -880,6 +894,24 @@ bool SceneGame::ApplyCardEffect(int effectId, Position targetPos)
 
 		// トラップ設置は成功したとみなす
 		return true;
+	}
+
+	case 2: // 生命の祝福 (Buff): 自身の駒単体の体力を3回復
+	{
+		const int healAmount = 3;
+
+		// 1. ターゲット駒が存在し、かつそれが自駒であるかを確認
+		//if (targetPiece && IsTargetPiece(targetPos, currentTurn)) {
+
+		//	// 2. 体力を回復
+		//	targetPiece->heal(healAmount);
+
+		//	
+		//	return true; // 効果適用成功
+		//}
+
+		// ターゲットが無効（駒がいない、または敵駒）
+		return false;
 	}
 
 	default:

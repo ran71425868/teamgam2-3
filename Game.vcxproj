@@ -148,6 +148,7 @@
     <ClInclude Include="Source\SceneManager.h" />
     <ClInclude Include="Source\SceneMultiGame.h" />
     <ClInclude Include="Source\SceneResult.h" />
+    <ClInclude Include="Source\SceneSelect.h" />
     <ClInclude Include="Source\SceneTitle.h" />
     <ClInclude Include="Source\Stage.h" />
     <ClInclude Include="Source\System\Audio.h" />
@@ -207,6 +208,7 @@
     <ClCompile Include="Source\SceneManager.cpp" />
     <ClCompile Include="Source\SceneMultiGame.cpp" />
     <ClCompile Include="Source\SceneResult.cpp" />
+    <ClCompile Include="Source\SceneSelect.cpp" />
     <ClCompile Include="Source\SceneTitle.cpp" />
     <ClCompile Include="Source\Stage.cpp" />
     <ClCompile Include="Source\System\Audio.cpp" />

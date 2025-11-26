@@ -5,11 +5,14 @@
 #include "Stage.h"
 #include "Piece.h"
 #include "Board.h"
+#include "Card.h" // UsedCardInfoのために必要
 #include <vector>
 #include "CameraController.h"
 #include "Scene.h"
 #include "NetworkManager.h"
 #include "ChessAI.h"
+#include <CardManager.h>
+
 
 // ゲームシーン
 class SceneGame:public Scene
@@ -79,6 +82,26 @@ private:
 
 	// ランダムで回復マスを生成するメソッド
 	void GenerateHealSpots();
+
+	// CardManagerのインスタンス (白と黒)
+	CardManager blackCardManager;
+	CardManager whiteCardManager;
+
+	// カード使用のための状態変数
+	// ...
+
+	// 前ターンに使用されたカードの情報 (運命の反転に使用)
+	UsedCardInfo lastWhiteUsedCard;
+	UsedCardInfo lastBlackUsedCard;
+
+	// ...
+
+	// ActiveEffectManagerの更新に必要な関数
+	//void ApplyPersistentEffect(const ActiveEffect& effect);
+
+
+	// ターゲット駒が自分の駒か敵の駒かを判定するヘルパー関数
+	bool IsTargetPiece(Position pos, const std::string& requiredColor) const;
 
 	bool ApplyCardEffect(int effectId, Position targetPos);
 

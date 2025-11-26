@@ -125,7 +125,7 @@ find_king_end:; // gotoのターゲット
         for (int x = 0; x < 8; ++x) {
             auto piece = grid[y][x];
             if (piece && piece->getColor() != color) {
-                // ★無限ループ回避: isForCheck=true を渡す
+                // isForCheck=true を渡す
                 auto moves = piece->getLegalMoves(*this, true);
 
                 for (auto& m : moves) {
@@ -139,7 +139,7 @@ find_king_end:; // gotoのターゲット
     return false;
 }
 
-bool Board::isCheckmate(std::string color) const { // ★const を付け、盤面を書き換えないようにする
+bool Board::isCheckmate(std::string color) const { // const を付け、盤面を書き換えないようにする
 
     // 1. まずチェックを受けているか確認
     // isKingInCheck は既に無限ループ対策（isForCheckフラグ）が施されている前提
@@ -153,7 +153,7 @@ bool Board::isCheckmate(std::string color) const { // ★const を付け、盤面を書き
             // 自分の駒であるか確認
             if (piece && piece->getColor() == color) {
 
-                // ★注意: ここで getLegalMoves を呼び出すと、その内部で filterPinnedMoves が
+                // ここで getLegalMoves を呼び出すと、その内部で filterPinnedMoves が
                 // isKingInCheck を呼び出すため、無限再帰の可能性があります。
                 // 駒の基本的な移動先リスト（未フィルタリング）を取得するべきです。
                 // ただし、ここでは既存の getLegalMoves を利用するため、
@@ -179,7 +179,7 @@ bool Board::isCheckmate(std::string color) const { // ★const を付け、盤面を書き
                     tempBoard.setPieceAt(m, self);
                     tempBoard.setPieceAt(originalPos, nullptr);
 
-                    // ★重要: 駒の内部座標を更新 (この行がないとシミュレーションが破綻する可能性あり)
+                    // 駒の内部座標を更新 (この行がないとシミュレーションが破綻する可能性あり)
                     // if (self) self->setPosition(m); 
 
                     // 3. 移動後にチェックされていないか確認
