@@ -21,6 +21,8 @@ Piece::Piece(std::string c, Position boardPos, std::string pType) : color(c), bo
     black_bord = new Model("Data/Model/Stage/black_bord.mdl");
     white_bord = new Model("Data/Model/Stage/white_bord.mdl");
 
+    worldPos = BoardToWorld(boardPos);
+
 }
 
 Piece::~Piece() {
@@ -43,15 +45,30 @@ Piece::~Piece() {
 
 void Piece::Update(float elapsedTime) {
     // アニメーションや移動補間があればここに
+
+    if (isMoving) {
+        animTime += elapsedTime;
+
+        float t = animTime / animDuration;
+        if (t >= 1.0f) {
+            t = 1.0f;
+            isMoving = false;
+        }
+
+        worldPos.x = startPos.x * (1 - t) + targetPos.x * t;
+        worldPos.y = startPos.y * (1 - t) + targetPos.y * t;
+        worldPos.z = startPos.z * (1 - t) + targetPos.z * t;
+    }
 }
 
 void Piece::Render(const RenderContext& rc, ModelRenderer* renderer) {
     DirectX::XMFLOAT4X4 transform;
+
     DirectX::XMStoreFloat4x4(&transform,
         DirectX::XMMatrixTranslation(
-            boardPosition.x * 100.0f, // 盤面1マス = 100ユニット
+            worldPos.x * 100.0f, // 盤面1マス = 100ユニット
             0.0f,
-            boardPosition.y * 100.0f
+            worldPos.z * 100.0f
         )
     );
 
@@ -136,7 +153,7 @@ void Piece::Render(const RenderContext& rc, ModelRenderer* renderer) {
             DirectX::XMFLOAT4X4 bord_transform;
             DirectX::XMStoreFloat4x4(&bord_transform,
                 DirectX::XMMatrixTranslation(
-                    i * 100.0f, // 盤面1マス = 100ユニット
+                    i * 100.0f, 
                     0.0f,
                     j * 100.0f
                 )
@@ -154,6 +171,12 @@ void Piece::Render(const RenderContext& rc, ModelRenderer* renderer) {
 
 void Piece::SetBoardPosition(Position pos) {
     boardPosition = pos;
+
+    startPos = worldPos;
+    targetPos = BoardToWorld(pos);
+    animTime = 0.0f;
+    animDuration = 0.5f; 
+    isMoving = true;
 }
 
 Position Piece::GetBoardPosition() const {

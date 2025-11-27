@@ -14,6 +14,10 @@ public:
     Position GetBoardPosition() const;
 
     void setDisplayInfo(bool isSelected, int currentHealth, int maxHealth);
+
+    DirectX::XMFLOAT3 BoardToWorld(Position p) {
+        return DirectX::XMFLOAT3(p.x, 0.0f, p.y);
+    }
 private:
     //白駒
     Model* white_bishop = nullptr;
@@ -43,4 +47,14 @@ private:
     bool isSelected = false;
     int currentHealth = 0;
     int maxHealth = 1;
+
+    //線形補完
+
+    DirectX::XMFLOAT3 worldPos;
+    DirectX::XMFLOAT3 startPos;
+    DirectX::XMFLOAT3 targetPos;
+    float animTime = 0.0f;
+    float animDuration = 0.0f;     
+    bool isMoving = false;
+
 };
