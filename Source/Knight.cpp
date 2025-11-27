@@ -24,3 +24,7 @@ std::vector<Position> Knight::getLegalMoves(const Board& board, bool isForCheck)
     
     return moves;
 }
+
+std::shared_ptr<ChessPiece> Knight::clone() const {
+    return std::make_shared<Knight>(*this);
+}

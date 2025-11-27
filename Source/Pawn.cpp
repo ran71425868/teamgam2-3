@@ -38,3 +38,7 @@ std::vector<Position> Pawn::getLegalMoves(const Board& board, bool isForCheck) c
     }
     return moves;
 }
+
+std::shared_ptr<ChessPiece> Pawn::clone() const {
+    return std::make_shared<Pawn>(*this);
+}

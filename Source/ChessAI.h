@@ -20,11 +20,18 @@ private:
     void MakeRandomMove(Board* board);
 
     bool ChessAI::isMoveSafe(Board* board, Position from, Position to) {
-        Board temp(*board); 
+        auto captured = board->getPieceAt(to);
 
-        temp.movePiece(from, to);
+     
+        board->movePiece(from, to);
 
-        return !temp.isKingInCheck("black");
+        bool safe = !board->isKingInCheck("black");
+
+      
+        board->movePiece(to, from);
+        board->setPieceAt(to, captured);
+
+        return safe;
     }
 
 };

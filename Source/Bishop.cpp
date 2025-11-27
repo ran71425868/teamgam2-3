@@ -30,3 +30,7 @@ std::vector<Position> Bishop::getLegalMoves(const Board& board, bool isForCheck)
     }
     return moves;
 }
+
+std::shared_ptr<ChessPiece> Bishop::clone() const {
+    return std::make_shared<Bishop>(*this);
+}

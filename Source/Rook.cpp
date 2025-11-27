@@ -27,3 +27,7 @@ std::vector<Position> Rook::getLegalMoves(const Board& board, bool isForCheck) c
     }
     return moves;
 }
+
+std::shared_ptr<ChessPiece> Rook::clone() const {
+    return std::make_shared<Rook>(*this);
+}

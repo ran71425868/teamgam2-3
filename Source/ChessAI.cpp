@@ -89,7 +89,7 @@ found:;
 
     if (moves.empty()) return;
 
-    std::uniform_int_distribution<int> dist(0, (int)moves.size() - 1);
+   /* std::uniform_int_distribution<int> dist(0, (int)moves.size() - 1);
     auto [from, to] = moves[dist(gen)];
 
     bool capturedBefore = (board->getPieceAt(to) != nullptr);
@@ -110,7 +110,29 @@ found:;
 
     if (onMoveCallback) {
         onMoveCallback(from, to, capturedBefore);
+    }*/
+
+    std::uniform_int_distribution<int> dist(0, (int)moves.size() - 1);
+    auto [from, to] = moves[dist(gen)];
+
+    bool captured = (board->getPieceAt(to) != nullptr);
+
+    auto movingPiece = board->getPieceAt(from);
+    if (movingPiece) {
+        movingPiece->takeDamage(1);
+    }
+
+    // ˆÚ“®‘O‚ÉŽ€‚ñ‚Å‚¢‚½ê‡
+    if (movingPiece && movingPiece->getHealth() <= 0) {
+        board->setPieceAt(from, nullptr);
+        if (onMoveCallback) onMoveCallback(from, to, captured);
+    }
+    else {
+        // ¶‚«‚Ä‚¢‚ê‚ÎˆÚ“®
+        board->movePiece(from, to);
+        if (onMoveCallback) onMoveCallback(from, to, captured);
     }
 
     board->switchTurn();
+
 }

@@ -15,8 +15,8 @@ std::vector<Position> King::getLegalMoves(const Board& board, bool isForCheck) c
                 if (!target || target->getColor() != color) {
                     // 仮に動かしてチェックされるか確認
                     // Board を一時コピーして仮移動
-                    Board tempBoard = board;
-                    auto self = tempBoard.getPieceAt(pos);
+                    Board tempBoard(board);
+                    auto self = tempBoard.getPieceAt(pos)->clone();
                     tempBoard.setPieceAt(p, self);
                     tempBoard.setPieceAt(pos, nullptr);
 
@@ -29,4 +29,8 @@ std::vector<Position> King::getLegalMoves(const Board& board, bool isForCheck) c
         }
     }
     return moves;
+}
+
+std::shared_ptr<ChessPiece> King::clone() const {
+    return std::make_shared<King>(*this);
 }

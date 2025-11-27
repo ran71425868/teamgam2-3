@@ -24,3 +24,7 @@ std::vector<Position> Queen::getLegalMoves(const Board& board, bool isForCheck) 
     }
     return moves;
 }
+
+std::shared_ptr<ChessPiece> Queen::clone() const {
+    return std::make_shared<Queen>(*this);
+}
