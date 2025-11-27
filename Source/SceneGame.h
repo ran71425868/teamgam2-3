@@ -73,7 +73,7 @@ private:
 	bool isGameOver = false;
 	std::string winnerColor = ""; // 勝利したプレイヤーの色
 
-	void RemoveSlimeAt(Position pos);
+	void RemovePieceAt(Position pos);
 
 	Position ScreenToBoard(int screenX, int screenY);
 	Piece* FindSlimeAt(Position pos);

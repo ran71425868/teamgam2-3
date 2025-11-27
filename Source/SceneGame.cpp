@@ -87,14 +87,24 @@ void SceneGame::Initialize()
 	cameraController = new CameraController;
 	ai = new ChessAI();
 	ai->onMoveCallback = [this](Position from, Position to, bool wasCapture) {
-		// 1) 視覚オブジェクトを移動
-		auto slime = this->FindSlimeAt(from);
-		if (slime) {
-		
-			if (wasCapture) {
-				this->RemoveSlimeAt(to); 
+		// 1) 敵駒が取られた場合の処理 (toの位置の描画オブジェクトを削除)
+		if (wasCapture) {
+			this->RemovePieceAt(to);
+		}
+
+		// 2) 移動元の描画オブジェクトを取得
+		auto piece = this->FindSlimeAt(from);
+
+		if (piece) {
+			// 3) from と to が同じなら、移動ではなく「fromでの死亡」を意味する
+			if (from.x == to.x && from.y == to.y) {
+				// AIの自傷死亡または戦闘敗北による移動元での死亡
+				this->RemovePieceAt(from);
 			}
-			slime->SetBoardPosition(to);
+			else {
+				// 4) 生きていれば移動を反映
+				piece->SetBoardPosition(to);
+			}
 		}
 		};
 	SetReady();
@@ -220,7 +230,7 @@ void SceneGame::Update(float elapsedTime)
 						// 負け：攻撃側は消滅し、防御側にダメージを与える
 
 						// 描画オブジェクトの削除 (攻撃側)
-						RemoveSlimeAt(selectedPos);
+						RemovePieceAt(selectedPos);
 						// 盤面からの駒の削除 (攻撃側)
 						board->setPieceAt(selectedPos, nullptr);
 
@@ -230,7 +240,7 @@ void SceneGame::Update(float elapsedTime)
 						//  防御側の死亡チェックと削除
 						if (defender->getHealth() <= 0) {
 							// 防御側も死亡した場合、描画と盤面から削除
-							RemoveSlimeAt(clicked);
+							RemovePieceAt(clicked);
 							board->setPieceAt(clicked, nullptr);
 						}
 
@@ -248,7 +258,7 @@ void SceneGame::Update(float elapsedTime)
 					// 勝利：通常通り相手の駒を取得（通常移動のロジックに任せる）
 					// 勝利時は、防御側のSlimeを削除する必要があるため、以下の処理を実行
 					else {
-						RemoveSlimeAt(clicked); // 取られる駒の Slime を削除
+						RemovePieceAt(clicked); // 取られる駒の Slime を削除
 
 						board->setPieceAt(clicked, nullptr);
 					}
@@ -321,7 +331,7 @@ void SceneGame::Update(float elapsedTime)
 						board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
 
 						// 死亡した駒に対応する Slime も描画リストから削除
-						RemoveSlimeAt(clicked);
+						RemovePieceAt(clicked);
 						board->setPieceAt(clicked, nullptr);
 					}
 				}
@@ -627,7 +637,7 @@ void SceneGame::DrawGUI()
 	
 }
 
-void SceneGame::RemoveSlimeAt(Position pos)
+void SceneGame::RemovePieceAt(Position pos)
 {
 	//// Slimeオブジェクトのリストを走査し、posと一致するものを削除する
 	//for (auto it = pieces.begin(); it != pieces.end(); ++it) {
@@ -642,7 +652,7 @@ void SceneGame::RemoveSlimeAt(Position pos)
 	//	}
 	//}
 
-	board->setPieceAt(pos, nullptr);
+	//board->setPieceAt(pos, nullptr);
 
 	// 描画用リストからも削除
 	for (auto it = pieces.begin(); it != pieces.end(); )
@@ -652,6 +662,7 @@ void SceneGame::RemoveSlimeAt(Position pos)
 		{
 			delete* it; // rawポインタなら delete
 			it = pieces.erase(it);
+			return; // ★一つ見つけたらループを抜ける (駒は一マスに一つであるため)
 		}
 		else
 		{
