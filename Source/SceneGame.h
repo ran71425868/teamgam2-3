@@ -11,7 +11,8 @@
 #include "Scene.h"
 #include "NetworkManager.h"
 #include "ChessAI.h"
-#include <CardManager.h>
+#include "ActiveEffectManager.h"
+#include "CardManager.h"
 
 
 // ゲームシーン
@@ -94,10 +95,8 @@ private:
 	UsedCardInfo lastWhiteUsedCard;
 	UsedCardInfo lastBlackUsedCard;
 
-	// ...
-
 	// ActiveEffectManagerの更新に必要な関数
-	//void ApplyPersistentEffect(const ActiveEffect& effect);
+	void ApplyPersistentEffect(const ActiveEffect& effect);
 
 
 	// ターゲット駒が自分の駒か敵の駒かを判定するヘルパー関数

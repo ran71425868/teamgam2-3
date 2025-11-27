@@ -10,7 +10,9 @@ struct Position {
     bool isValid() const {
         return x >= 0 && x < 8 && y >= 0 && y < 8;
     }
-
+    bool operator==(const Position& other) const {
+        return x == other.x && y == other.y;
+    }
 };
 
 class Board; // ‘O•ûéŒ¾
@@ -29,7 +31,7 @@ public:
 
     virtual std::string getType() const = 0;
     virtual std::vector<Position> getLegalMoves(const Board& board, bool isForCheck = false) const=0;
-    virtual std::shared_ptr<ChessPiece> clone() const = 0;
+    //virtual std::shared_ptr<ChessPiece> clone() const = 0;
 
 
     void setPosition(Position p);

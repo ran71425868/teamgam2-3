@@ -1,17 +1,8 @@
 #pragma once
 
-
+#include "ChessPiece.h"
 #include <string>
 #include <iostream>
-
-// チェス盤上の位置を示す構造体（SceneGameの定義を仮定）
-struct Position {
-    int x;
-    int y;
-    bool operator==(const Position& other) const {
-        return x == other.x && y == other.y;
-    }
-};
 
 /**
  * @brief ターン経過後に発動する持続効果のデータ構造

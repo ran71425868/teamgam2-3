@@ -12,6 +12,7 @@
 
 using namespace DirectX;
 
+
 // 初期化
 void SceneMultiGame::Initialize()
 {
@@ -22,6 +23,7 @@ void SceneMultiGame::Initialize()
 
 	highlightModel = new Model("Data/Model/Stage/yellow_bord.mdl");
 	healSpotModel = new Model("Data/Model/Stage/heal_bord.mdl");
+
 
 	// 駒を初期配置（例：白と黒のスライム）
 	for (int i = 0; i <= 7; i++)
@@ -83,7 +85,18 @@ void SceneMultiGame::Initialize()
 	);
 
 	cameraController = new CameraController;
+	//ai = new ChessAI();
+	//ai->onMoveCallback = [this](Position from, Position to, bool wasCapture) {
+	//	// 1) 視覚オブジェクトを移動
+	//	auto slime = this->FindSlimeAt(from);
+	//	if (slime) {
 
+	//		if (wasCapture) {
+	//			this->RemoveSlimeAt(to);
+	//		}
+	//		slime->SetBoardPosition(to);
+	//	}
+	//	};
 	SetReady();
 
 }
@@ -115,6 +128,9 @@ void SceneMultiGame::Finalize()
 
 	network.Finalize();
 
+	/*delete ai;
+	ai = nullptr;*/
+
 }
 
 // 更新処理
@@ -129,8 +145,14 @@ void SceneMultiGame::Update(float elapsedTime)
 	}
 	Mouse& mouseCursor = Input::Instance().GetMouse();
 
+
+
+
 	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
 		POINT cursor = mouseCursor.GetPosition();
+
+		/*if (board->getCurrentTurn() == "black")
+			return;*/
 
 		// 1. ボード座標への変換とボード外チェック
 		Position clicked = ScreenToBoard(cursor.x, cursor.y);
@@ -176,7 +198,7 @@ void SceneMultiGame::Update(float elapsedTime)
 
 
 			if (isLegalMove) {
-				// piece の位置も更新
+				// slime の位置も更新
 				auto piece = FindSlimeAt(selectedPos);
 
 				// 修正: 移動する駒を取得（自傷と死亡判定のため）
@@ -186,7 +208,7 @@ void SceneMultiGame::Update(float elapsedTime)
 				auto attacker = board->getPieceAt(selectedPos);
 				auto defender = board->getPieceAt(clicked); // 取られる駒（nullptrの場合もある）
 
-				// --- 新規追加ロジック: 体力ベースの戦闘判定 ---
+				// --- 体力ベースの戦闘判定 ---
 				if (defender) {
 
 					// 1. 体力を比較
@@ -199,12 +221,18 @@ void SceneMultiGame::Update(float elapsedTime)
 
 						// 描画オブジェクトの削除 (攻撃側)
 						RemoveSlimeAt(selectedPos);
-
 						// 盤面からの駒の削除 (攻撃側)
 						board->setPieceAt(selectedPos, nullptr);
 
 						// 防御側に自駒の体力分のダメージを与える
 						defender->takeDamage(attackerHealth);
+
+						//  防御側の死亡チェックと削除
+						if (defender->getHealth() <= 0) {
+							// 防御側も死亡した場合、描画と盤面から削除
+							RemoveSlimeAt(clicked);
+							board->setPieceAt(clicked, nullptr);
+						}
 
 						// 負けたため、移動処理をスキップし、ターンを終了
 						// 負けの場合は移動処理(board->movePiece)は不要
@@ -221,6 +249,8 @@ void SceneMultiGame::Update(float elapsedTime)
 					// 勝利時は、防御側のSlimeを削除する必要があるため、以下の処理を実行
 					else {
 						RemoveSlimeAt(clicked); // 取られる駒の Slime を削除
+
+						board->setPieceAt(clicked, nullptr);
 					}
 				}
 
@@ -279,7 +309,7 @@ void SceneMultiGame::Update(float elapsedTime)
 				network.SendMove(move);
 
 				// ----------------------------------------------------
-				// 新規追加ロジック: 自傷と死亡判定
+				// 自傷と死亡判定
 				// ----------------------------------------------------
 				if (movingPiece) {
 					// 1. 1ダメージを与える
@@ -291,8 +321,8 @@ void SceneMultiGame::Update(float elapsedTime)
 						board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
 
 						// 死亡した駒に対応する Slime も描画リストから削除
-						// ※ RemoveSlimeAt は既に実装しているはず
 						RemoveSlimeAt(clicked);
+						board->setPieceAt(clicked, nullptr);
 					}
 				}
 
@@ -339,6 +369,9 @@ void SceneMultiGame::Update(float elapsedTime)
 					}
 				}
 
+
+
+
 				// 選択を解除し、ターンを切り替える
 				selectedPos = { -1, -1 };
 				legalMoves.clear();
@@ -377,7 +410,6 @@ void SceneMultiGame::Update(float elapsedTime)
 					// シンプルに選択解除のみを行う
 					selectedPos = { -1, -1 };
 					legalMoves.clear();
-
 				}
 			}
 
@@ -419,6 +451,20 @@ void SceneMultiGame::Update(float elapsedTime)
 
 	//エフェクトマネージャー更新処理
 	EffectManager::Instance().Update(elapsedTime);
+
+	//if (!isGameOver) {
+	//	/*ai->Update(board);*/
+	//	blackMovedToCommonCount++;
+	//}
+
+	if (!board->isKingPresent("white")) {
+		isGameOver = true;
+		winnerColor = "black";
+	}
+	else if (!board->isKingPresent("black")) {
+		isGameOver = true;
+		winnerColor = "white";
+	}
 }
 
 // 描画処理
@@ -450,7 +496,7 @@ void SceneMultiGame::Render()
 	{
 		//ステージ描画
 		stage->Render(rc, modelRenderer);
-	
+
 		for (auto p : pieces) p->Render(rc, renderer);
 
 		// 選択された駒があり、合法手リストが空でなければハイライトを描画
@@ -583,16 +629,33 @@ void SceneMultiGame::DrawGUI()
 
 void SceneMultiGame::RemoveSlimeAt(Position pos)
 {
-	// Slimeオブジェクトのリストを走査し、posと一致するものを削除する
-	for (auto it = pieces.begin(); it != pieces.end(); ++it) {
-		if ((*it)->GetBoardPosition().x == pos.x && (*it)->GetBoardPosition().y == pos.y) {
+	//// Slimeオブジェクトのリストを走査し、posと一致するものを削除する
+	//for (auto it = pieces.begin(); it != pieces.end(); ++it) {
+	//	if ((*it)->GetBoardPosition().x == pos.x && (*it)->GetBoardPosition().y == pos.y) {
+	//
+	//		// 削除前にメモリを解放（ヒープ領域で確保している場合）
+	//		delete (*it);
+	//
+	//		// リストから要素を削除
+	//		pieces.erase(it);
+	//		return; // 駒は一つしか存在しないので、見つけたら終了
+	//	}
+	//}
 
-			// 削除前にメモリを解放（ヒープ領域で確保している場合）
-			delete (*it);
+	board->setPieceAt(pos, nullptr);
 
-			// リストから要素を削除
-			pieces.erase(it);
-			return; // 駒は一つしか存在しないので、見つけたら終了
+	// 描画用リストからも削除
+	for (auto it = pieces.begin(); it != pieces.end(); )
+	{
+		if ((*it)->GetBoardPosition().x == pos.x &&
+			(*it)->GetBoardPosition().y == pos.y)
+		{
+			delete* it; // rawポインタなら delete
+			it = pieces.erase(it);
+		}
+		else
+		{
+			++it;
 		}
 	}
 }
@@ -760,6 +823,100 @@ void SceneMultiGame::GenerateHealSpots() {
 		healSpots[pos.y][pos.x] = { HealType::COMMON, true };
 	}
 
+}
+
+bool SceneMultiGame::IsTargetPiece(Position pos, const std::string& requiredColor) const
+{
+	auto piece = board->getPieceAt(pos);
+	if (!piece) return false;
+	return piece->getColor() == requiredColor;
+}
+
+bool SceneMultiGame::ApplyCardEffect(int effectId, Position targetPos)
+{
+	// 現在のターンの色
+	std::string currentTurn = board->getCurrentTurn();
+
+	// ターゲット駒 (このカードは空きマスにも打てる可能性があるため、ここではターゲット駒の存在は必須ではない)
+	// auto targetPiece = board->getPieceAt(targetPos);
+
+	// 乱数生成器 (他の効果用)
+	// ...
+
+	switch (effectId) {
+		// ... (既存の case 0, 2, 3, 4, 5, 6, 7, 8, 9) ...
+
+	case 1: // 焦土の罠 (Trap): 指定した場所の前方 2x3 マスの駒に 1 ダメージ
+	{
+		// ターゲット位置がボード内か確認
+		if (!board->isInsideBoard(targetPos)) {
+			return false; // 無効な位置
+		}
+
+		// 1. ダメージエリアの定義
+		int damage = 1;
+
+		// 進行方向の定義 (白: y軸減少方向へ前方, 黒: y軸増加方向へ前方)
+		// 白 (y=7, 6 から y=0, 1 へ移動) の場合、前方マスは y - 1, y - 2
+		// 黒 (y=0, 1 から y=7, 6 へ移動) の場合、前方マスは y + 1, y + 2
+		const int direction = (currentTurn == "white") ? -1 : 1;
+
+		// 展開エリア: 前方2マス (y+direction*1, y+direction*2)、横幅3マス (x-1, x, x+1)
+		// 前方 2 マス (dy = 1, 2)
+		for (int dy = 1; dy <= 2; ++dy) {
+			// 横幅 3 マス (dx = -1, 0, 1)
+			for (int dx = -1; dx <= 1; ++dx) {
+
+				// ダメージを与えるマスの座標を計算
+				Position damagePos = {
+					targetPos.x + dx,
+					targetPos.y + (direction * dy) // 進行方向へ展開
+				};
+
+				// 2. ボード内チェックとダメージ適用
+				if (board->isInsideBoard(damagePos)) {
+					auto victim = board->getPieceAt(damagePos);
+
+					if (victim) {
+						// 駒が存在する場合、ダメージを与える
+						victim->takeDamage(damage);
+
+						// 死亡チェック (takeDamage後に health <= 0 になったら、リストから削除する処理が必要)
+						// if (victim->getHealth() <= 0) { 
+						//     board->removePiece(victim); 
+						// }
+
+						// DebugLog(victim->getColor() + victim->getType() + "が焦土の罠で1ダメージを受けました。");
+					}
+				}
+			}
+		}
+
+		// トラップ設置は成功したとみなす
+		return true;
+	}
+
+	case 2: // 生命の祝福 (Buff): 自身の駒単体の体力を3回復
+	{
+		const int healAmount = 3;
+
+		// 1. ターゲット駒が存在し、かつそれが自駒であるかを確認
+		//if (targetPiece && IsTargetPiece(targetPos, currentTurn)) {
+
+		//	// 2. 体力を回復
+		//	targetPiece->heal(healAmount);
+
+		//	
+		//	return true; // 効果適用成功
+		//}
+
+		// ターゲットが無効（駒がいない、または敵駒）
+		return false;
+	}
+
+	default:
+		return false;
+	}
 }
 
 //　駒が置かれておらず、かつ回復マスが生成されていない共通マスをランダムに選ぶ

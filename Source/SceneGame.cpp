@@ -720,10 +720,10 @@ Position SceneGame::ScreenToBoard(int screenX, int screenY)
 
 //Piece を盤面座標から取得
 Piece* SceneGame::FindSlimeAt(Position pos) {
-	for (auto slime : pieces) {
-		if (slime->GetBoardPosition().x == pos.x &&
-			slime->GetBoardPosition().y == pos.y)
-			return slime;
+	for (auto p : pieces) {
+		if (p->GetBoardPosition().x == pos.x &&
+			p->GetBoardPosition().y == pos.y)
+			return p;
 	}
 	return nullptr;
 }
@@ -823,6 +823,48 @@ void SceneGame::GenerateHealSpots() {
 		healSpots[pos.y][pos.x] = { HealType::COMMON, true };
 	}
 
+}
+
+void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
+{
+	// 発動した効果に応じてゲーム状態を変化させる
+
+	auto targetPiece = board->getPieceAt(effect.targetPos);
+	// Position target = effect.targetPos;
+
+	switch (effect.sourceEffectId) {
+	case 3: // 悠久の盟約: 自身の駒全体の体力を2回復
+	{
+		// effect.ownerColor のプレイヤーの全ての駒を探し、2回復させる
+		// for (auto piece : pieces) {
+		//     if (piece->getColor() == effect.ownerColor) {
+		//         piece->heal(2);
+		//     }
+		// }
+		//std::cout << "悠久の盟約 (ID 3) が発動: " << effect.ownerColor << "側の駒全体を2回復" << std::endl;
+	}
+	break;
+
+	case 6: // 破滅の刻印: 自身を中心とする周囲8マスに2ダメージ
+	{
+		// targetPiece (刻印を付与された駒) を中心に周囲8マス（3x3の範囲）内の全駒にダメージを与える
+		// for (int dy = -1; dy <= 1; ++dy) {
+		//     for (int dx = -1; dx <= 1; ++dx) {
+		//         Position damagePos = {effect.targetPos.x + dx, effect.targetPos.y + dy};
+		//         // if (board->isInsideBoard(damagePos) && (dx != 0 || dy != 0)) {
+		//         //     auto victim = board->getPieceAt(damagePos);
+		//         //     if (victim) victim->takeDamage(2);
+		//         // }
+		//     }
+		// }
+		//std::cout << "破滅の刻印 (ID 6) が発動: ターゲット周囲に2ダメージ" << std::endl;
+	}
+	break;
+
+	default:
+		// 未知の持続効果
+		break;
+	}
 }
 
 bool SceneGame::IsTargetPiece(Position pos, const std::string& requiredColor) const

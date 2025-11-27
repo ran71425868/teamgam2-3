@@ -68,7 +68,7 @@ std::shared_ptr<ChessPiece> Board::getPieceAt(Position pos) const {
 void Board::setPieceAt(Position pos, std::shared_ptr<ChessPiece> piece) {
     if (isInsideBoard(pos)) {
         grid[pos.y][pos.x] = piece;
-        if (piece) piece->setPosition(pos);
+        /*if (piece) piece->setPosition(pos);*/
     }
 }
 
@@ -107,17 +107,19 @@ void Board::switchTurn() {
 
 bool Board::isKingInCheck(std::string color) const {
     Position kingPos{ -1, -1 };
+    bool kingFound = false;
     // 1. キングの位置を探す
     for (int y = 0; y < 8; ++y) {
         for (int x = 0; x < 8; ++x) {
             auto piece = grid[y][x];
             if (piece && piece->getType() == "King" && piece->getColor() == color) {
                 kingPos = { x, y };
-                goto find_king_end; // キングを見つけたらループを抜ける
+                kingFound = true; // フラグを立てる
+                break;           // 内部ループを抜ける
             }
         }
+        if (kingFound) break; // フラグが立っていれば外部ループも抜ける
     }
-find_king_end:; // gotoのターゲット
     if (kingPos.x == -1) return false;
 
     // 2. 敵駒の合法手にキングが含まれるか確認 (再帰防止のためフラグを使用)
