@@ -5,6 +5,10 @@
 Knight::Knight(std::string c, Position p) : ChessPiece(c, p, 5) {}
 std::string Knight::getType() const { return "Knight"; }
 std::vector<Position> Knight::getLegalMoves(const Board& board, bool isForCheck) const {
+    // 移動制限が適用されているかチェック
+    if (IsImmobilized) {
+        return {}; // 空のリストを返す (移動不可)
+    }
     std::vector<Position> moves;
     const int jumps[8][2] = {
         {1,2},{2,1},{-1,2},{-2,1},

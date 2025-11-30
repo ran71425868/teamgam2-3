@@ -5,6 +5,10 @@
 Queen::Queen(std::string c, Position p) : ChessPiece(c, p, 5) {}
 std::string Queen::getType() const { return "Queen"; }
 std::vector<Position> Queen::getLegalMoves(const Board& board, bool isForCheck) const {
+    // 移動制限が適用されているかチェック
+    if (IsImmobilized) {
+        return {}; // 空のリストを返す (移動不可)
+    }
     std::vector<Position> moves;
     const int dirs[8][2] = { {1,0},{-1,0},{0,1},{0,-1},{1,1},{-1,-1},{1,-1},{-1,1} };
     for (auto& d : dirs) {

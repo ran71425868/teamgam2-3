@@ -92,5 +92,5 @@ void SceneLoading::LoadingThread(SceneLoading* scene)
 	CoUninitialize();
 
 	//Ÿ‚ÌƒV[ƒ“‚Ì€”õŠ®—¹İ’è
-	//scene->nextScene->SetReady();
+	scene->nextScene->SetReady();
 }

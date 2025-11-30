@@ -6,6 +6,10 @@
 Pawn::Pawn(std::string c, Position p) : ChessPiece(c, p, 5) {}
 std::string Pawn::getType() const { return "Pawn"; }
 std::vector<Position> Pawn::getLegalMoves(const Board& board, bool isForCheck) const {
+    // 移動制限が適用されているかチェック
+    if (IsImmobilized) {
+        return {}; // 空のリストを返す (移動不可)
+    }
     std::vector<Position> moves;
 
     int dir = (color == "white") ? 1 : -1;

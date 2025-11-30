@@ -10,10 +10,10 @@
 void SceneSelect::Initialize()
 {
 
-	sprite = new Sprite("Data/Sprite/select 1.png");
-	sprite2 = new Sprite("Data/Sprite/select 2.png");
-	sprite3 = new Sprite("Data/Sprite/select 3.png");
-	sprite4 = new Sprite("Data/Sprite/select 4.png");
+	sprite = new Sprite("Data/Sprite/仮セレクト.png");
+	sprite2 = new Sprite("Data/Sprite/チュートリアル.png");
+	sprite3 = new Sprite("Data/Sprite/シングル.png");
+	sprite4 = new Sprite("Data/Sprite/マルチ.png");
 
 }
 
@@ -51,25 +51,26 @@ void SceneSelect::Update(float elapsedTime)
 		Mouse::BTN_LEFT;
 
 	//長方形の描画位置
-	DirectX::XMFLOAT2 stageleft = { 320,360 };
-	DirectX::XMFLOAT2 stageright = { 420,460 };
+	/*DirectX::XMFLOAT2 tutorialleft = { 1560,1560 };
+	DirectX::XMFLOAT2 tutorialright = { 1660,640 };*/
 
-	DirectX::XMFLOAT2 stage2left = { 420,360 };
-	DirectX::XMFLOAT2 stage2right = { 960,460 };
+	DirectX::XMFLOAT2 stageleft = { 800,450 };
+	DirectX::XMFLOAT2 stageright = { 1000,600 };
 
-	DirectX::XMFLOAT2 tutorialleft = { 960,360 };
-	DirectX::XMFLOAT2 tutorialright = { 1060,460 };
+	DirectX::XMFLOAT2 stage2left = { 1400,400 };
+	DirectX::XMFLOAT2 stage2right = { 1600,550 };
+
 
 	//ボタンの描画をしているとこに当たり判定
-	if (stageleft.x < mouseCursor.GetPositionX() && stageright.x > mouseCursor.GetPositionX() && stageleft.y<mouseCursor.GetPositionY() && stageright.y>mouseCursor.GetPositionY())
+	/*if (tutorialleft.x < mouseCursor.GetPositionX() && tutorialright.x > mouseCursor.GetPositionX() && tutorialleft.y<mouseCursor.GetPositionY() && tutorialright.y>mouseCursor.GetPositionY())
 	{
-		/*if (mouseCursor.GetButtonDown() & anyButton)
+		if (mouseCursor.GetButtonDown() & anyButton)
 		{
-			SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTutorial));
-		}*/
-	}
+			SceneManager::Instance().ChangeScene(new SceneLoading(new SceneMultiGame));
+		}
+	}*/
 
-	if (stage2left.x < mouseCursor.GetPositionX() && stage2right.x > mouseCursor.GetPositionX() && stage2left.y<mouseCursor.GetPositionY() && stage2right.y>mouseCursor.GetPositionY())
+	if (stageleft.x < mouseCursor.GetPositionX() && stageright.x > mouseCursor.GetPositionX() && stageleft.y<mouseCursor.GetPositionY() && stageright.y>mouseCursor.GetPositionY())
 	{
 		if (mouseCursor.GetButtonDown() & anyButton)
 		{
@@ -77,13 +78,14 @@ void SceneSelect::Update(float elapsedTime)
 		}
 	}
 
-	if (tutorialleft.x < mouseCursor.GetPositionX() && tutorialright.x > mouseCursor.GetPositionX() && tutorialleft.y<mouseCursor.GetPositionY() && tutorialright.y>mouseCursor.GetPositionY())
+	if (stage2left.x < mouseCursor.GetPositionX() && stage2right.x > mouseCursor.GetPositionX() && stage2left.y<mouseCursor.GetPositionY() && stage2right.y>mouseCursor.GetPositionY())
 	{
 		if (mouseCursor.GetButtonDown() & anyButton)
 		{
 			SceneManager::Instance().ChangeScene(new SceneLoading(new SceneMultiGame));
 		}
 	}
+
 
 }
 
@@ -105,24 +107,25 @@ void SceneSelect::Render()
 		float screenWidth = static_cast<float>(graphics.GetScreenWidth());
 		float screenHeight = static_cast<float>(graphics.GetScreenHeight());
 		sprite->Render(rc,
-			0, 0, 0, 1350, 720,
+			0, 0, 0, 1920, 1080,
 			0,
 			1, 1, 1, 1);
 
 		sprite2->Render(rc,
-			320, 360, 0, 400, 300,
-			0,
-			1, 1, 1, 1);
-
-		sprite4->Render(rc,
-			960, 360, 0, 500, 300,
+			120, 400, 0, 400, 300,
 			0,
 			1, 1, 1, 1);
 
 		sprite3->Render(rc,
-			640, 360, 0, 500, 300,
+			700, 400, 0, 500, 300,
 			0,
 			1, 1, 1, 1);
+
+		sprite4->Render(rc,
+			1300, 300, 0, 500, 500,
+			0,
+			1, 1, 1, 1);
+
 	}
 
 }

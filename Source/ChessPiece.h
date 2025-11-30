@@ -24,6 +24,7 @@ protected:
 
     int health;
     int maxHealth;
+    bool IsImmobilized = false; // ˆÚ“®§ŒÀó‘Ô
 
 public:
     ChessPiece(std::string c, Position p, int initialHealth);
@@ -50,4 +51,7 @@ public:
 
     Position getPosition() const;
     std::string getColor() const;
+
+    void ChessPiece::setImmobilized(bool state) { IsImmobilized = state; }
+    bool ChessPiece::isImmobilized() const { return IsImmobilized; }
 };

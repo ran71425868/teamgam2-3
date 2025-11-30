@@ -2,7 +2,6 @@
 
 #include "System/Mouse.h"
 #include "System/Input.h"
-#include "Stage.h"
 #include "Piece.h"
 #include "Board.h"
 #include "Card.h" // UsedCardInfo‚Ì‚½‚ß‚É•K—v
@@ -37,7 +36,6 @@ public:
 	void DrawGUI()override;
 
 private:
-	Stage* stage = nullptr;
 	Board* board = nullptr;
 	Piece* piece = nullptr;
 

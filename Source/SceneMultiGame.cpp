@@ -110,13 +110,6 @@ void SceneMultiGame::Finalize()
 		cameraController = nullptr;
 	}
 
-	//ステージ終了化
-	if (stage != nullptr)
-	{
-		delete stage;
-		stage = nullptr;
-	}
-
 	if (board != nullptr)
 	{
 		delete board;
@@ -425,7 +418,6 @@ void SceneMultiGame::Update(float elapsedTime)
 		if (slime) slime->SetBoardPosition(to);
 	}
 
-	stage->Update(elapsedTime);
 	for (auto p : pieces) p->Update(elapsedTime);
 
 
@@ -494,8 +486,6 @@ void SceneMultiGame::Render()
 
 	// 3Dモデル描画
 	{
-		//ステージ描画
-		stage->Render(rc, modelRenderer);
 
 		for (auto p : pieces) p->Render(rc, renderer);
 

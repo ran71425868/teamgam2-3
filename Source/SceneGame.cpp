@@ -62,11 +62,11 @@ void SceneGame::Initialize()
 	pieces.push_back(new Piece("black", { 3, 7 },"queen"));
 
 	
-	isServer = true; // ← サーバー側なら true / クライアントなら false に設定
-	if (isServer)
-		network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
-	else
-		network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);
+	//isServer = true; // ← サーバー側なら true / クライアントなら false に設定
+	//if (isServer)
+	//	network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
+	//else
+		/*network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);*/
 
 	//カメラ初期設定
 	Graphics& graphics = Graphics::Instance();
@@ -85,6 +85,7 @@ void SceneGame::Initialize()
 		);
 
 	cameraController = new CameraController;
+
 	ai = new ChessAI();
 	ai->onMoveCallback = [this](Position from, Position to, bool wasCapture) {
 		// 1) 敵駒が取られた場合の処理 (toの位置の描画オブジェクトを削除)
@@ -106,8 +107,7 @@ void SceneGame::Initialize()
 				piece->SetBoardPosition(to);
 			}
 		}
-		};
-	SetReady();
+	};
 
 }
 
@@ -118,13 +118,6 @@ void SceneGame::Finalize()
 	if (cameraController != nullptr) {
 		delete cameraController;
 		cameraController = nullptr;
-	}
-
-	//ステージ終了化
-	if (stage != nullptr)
-	{
-		delete stage;
-		stage = nullptr;
 	}
 
 	if (board != nullptr)
@@ -435,7 +428,6 @@ void SceneGame::Update(float elapsedTime)
 		if (slime) slime->SetBoardPosition(to);
 	}
 
-	stage->Update(elapsedTime);
 	for (auto p : pieces) p->Update(elapsedTime);
 
 
@@ -504,9 +496,6 @@ void SceneGame::Render()
 
 	// 3Dモデル描画
 	{
-		//ステージ描画
-		stage->Render(rc, modelRenderer);
-
 		for (auto p : pieces) p->Render(rc, renderer);
 
 		// 選択された駒があり、合法手リストが空でなければハイライトを描画
@@ -515,18 +504,16 @@ void SceneGame::Render()
 			for (const auto& move : legalMoves) {
 
 				// 盤面座標 (move.x, move.y) をワールド座標に変換
-				// Slime::Render で使っている変換ロジックと同様
 				DirectX::XMFLOAT4X4 transform;
 				DirectX::XMStoreFloat4x4(&transform,
 					DirectX::XMMatrixTranslation(
 						move.x * 100.0f, // X座標
-						2.0f,            // 駒より少し高い位置 (ZよりYが適切)
+						2.0f,            // 駒より少し高い位置
 						move.y * 100.0f  // Z座標
 					)
 				);
 
 				// ハイライトモデルを描画
-				// ※ highlightModel が SceneGame 内のメンバー変数だと仮定
 				renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
 			}
 		}
@@ -846,12 +833,12 @@ void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 	switch (effect.sourceEffectId) {
 	case 3: // 悠久の盟約: 自身の駒全体の体力を2回復
 	{
-		// effect.ownerColor のプレイヤーの全ての駒を探し、2回復させる
-		// for (auto piece : pieces) {
-		//     if (piece->getColor() == effect.ownerColor) {
-		//         piece->heal(2);
-		//     }
-		// }
+		 //effect.ownerColor のプレイヤーの全ての駒を探し、2回復させる
+		 /*for (auto piece : pieces) {
+		     if (piece->getColor() == effect.ownerColor) {
+		         piece->heal(2);
+		     }
+		 }*/
 		//std::cout << "悠久の盟約 (ID 3) が発動: " << effect.ownerColor << "側の駒全体を2回復" << std::endl;
 	}
 	break;
@@ -889,9 +876,10 @@ bool SceneGame::ApplyCardEffect(int effectId, Position targetPos)
 {
 	// 現在のターンの色
 	std::string currentTurn = board->getCurrentTurn();
+	std::string enemyColor = (currentTurn == "white") ? "black" : "white";
 
 	// ターゲット駒 (このカードは空きマスにも打てる可能性があるため、ここではターゲット駒の存在は必須ではない)
-	// auto targetPiece = board->getPieceAt(targetPos);
+	 auto targetPiece = board->getPieceAt(targetPos);
 
 	// 乱数生成器 (他の効果用)
 	// ...
@@ -935,11 +923,9 @@ bool SceneGame::ApplyCardEffect(int effectId, Position targetPos)
 						victim->takeDamage(damage);
 
 						// 死亡チェック (takeDamage後に health <= 0 になったら、リストから削除する処理が必要)
-						// if (victim->getHealth() <= 0) { 
-						//     board->removePiece(victim); 
-						// }
-
-						// DebugLog(victim->getColor() + victim->getType() + "が焦土の罠で1ダメージを受けました。");
+						 /*if (victim->getHealth() <= 0) { 
+						     board->RemovePieceAt(victim);
+						 }*/
 					}
 				}
 			}
@@ -954,16 +940,38 @@ bool SceneGame::ApplyCardEffect(int effectId, Position targetPos)
 		const int healAmount = 3;
 
 		// 1. ターゲット駒が存在し、かつそれが自駒であるかを確認
-		//if (targetPiece && IsTargetPiece(targetPos, currentTurn)) {
+		if (targetPiece && IsTargetPiece(targetPos, currentTurn)) {
 
-		//	// 2. 体力を回復
-		//	targetPiece->heal(healAmount);
+			// 2. 体力を回復
+			targetPiece->heal(healAmount);
 
-		//	
-		//	return true; // 効果適用成功
-		//}
+			
+			return true; // 効果適用成功
+		}
 
 		// ターゲットが無効（駒がいない、または敵駒）
+		return false;
+	}
+
+	case 4: // 石化の鎖 (Debuff): 相手の駒単体の移動を制限 (キング使用不可)
+	{
+		// 1. ターゲット駒が存在し、かつそれが敵駒であるかを確認
+		if (targetPiece && IsTargetPiece(targetPos, enemyColor)) {
+
+			// 2. キングではないかを確認
+			if (targetPiece->getType() == "King") {
+				// DebugLog("石化の鎖はキングに使用できません。");
+				return false; // キングには使用不可
+			}
+
+			// 3. 駒の移動を制限
+			//targetPiece->setImmobilized(true);
+
+			// DebugLog(targetPiece->getColor() + " の " + targetPiece->getType() + " に移動制限を適用しました。");
+			return true; // 効果適用成功
+		}
+
+		// ターゲットが無効（駒がいない、自駒、または無効なカード使用）
 		return false;
 	}
 

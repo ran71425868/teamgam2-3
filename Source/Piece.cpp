@@ -163,8 +163,11 @@ void Piece::Render(const RenderContext& rc, ModelRenderer* renderer) {
                 renderer->Render(rc, bord_transform, white_bord, ShaderId::Lambert);
             else
                 renderer->Render(rc, bord_transform, black_bord, ShaderId::Lambert);
+ 
         }
     }
+
+   
 }
 
 

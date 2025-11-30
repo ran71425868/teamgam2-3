@@ -2,7 +2,6 @@
 
 #include "System/Mouse.h"
 #include "System/Input.h"
-#include "Stage.h"
 #include "Piece.h"
 #include "Board.h"
 #include "Card.h" // UsedCardInfoのために必要
@@ -38,7 +37,6 @@ public:
 	void DrawGUI()override;
 
 private:
-	Stage* stage = nullptr;
 	Board* board = nullptr;
 	Piece* piece = nullptr;
 
@@ -89,7 +87,7 @@ private:
 	CardManager whiteCardManager;
 
 	// カード使用のための状態変数
-	// ...
+	
 
 	// 前ターンに使用されたカードの情報 (運命の反転に使用)
 	UsedCardInfo lastWhiteUsedCard;

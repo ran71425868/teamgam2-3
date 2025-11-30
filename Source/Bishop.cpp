@@ -5,6 +5,10 @@
 Bishop::Bishop(std::string c, Position p) : ChessPiece(c, p, 5) {}
 std::string Bishop::getType() const { return "Bishop"; }
 std::vector<Position> Bishop::getLegalMoves(const Board& board, bool isForCheck) const {
+    // 移動制限が適用されているかチェック
+    if (IsImmobilized) {
+        return {}; // 空のリストを返す (移動不可)
+    }
     std::vector<Position> moves;
     const int directions[4][2] = { {1,1},{-1,-1},{1,-1},{-1,1} };
 
