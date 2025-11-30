@@ -186,9 +186,6 @@
     <ClCompile Include="Source\SceneTitle.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Stage.cpp">
-      <Filter>Source\ソースファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Source\ActiveEffectManager.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
@@ -369,9 +366,6 @@
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\SceneTitle.h">
-      <Filter>Source\ヘッダーファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Stage.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\ActiveEffectManager.h">
