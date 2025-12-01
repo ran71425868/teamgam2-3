@@ -4,11 +4,11 @@
 #include "Scene.h"
 
 // ƒQ[ƒ€ƒŠƒUƒ‹ƒg
-class SceneResult :public Scene
+class SceneWhiteResult :public Scene
 {
 public:
-	SceneResult() {};
-	~SceneResult() override {};
+	SceneWhiteResult() {};
+	~SceneWhiteResult() override {};
 
 	// ‰Šú‰»
 	void Initialize()override;
@@ -27,4 +27,5 @@ public:
 
 private:
 	Sprite* sprite = nullptr;
+	Sprite* win = nullptr;
 };

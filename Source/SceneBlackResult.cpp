@@ -1,17 +1,19 @@
 #include "System/Graphics.h"
 #include "SceneTitle.h"
-#include "SceneResult.h"
+#include "SceneBlackResult.h"
 #include "System/Input.h"
 #include "SceneManager.h"
+#include "SceneGame.h"
 
 //初期化
-void SceneResult::Initialize()
+void SceneBlackResult::Initialize()
 {
 	sprite = new Sprite("Data/Sprite/仮リザルト.png");
+	win = new Sprite("Data/Sprite/黒勝ち.png");
 }
 
 //終了化
-void SceneResult::Finalize()
+void SceneBlackResult::Finalize()
 {
 	if (sprite != nullptr)
 	{
@@ -21,7 +23,7 @@ void SceneResult::Finalize()
 }
 
 //更新処理
-void SceneResult::Update(float elapsedTime)
+void SceneBlackResult::Update(float elapsedTime)
 {
 	GamePad& gamePad = Input::Instance().GetGamePad();
 
@@ -40,7 +42,7 @@ void SceneResult::Update(float elapsedTime)
 }
 
 //描画処理
-void SceneResult::Render()
+void SceneBlackResult::Render()
 {
 	Graphics& graphics = Graphics::Instance();
 	ID3D11DeviceContext* dc = graphics.GetDeviceContext();
@@ -60,11 +62,16 @@ void SceneResult::Render()
 			0, 0, 0, screenWidth, screenHeight,
 			0,
 			1, 1, 1, 1);
+
+		win->Render(rc,
+			0, 0, 0, screenWidth, screenHeight,
+			0,
+			1, 1, 1, 1);
 	}
 
 }
 
 //GUI描画
-void SceneResult::DrawGUI()
+void SceneBlackResult::DrawGUI()
 {
 }

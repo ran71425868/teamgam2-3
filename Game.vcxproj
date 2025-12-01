@@ -143,11 +143,12 @@
     <ClInclude Include="Source\Queen.h" />
     <ClInclude Include="Source\Rook.h" />
     <ClInclude Include="Source\Scene.h" />
+    <ClInclude Include="Source\SceneBlackResult.h" />
     <ClInclude Include="Source\SceneGame.h" />
     <ClInclude Include="Source\SceneLoading.h" />
     <ClInclude Include="Source\SceneManager.h" />
     <ClInclude Include="Source\SceneMultiGame.h" />
-    <ClInclude Include="Source\SceneResult.h" />
+    <ClInclude Include="Source\SceneWhiteResult.h" />
     <ClInclude Include="Source\SceneSelect.h" />
     <ClInclude Include="Source\SceneTitle.h" />
     <ClInclude Include="Source\System\Audio.h" />
@@ -202,11 +203,12 @@
     <ClCompile Include="Source\Piece.cpp" />
     <ClCompile Include="Source\Queen.cpp" />
     <ClCompile Include="Source\Rook.cpp" />
+    <ClCompile Include="Source\SceneBlackResult.cpp" />
     <ClCompile Include="Source\SceneGame.cpp" />
     <ClCompile Include="Source\SceneLoading.cpp" />
     <ClCompile Include="Source\SceneManager.cpp" />
     <ClCompile Include="Source\SceneMultiGame.cpp" />
-    <ClCompile Include="Source\SceneResult.cpp" />
+    <ClCompile Include="Source\SceneWhiteResult.cpp" />
     <ClCompile Include="Source\SceneSelect.cpp" />
     <ClCompile Include="Source\SceneTitle.cpp" />
     <ClCompile Include="Source\System\Audio.cpp" />

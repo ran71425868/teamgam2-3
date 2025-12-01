@@ -3,7 +3,7 @@
 #include "System/Graphics.h"
 #include <iostream>
 #include "SceneMultiGame.h"
-#include "SceneResult.h"
+#include "SceneWhiteResult.h"
 #include "SceneManager.h"
 #include "Camera.h"
 #include "Piece.h"
@@ -133,7 +133,7 @@ void SceneMultiGame::Update(float elapsedTime)
 	if (isGameOver) {
 		// ここに結果表示のロジック（未作成）が入る
 		// シーン遷移がないため、結果表示（例：テキスト表示）のみを行う
-		SceneManager::Instance().ChangeScene(new SceneResult);
+		SceneManager::Instance().ChangeScene(new SceneWhiteResult);
 		return;
 	}
 	Mouse& mouseCursor = Input::Instance().GetMouse();

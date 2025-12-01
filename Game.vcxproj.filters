@@ -180,7 +180,7 @@
     <ClCompile Include="Source\SceneMultiGame.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Source\SceneResult.cpp">
+    <ClCompile Include="Source\SceneWhiteResult.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
     <ClCompile Include="Source\SceneTitle.cpp">
@@ -190,6 +190,9 @@
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
     <ClCompile Include="Source\SceneSelect.cpp">
+      <Filter>Source\ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SceneBlackResult.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -362,7 +365,7 @@
     <ClInclude Include="Source\SceneMultiGame.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Source\SceneResult.h">
+    <ClInclude Include="Source\SceneWhiteResult.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\SceneTitle.h">
@@ -372,6 +375,9 @@
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\SceneSelect.h">
+      <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SceneBlackResult.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
   </ItemGroup>

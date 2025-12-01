@@ -3,12 +3,14 @@
 #include "System/Graphics.h"
 #include <iostream>
 #include "SceneGame.h"
-#include "SceneResult.h"
+#include "SceneWhiteResult.h"
+#include"SceneBlackResult.h"
 #include "SceneManager.h"
 #include "Camera.h"
 #include "Piece.h"
 #include "EffectManager.h"
 #include <DirectXMath.h>
+
 
 using namespace DirectX;
 
@@ -143,7 +145,10 @@ void SceneGame::Update(float elapsedTime)
 	if (isGameOver) {
 		// ここに結果表示のロジック（未作成）が入る
 		// シーン遷移がないため、結果表示（例：テキスト表示）のみを行う
-		SceneManager::Instance().ChangeScene(new SceneResult);
+		if(winnerColor=="white")
+			SceneManager::Instance().ChangeScene(new SceneWhiteResult);
+		else
+			SceneManager::Instance().ChangeScene(new SceneBlackResult);
 		return;
 	}
 	Mouse& mouseCursor = Input::Instance().GetMouse();
