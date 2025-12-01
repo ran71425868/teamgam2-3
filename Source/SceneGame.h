@@ -2,6 +2,7 @@
 
 #include "System/Mouse.h"
 #include "System/Input.h"
+#include "System/Sprite.h"
 #include "Piece.h"
 #include "Board.h"
 #include "Card.h" // UsedCardInfoのために必要
@@ -130,4 +131,5 @@ private:
 	bool ApplyCardEffect(int effectId, Position targetPos);
 
 	ChessAI* ai = nullptr;
+	Sprite* check = nullptr;
 };

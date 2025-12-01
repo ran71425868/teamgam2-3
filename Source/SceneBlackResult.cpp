@@ -9,7 +9,7 @@
 void SceneBlackResult::Initialize()
 {
 	sprite = new Sprite("Data/Sprite/‰¼ƒŠƒUƒ‹ƒg.png");
-	win = new Sprite("Data/Sprite/•Ÿ‚¿.png");
+	win = new Sprite("Data/Sprite/black_win.png");
 }
 
 //I—¹‰»
@@ -64,7 +64,7 @@ void SceneBlackResult::Render()
 			1, 1, 1, 1);
 
 		win->Render(rc,
-			0, 0, 0, screenWidth, screenHeight,
+			550, 0, 0, 800, 500,
 			0,
 			1, 1, 1, 1);
 	}

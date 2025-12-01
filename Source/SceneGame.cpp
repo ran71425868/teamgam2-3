@@ -111,6 +111,8 @@ void SceneGame::Initialize()
 		}
 	};
 
+	check= new Sprite("Data/Sprite/check1.png");
+
 }
 
 // 終了化
@@ -567,6 +569,7 @@ if (movingPiece->getHealth() <= 0) {
 		isGameOver = true;
 		winnerColor = "white";
 	}
+
 }
 
 // 描画処理
@@ -715,7 +718,17 @@ void SceneGame::Render()
 				);
 			}
 		}
+
 	}
+	if (board->isKingInCheck("black") || board->isKingInCheck("white"))
+	{
+		check->Render(rc,
+			500, -200, 0, 800, 500,
+			0,
+			1, 1, 1, 1);
+	}
+
+
 }
 
 // GUI描画
