@@ -153,9 +153,6 @@ void SceneGame::Update(float elapsedTime)
 	}
 	Mouse& mouseCursor = Input::Instance().GetMouse();
 
-
-
-
 	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
 		POINT cursor = mouseCursor.GetPosition();
 
@@ -213,6 +210,25 @@ void SceneGame::Update(float elapsedTime)
 				auto movingPiece = board->getPieceAt(selectedPos);
 				// 取られる駒があれば、その slime を削除
 
+
+				// 駒の移動が成功した後、もしカードが選択されていればここで効果を適用
+				//if (selectedCardId != -1) {
+				//	// 1. カード効果適用
+				//	// targetPos は clicked と同じ
+				//	bool effectSuccess = ApplyCardEffect(selectedCardId, clicked);
+
+				//	if (effectSuccess) {
+				//		// 2. 成功したらクールダウン開始 (破棄)
+				//		isCardInUse = true;
+				//		cardCooldownTimer = CARD_COOLDOWN_TIME;
+				//	}
+
+				//	// 3. 選択解除 (成功/失敗にかかわらず、カードは手札から消えているため)
+				//	selectedCardId = -1;
+
+				//	// ... (ターン切り替えなど) ...
+				//	return;
+				//}
 				auto attacker = board->getPieceAt(selectedPos);
 				auto defender = board->getPieceAt(clicked); // 取られる駒（nullptrの場合もある）
 
@@ -377,9 +393,7 @@ void SceneGame::Update(float elapsedTime)
 					}
 				}
 
-
-
-
+				
 				// 選択を解除し、ターンを切り替える
 				selectedPos = { -1, -1 };
 				legalMoves.clear();
@@ -423,6 +437,86 @@ void SceneGame::Update(float elapsedTime)
 			
 		}
 	}
+
+	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT)
+	{
+		//// --- カードクールダウン処理 ---
+		if (isCardInUse) {
+			cardCooldownTimer -= elapsedTime;
+			if (cardCooldownTimer <= 0.0f) {
+				isCardInUse = false;
+				cardCooldownTimer = 0.0f;
+			}
+		}
+
+		// --- 常に手札の0番目（最も新しく引いたカード）を表示対象とする ---
+		if (cardManager->getHandSize() > 0) {
+			displayHandIndex = 0;
+		}
+		else {
+			displayHandIndex = -1; // 手札が空
+		}
+
+		if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
+			POINT cursor = mouseCursor.GetPosition();
+
+			// --- 1. カード使用判定（画面左下のカードをクリック） ---
+			// 表示対象のカードがあり、クールダウン中でないか
+			if (displayHandIndex != -1 && !isCardInUse) {
+
+				const int CARD_WIDTH = 150;
+				const int CARD_HEIGHT = 200;
+
+				if (cursor.x >= CARD_DISPLAY_X && cursor.x < CARD_DISPLAY_X + CARD_WIDTH &&
+					cursor.y >= CARD_DISPLAY_Y && cursor.y < CARD_DISPLAY_Y + CARD_HEIGHT)
+				{
+					// クリックされたら、その手札インデックスを選択状態にする
+					selectedHandIndex = displayHandIndex;
+
+					// DebugLog("手札のカードID " + std::to_string(cardManager->getCardInHand(selectedHandIndex).effectId) + " を選択しました。");
+
+					return; // カード操作が完了したので、盤面クリック処理に進まない
+				}
+			}
+
+			// --- 2. 盤面クリック処理（既存のロジック） ---
+
+			Position clicked = ScreenToBoard(cursor.x, cursor.y);
+
+			if (clicked.isValid()) {
+
+				// ... (駒の移動処理ロジック: isLegalMove を判定) ...
+
+				// --- 3. カード効果の適用（選択状態の場合） ---
+				if (selectedHandIndex != -1) {
+
+					// CardManagerにカードの使用と破棄を依頼
+					UsedCardInfo usedInfo = cardManager->UseCard(selectedHandIndex);
+
+					// カード使用成功時 (UseCardの内部で hand から削除、isUsedCard = true になっている)
+					if (usedInfo.effectId != -1) {
+
+						// 1. カード効果適用 (ターゲットはクリックされたマス)
+						bool effectSuccess = ApplyCardEffect(usedInfo.effectId, clicked);
+
+						if (effectSuccess) {
+							// 2. 成功したらクールダウン開始
+							isCardInUse = true;
+							cardCooldownTimer = CARD_COOLDOWN_TIME;
+						}
+						// ※ effectSuccess が false でも、カードは破棄済み(UseCard内)のため、クールダウンは開始してもよいが、ここでは成功時のみ開始。
+					}
+
+					// 選択解除
+					selectedHandIndex = -1;
+					// displayHandIndex は Update の冒頭で自動で更新される
+
+					return; // カード使用が完了したので、その後の駒選択ロジックへ進まない
+				}
+			}
+		}
+	}
+
 	
 	MoveData recvMove{};
 	if (network.ReceiveMove(recvMove)) {
@@ -626,7 +720,41 @@ void SceneGame::Render()
 // GUI描画
 void SceneGame::DrawGUI()
 {
-	
+	//// 1. カードがドローされている場合 (手札)
+	//// 手札の0番目があるか、かつクールダウン中でないか
+	//if (displayHandIndex != -1 && !isCardInUse) {
+
+	//	const Card& cardToDisplay = cardManager->getCardInHand(displayHandIndex);
+	//	std::string cardName = cardToDisplay.name;
+
+	//	// カードの枠/背景を描画
+	//	// DrawRect(CARD_DISPLAY_X, CARD_DISPLAY_Y, 150, 200, Color::White);
+
+	//	// カード名を描画
+	//	// DrawText(cardName, CARD_DISPLAY_X + 10, CARD_DISPLAY_Y + 10, Color::Black);
+
+	//	// カードの効果説明を描画
+	//	// DrawText(cardToDisplay.description, CARD_DISPLAY_X + 10, CARD_DISPLAY_Y + 40, Color::DarkGray);
+
+	//	// 選択中の場合は枠の色を変えるなど
+	//	// if (selectedHandIndex == displayHandIndex) {
+	//	//     DrawRectBorder(CARD_DISPLAY_X, CARD_DISPLAY_Y, 150, 200, Color::Yellow);
+	//	// }
+	//}
+
+	//// 2. カード使用中（クールダウン中）の場合 (＝デッキ全体の使用不可状態)
+	//if (isCardInUse) {
+	//	// ロックされていることを示すUI
+	//	float progress = cardCooldownTimer / CARD_COOLDOWN_TIME;
+
+	//	// クールダウンバーの描画 (左下のカード位置にオーバーレイ)
+	//	// DrawRect(CARD_DISPLAY_X, CARD_DISPLAY_Y + 220, 150, 20, Color::DarkRed);
+	//	// DrawRect(CARD_DISPLAY_X, CARD_DISPLAY_Y + 220, 150 * (1.0f - progress), 20, Color::Red);
+
+	//	// ロックされていることを示すテキスト
+	//	// DrawText("カード使用不可 (CD: " + std::to_string((int)ceil(cardCooldownTimer)) + "s)", 
+	//	//          CARD_DISPLAY_X, CARD_DISPLAY_Y + 250, Color::Red);
+	//}
 }
 
 void SceneGame::RemovePieceAt(Position pos)
@@ -828,22 +956,45 @@ void SceneGame::GenerateHealSpots() {
 
 }
 
+//void SceneGame::DrawNewCard(CardManager* cardManager) {
+//	// CardManager (または Card.h に定義された全カードリスト) からランダムにカードIDを選択
+//	// ここでは、効果ID 1から9までをランダムに選ぶと仮定します。
+//	// ID 0 (攻撃) は通常移動に相当するため除外。
+//
+//	if (cardManager->isHandFull()) {
+//		return; // 手札が既に満杯なら何もしない
+//	}
+//
+//	// 1. CardManagerに実際のドロー処理を依頼
+//	cardManager->DrawCard();
+//
+//	// 2. SceneGameの描画用変数に、ドローされたカードの情報を反映
+//	// (手札の最後のカードのIDを取得すると仮定)
+//	if (!cardManager->getHand().empty()) {
+//		const Card& drawnCard = cardManager->getHand().back();
+//		this->drawnCardId = drawnCard.id; // カード構造体から ID を取得
+//	}
+//	else {
+//		this->drawnCardId = -1; // ドローできなかった
+//	}
+//}
+
 void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 {
 	// 発動した効果に応じてゲーム状態を変化させる
 
 	auto targetPiece = board->getPieceAt(effect.targetPos);
-	// Position target = effect.targetPos;
+	 Position target = effect.targetPos;
 
 	switch (effect.sourceEffectId) {
 	case 3: // 悠久の盟約: 自身の駒全体の体力を2回復
 	{
 		 //effect.ownerColor のプレイヤーの全ての駒を探し、2回復させる
-		 /*for (auto piece : pieces) {
-		     if (piece->getColor() == effect.ownerColor) {
+		 for (auto piece : pieces) {
+		     /*if (piece->getColor() == effect.ownerColor) {
 		         piece->heal(2);
-		     }
-		 }*/
+		     }*/
+		 }
 		//std::cout << "悠久の盟約 (ID 3) が発動: " << effect.ownerColor << "側の駒全体を2回復" << std::endl;
 	}
 	break;
@@ -970,7 +1121,7 @@ bool SceneGame::ApplyCardEffect(int effectId, Position targetPos)
 			}
 
 			// 3. 駒の移動を制限
-			//targetPiece->setImmobilized(true);
+			targetPiece->setImmobilized(true);
 
 			// DebugLog(targetPiece->getColor() + " の " + targetPiece->getType() + " に移動制限を適用しました。");
 			return true; // 効果適用成功

@@ -24,6 +24,12 @@ public:
     //コンストラクタ
     CardManager();
 
+    // 手札の枚数を取得
+    size_t getHandSize() const { return hand.size(); }
+
+    // 手札の特定のインデックスにあるカード情報を取得 (読み取り専用)
+    const Card& getCardInHand(size_t index) const { return hand[index]; }
+
     //カードをドロー
     void DrawCard();
 

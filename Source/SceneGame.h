@@ -1,10 +1,10 @@
-#pragma once
+ï»¿#pragma once
 
 #include "System/Mouse.h"
 #include "System/Input.h"
 #include "Piece.h"
 #include "Board.h"
-#include "Card.h" // UsedCardInfo‚Ì‚½‚ß‚É•K—v
+#include "Card.h" // UsedCardInfoã®ãŸã‚ã«å¿…è¦
 #include <vector>
 #include "CameraController.h"
 #include "Scene.h"
@@ -14,26 +14,26 @@
 #include "CardManager.h"
 
 
-// ƒQ[ƒ€ƒV[ƒ“
+// ã‚²ãƒ¼ãƒ ã‚·ãƒ¼ãƒ³
 class SceneGame:public Scene
 {
 public:
 	SceneGame() {};
 	~SceneGame() override {};
 
-	// ‰Šú‰»
+	// åˆæœŸåŒ–
 	void Initialize()override;
 
-	// I—¹‰»
+	// çµ‚äº†åŒ–
 	void Finalize()override;
 
-	// XVˆ—
+	// æ›´æ–°å‡¦ç†
 	void Update(float elapsedTime)override;
 
-	// •`‰æˆ—
+	// æç”»å‡¦ç†
 	void Render() override;
 
-	// GUI•`‰æ
+	// GUIæç”»
 	void DrawGUI()override;
 
 private:
@@ -43,7 +43,7 @@ private:
 	Model* highlightModel = nullptr;
 	Model* healSpotModel = nullptr;
 
-	// ƒ[ƒ‹ƒhÀ•W ¨ ƒXƒNƒŠ[ƒ“À•W•ÏŠ·
+	// ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™ â†’ ã‚¹ã‚¯ãƒªãƒ¼ãƒ³åº§æ¨™å¤‰æ›
 	DirectX::XMFLOAT2 WorldToScreen(const DirectX::XMFLOAT3& worldPos) const;
 
 	std::vector<Piece*> pieces;
@@ -54,50 +54,77 @@ private:
 	Position selectedPos = { -1, -1 };
 	std::vector<Position> legalMoves;
 
-	// “®“I‚È‰ñ•œƒ}ƒX¶¬‚Ì‚½‚ß‚ÌƒJƒEƒ“ƒ^[
+	// CardManagerã¸ã®ãƒã‚¤ãƒ³ã‚¿
+	CardManager* cardManager;
+
+	// --- ã‚«ãƒ¼ãƒ‰è¡¨ç¤º/é¸æŠã‚·ã‚¹ãƒ†ãƒ ç”¨ã®è¿½åŠ ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ ---
+
+	// æç”»ã™ã‚‹æ‰‹æœ­ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ (é€šå¸¸ã€å¸¸ã«æ‰‹æœ­ã®0ç•ªç›®ã‚’è¡¨ç¤ºã™ã‚‹ã¨ä»®å®š)
+	// -1 ã®å ´åˆã€æ‰‹æœ­ã«è¡¨ç¤ºã™ã‚‹ã‚«ãƒ¼ãƒ‰ãŒãªã„
+	int displayHandIndex = 0;
+
+	// ç¾åœ¨é¸æŠä¸­ã®æ‰‹æœ­ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã€‚ã‚«ãƒ¼ãƒ‰ä½¿ç”¨æ™‚ã«ç›¤é¢ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã‚’é¸ã¶ãƒ•ã‚§ãƒ¼ã‚ºã¸ç§»è¡Œ
+	int selectedHandIndex = -1;
+
+	// ã‚«ãƒ¼ãƒ‰ãŒç¾åœ¨ä½¿ç”¨ä¸­ï¼ˆã‚¯ãƒ¼ãƒ«ãƒ€ã‚¦ãƒ³ä¸­ï¼‰ã§ã‚ã‚‹ã‹ã‚’ç¤ºã™ãƒ•ãƒ©ã‚°
+	bool isCardInUse = false;
+
+	// ã‚«ãƒ¼ãƒ‰ä½¿ç”¨å¾Œã®ã‚¯ãƒ¼ãƒ«ãƒ€ã‚¦ãƒ³/ãƒ­ãƒƒã‚¯æ™‚é–“ (ç§’)
+	const float CARD_COOLDOWN_TIME = 1.0f;
+
+	// ã‚¯ãƒ¼ãƒ«ãƒ€ã‚¦ãƒ³æ®‹ã‚Šæ™‚é–“
+	float cardCooldownTimer = 0.0f;
+
+	// ã‚«ãƒ¼ãƒ‰æç”»ä½ç½® (ç”»é¢å·¦ä¸‹ã‚’æƒ³å®š)
+	const int CARD_DISPLAY_X = 50;
+	const int CARD_DISPLAY_Y = 700;
+
+
+	// å‹•çš„ãªå›å¾©ãƒã‚¹ç”Ÿæˆã®ãŸã‚ã®ã‚«ã‚¦ãƒ³ã‚¿ãƒ¼
 	int blackMovedToCommonCount = 0;
 	int whiteMovedToCommonCount = 0;
 
-	// “®“I‚É¶¬‚³‚ê‚½‰ñ•œƒ}ƒX‚ªŠù‚É‘¶İ‚·‚é‚©‚Ç‚¤‚©
+	// å‹•çš„ã«ç”Ÿæˆã•ã‚ŒãŸå›å¾©ãƒã‚¹ãŒæ—¢ã«å­˜åœ¨ã™ã‚‹ã‹ã©ã†ã‹
 	bool isDynamicHealSpotActive = false;
 
-	// ‹ó‚¢‚Ä‚¢‚é‹¤’Êƒ}ƒX‚ğƒ‰ƒ“ƒ_ƒ€‚É’T‚·ŠÖ” (ˆÈ‘Oì¬‚µ‚½‚à‚Ì)
+	// ç©ºã„ã¦ã„ã‚‹å…±é€šãƒã‚¹ã‚’ãƒ©ãƒ³ãƒ€ãƒ ã«æ¢ã™é–¢æ•° (ä»¥å‰ä½œæˆã—ãŸã‚‚ã®)
 	Position FindRandomEmptyCommonSpot() const;
 
 	NetworkManager network;
 	bool isServer = false;
 
-	// ƒQ[ƒ€I—¹ˆ—•Ï”
+	// ã‚²ãƒ¼ãƒ çµ‚äº†å‡¦ç†å¤‰æ•°
 	bool isGameOver = false;
-	std::string winnerColor = ""; // Ÿ—˜‚µ‚½ƒvƒŒƒCƒ„[‚ÌF
+	std::string winnerColor = ""; // å‹åˆ©ã—ãŸãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®è‰²
 
 	void RemovePieceAt(Position pos);
 
 	Position ScreenToBoard(int screenX, int screenY);
 	Piece* FindSlimeAt(Position pos);
 
-	// 8x8‚Ìƒ{[ƒh‚É‘Î‰‚·‚é‰ñ•œƒ}ƒX”z—ñ
+	// 8x8ã®ãƒœãƒ¼ãƒ‰ã«å¯¾å¿œã™ã‚‹å›å¾©ãƒã‚¹é…åˆ—
 	HealSpot healSpots[8][8];
 
-	// ƒ‰ƒ“ƒ_ƒ€‚Å‰ñ•œƒ}ƒX‚ğ¶¬‚·‚éƒƒ\ƒbƒh
+	// ãƒ©ãƒ³ãƒ€ãƒ ã§å›å¾©ãƒã‚¹ã‚’ç”Ÿæˆã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
 	void GenerateHealSpots();
 
-	// CardManager‚ÌƒCƒ“ƒXƒ^ƒ“ƒX (”’‚Æ•)
+	// CardManagerã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ (ç™½ã¨é»’)
 	CardManager blackCardManager;
 	CardManager whiteCardManager;
 
-	// ƒJ[ƒhg—p‚Ì‚½‚ß‚Ìó‘Ô•Ï”
-	
+	// ã‚«ãƒ¼ãƒ‰ä½¿ç”¨ã®ãŸã‚ã®çŠ¶æ…‹å¤‰æ•°
+	// ã‚«ãƒ¼ãƒ‰ã‚’ãƒ‰ãƒ­ãƒ¼ã™ã‚‹é–¢æ•°
+	//void DrawNewCard(CardManager* cardManager);
 
-	// ‘Oƒ^[ƒ“‚Ég—p‚³‚ê‚½ƒJ[ƒh‚Ìî•ñ (‰^–½‚Ì”½“]‚Ég—p)
+	// å‰ã‚¿ãƒ¼ãƒ³ã«ä½¿ç”¨ã•ã‚ŒãŸã‚«ãƒ¼ãƒ‰ã®æƒ…å ± (é‹å‘½ã®åè»¢ã«ä½¿ç”¨)
 	UsedCardInfo lastWhiteUsedCard;
 	UsedCardInfo lastBlackUsedCard;
 
-	// ActiveEffectManager‚ÌXV‚É•K—v‚ÈŠÖ”
+	// ActiveEffectManagerã®æ›´æ–°ã«å¿…è¦ãªé–¢æ•°
 	void ApplyPersistentEffect(const ActiveEffect& effect);
 
 
-	// ƒ^[ƒQƒbƒg‹î‚ª©•ª‚Ì‹î‚©“G‚Ì‹î‚©‚ğ”»’è‚·‚éƒwƒ‹ƒp[ŠÖ”
+	// ã‚¿ãƒ¼ã‚²ãƒƒãƒˆé§’ãŒè‡ªåˆ†ã®é§’ã‹æ•µã®é§’ã‹ã‚’åˆ¤å®šã™ã‚‹ãƒ˜ãƒ«ãƒ‘ãƒ¼é–¢æ•°
 	bool IsTargetPiece(Position pos, const std::string& requiredColor) const;
 
 	bool ApplyCardEffect(int effectId, Position targetPos);
