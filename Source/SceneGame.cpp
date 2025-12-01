@@ -339,15 +339,15 @@ void SceneGame::Update(float elapsedTime)
 					// 1. 1ダメージを与える
 					movingPiece->takeDamage(1);
 
-					// 2. 体力が0になったら死亡とみなし、盤面から削除
-					if (movingPiece->getHealth() <= 0) {
-						// 死亡: 盤面（Board）から駒を削除
-						board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
+// 2. 体力が0になったら死亡とみなし、盤面から削除
+if (movingPiece->getHealth() <= 0) {
+	// 死亡: 盤面（Board）から駒を削除
+	board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
 
-						// 死亡した駒に対応する Slime も描画リストから削除
-						RemovePieceAt(clicked);
-						board->setPieceAt(clicked, nullptr);
-					}
+	// 死亡した駒に対応する Slime も描画リストから削除
+	RemovePieceAt(clicked);
+	board->setPieceAt(clicked, nullptr);
+}
 				}
 
 				// 動的な回復マス生成ロジック
@@ -393,19 +393,19 @@ void SceneGame::Update(float elapsedTime)
 					}
 				}
 
-				
+
 				// 選択を解除し、ターンを切り替える
 				selectedPos = { -1, -1 };
 				legalMoves.clear();
 				// ゲーム終了判定
-					if (!board->isKingPresent("white")) {
-						isGameOver = true;
-						winnerColor = "black";
-					}
-					else if (!board->isKingPresent("black")) {
-						isGameOver = true;
-						winnerColor = "white";
-					}
+				if (!board->isKingPresent("white")) {
+					isGameOver = true;
+					winnerColor = "black";
+				}
+				else if (!board->isKingPresent("black")) {
+					isGameOver = true;
+					winnerColor = "white";
+				}
 
 				// ゲームが終了していなければ、ターンを切り替える
 				if (!isGameOver) {
@@ -434,90 +434,91 @@ void SceneGame::Update(float elapsedTime)
 					legalMoves.clear();
 				}
 			}
-			
+
 		}
 	}
 
-	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT)
 	{
-		//// --- カードクールダウン処理 ---
-		if (isCardInUse) {
-			cardCooldownTimer -= elapsedTime;
-			if (cardCooldownTimer <= 0.0f) {
-				isCardInUse = false;
-				cardCooldownTimer = 0.0f;
-			}
-		}
+		//if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT)
+		//{
+		//	//// --- カードクールダウン処理 ---
+		//	if (isCardInUse) {
+		//		cardCooldownTimer -= elapsedTime;
+		//		if (cardCooldownTimer <= 0.0f) {
+		//			isCardInUse = false;
+		//			cardCooldownTimer = 0.0f;
+		//		}
+		//	}
 
-		// --- 常に手札の0番目（最も新しく引いたカード）を表示対象とする ---
-		if (cardManager->getHandSize() > 0) {
-			displayHandIndex = 0;
-		}
-		else {
-			displayHandIndex = -1; // 手札が空
-		}
+		//	// --- 常に手札の0番目（最も新しく引いたカード）を表示対象とする ---
+		//	if (cardManager->getHandSize() > 0) {
+		//		displayHandIndex = 0;
+		//	}
+		//	else {
+		//		displayHandIndex = -1; // 手札が空
+		//	}
 
-		if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
-			POINT cursor = mouseCursor.GetPosition();
+		//	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
+		//		POINT cursor = mouseCursor.GetPosition();
 
-			// --- 1. カード使用判定（画面左下のカードをクリック） ---
-			// 表示対象のカードがあり、クールダウン中でないか
-			if (displayHandIndex != -1 && !isCardInUse) {
+		//		// --- 1. カード使用判定（画面左下のカードをクリック） ---
+		//		// 表示対象のカードがあり、クールダウン中でないか
+		//		if (displayHandIndex != -1 && !isCardInUse) {
 
-				const int CARD_WIDTH = 150;
-				const int CARD_HEIGHT = 200;
+		//			const int CARD_WIDTH = 150;
+		//			const int CARD_HEIGHT = 200;
 
-				if (cursor.x >= CARD_DISPLAY_X && cursor.x < CARD_DISPLAY_X + CARD_WIDTH &&
-					cursor.y >= CARD_DISPLAY_Y && cursor.y < CARD_DISPLAY_Y + CARD_HEIGHT)
-				{
-					// クリックされたら、その手札インデックスを選択状態にする
-					selectedHandIndex = displayHandIndex;
+		//			if (cursor.x >= CARD_DISPLAY_X && cursor.x < CARD_DISPLAY_X + CARD_WIDTH &&
+		//				cursor.y >= CARD_DISPLAY_Y && cursor.y < CARD_DISPLAY_Y + CARD_HEIGHT)
+		//			{
+		//				// クリックされたら、その手札インデックスを選択状態にする
+		//				selectedHandIndex = displayHandIndex;
 
-					// DebugLog("手札のカードID " + std::to_string(cardManager->getCardInHand(selectedHandIndex).effectId) + " を選択しました。");
+		//				// DebugLog("手札のカードID " + std::to_string(cardManager->getCardInHand(selectedHandIndex).effectId) + " を選択しました。");
 
-					return; // カード操作が完了したので、盤面クリック処理に進まない
-				}
-			}
+		//				return; // カード操作が完了したので、盤面クリック処理に進まない
+		//			}
+		//		}
 
-			// --- 2. 盤面クリック処理（既存のロジック） ---
+		//		// --- 2. 盤面クリック処理（既存のロジック） ---
 
-			Position clicked = ScreenToBoard(cursor.x, cursor.y);
+		//		Position clicked = ScreenToBoard(cursor.x, cursor.y);
 
-			if (clicked.isValid()) {
+		//		if (clicked.isValid()) {
 
-				// ... (駒の移動処理ロジック: isLegalMove を判定) ...
+		//			// ... (駒の移動処理ロジック: isLegalMove を判定) ...
 
-				// --- 3. カード効果の適用（選択状態の場合） ---
-				if (selectedHandIndex != -1) {
+		//			// --- 3. カード効果の適用（選択状態の場合） ---
+		//			if (selectedHandIndex != -1) {
 
-					// CardManagerにカードの使用と破棄を依頼
-					UsedCardInfo usedInfo = cardManager->UseCard(selectedHandIndex);
+		//				// CardManagerにカードの使用と破棄を依頼
+		//				UsedCardInfo usedInfo = cardManager->UseCard(selectedHandIndex);
 
-					// カード使用成功時 (UseCardの内部で hand から削除、isUsedCard = true になっている)
-					if (usedInfo.effectId != -1) {
+		//				// カード使用成功時 (UseCardの内部で hand から削除、isUsedCard = true になっている)
+		//				if (usedInfo.effectId != -1) {
 
-						// 1. カード効果適用 (ターゲットはクリックされたマス)
-						bool effectSuccess = ApplyCardEffect(usedInfo.effectId, clicked);
+		//					// 1. カード効果適用 (ターゲットはクリックされたマス)
+		//					bool effectSuccess = ApplyCardEffect(usedInfo.effectId, clicked);
 
-						if (effectSuccess) {
-							// 2. 成功したらクールダウン開始
-							isCardInUse = true;
-							cardCooldownTimer = CARD_COOLDOWN_TIME;
-						}
-						// ※ effectSuccess が false でも、カードは破棄済み(UseCard内)のため、クールダウンは開始してもよいが、ここでは成功時のみ開始。
-					}
+		//					if (effectSuccess) {
+		//						// 2. 成功したらクールダウン開始
+		//						isCardInUse = true;
+		//						cardCooldownTimer = CARD_COOLDOWN_TIME;
+		//					}
+		//					// ※ effectSuccess が false でも、カードは破棄済み(UseCard内)のため、クールダウンは開始してもよいが、ここでは成功時のみ開始。
+		//				}
 
-					// 選択解除
-					selectedHandIndex = -1;
-					// displayHandIndex は Update の冒頭で自動で更新される
+		//				// 選択解除
+		//				selectedHandIndex = -1;
+		//				// displayHandIndex は Update の冒頭で自動で更新される
 
-					return; // カード使用が完了したので、その後の駒選択ロジックへ進まない
-				}
-			}
-		}
+		//				return; // カード使用が完了したので、その後の駒選択ロジックへ進まない
+		//			}
+		//		}
+		//	}
+		//}
 	}
 
-	
 	MoveData recvMove{};
 	if (network.ReceiveMove(recvMove)) {
 		Position from{ recvMove.fromX, recvMove.fromY };
