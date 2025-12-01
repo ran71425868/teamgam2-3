@@ -132,4 +132,7 @@ private:
 
 	ChessAI* ai = nullptr;
 	Sprite* check = nullptr;
+
+	int timer = 0;
+	int cooldown = 2;
 };

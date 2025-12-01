@@ -161,6 +161,7 @@ void SceneGame::Update(float elapsedTime)
 		if (board->getCurrentTurn() == "black")
 			return;
 
+		timer = 0;
 		// 1. ボード座標への変換とボード外チェック
 		Position clicked = ScreenToBoard(cursor.x, cursor.y);
 		if (!board->isInsideBoard(clicked)) return; // ボード外なら何もしない
@@ -556,9 +557,16 @@ if (movingPiece->getHealth() <= 0) {
 	//エフェクトマネージャー更新処理
 	EffectManager::Instance().Update(elapsedTime);
 
-	if (!isGameOver) {
+	if (board->getCurrentTurn() == "black")
+	{
+		timer++;
+	}
+
+
+	if (!isGameOver&&timer>=120) {
 		ai->Update(board);
 		blackMovedToCommonCount++;
+		
 	}
 
 	if (!board->isKingPresent("white")) {
