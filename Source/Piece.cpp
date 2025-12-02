@@ -16,7 +16,6 @@ Piece::Piece(std::string c, Position boardPos, std::string pType) : color(c), bo
     black_knight = new Model("Data/Model/Chesspiece/knight_black.mdl");
     black_queen = new Model("Data/Model/Chesspiece/queen_black.mdl");
     black_rook = new Model("Data/Model/Chesspiece/rook_black.mdl");
-
     //ボード
     black_bord = new Model("Data/Model/Stage/black_bord.mdl");
     white_bord = new Model("Data/Model/Stage/white_bord.mdl");
@@ -106,7 +105,7 @@ void Piece::Render(const RenderContext& rc, ModelRenderer* renderer) {
     }
 
     // ---  体力バーの描画ロジック (選択時のみ) ---
-    if (isSelected) {
+    if (!isSelected) {
 
         // 1. 体力比率を計算 (0.0 から 1.0)
         float healthRatio = (float)currentHealth / maxHealth;
@@ -140,31 +139,10 @@ void Piece::Render(const RenderContext& rc, ModelRenderer* renderer) {
                 boardPosition.y * 100.0f
             )
         );
-        // renderer->Render(rc, fillTransform, healthBarModel, ShaderId::UnlitGreen);
+        //renderer->Render(rc, fillTransform, healthBarModel, ShaderId::UnlitGreen);
 
         // 暫定的な描画: モデルが未定義の場合、デバッグとして四角を描画するなどしてください。
         // モデルを描画する場合は、上記のコメントアウトを外し、適切な Model* と ShaderId を設定してください。
-    }
-
-    for (int i = 0; i <= 7; i++)
-    {
-        for (int j = 0; j <= 7; j++)
-        {
-            DirectX::XMFLOAT4X4 bord_transform;
-            DirectX::XMStoreFloat4x4(&bord_transform,
-                DirectX::XMMatrixTranslation(
-                    i * 100.0f, 
-                    0.0f,
-                    j * 100.0f
-                )
-            );
-
-            /*if ((static_cast<int>(i) + static_cast<int>(j)) % 2 == 1)
-                renderer->Render(rc, bord_transform, white_bord, ShaderId::Lambert);
-            else
-                renderer->Render(rc, bord_transform, black_bord, ShaderId::Lambert);*/
- 
-        }
     }
 
    

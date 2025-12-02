@@ -39,6 +39,7 @@ private:
     Model* black_bord = nullptr;
     Model* white_bord = nullptr;
 
+
     std::string color;
     Position boardPosition; // 盤面上の座標（0〜7）
     std::string pieceType;
@@ -56,5 +57,7 @@ private:
     float animTime = 0.0f;
     float animDuration = 0.0f;     
     bool isMoving = false;
+
+    int board_count = 0;
 
 };
