@@ -14,6 +14,13 @@
 #include "ActiveEffectManager.h"
 #include "CardManager.h"
 
+enum class CardEffectState
+{
+	NONE,                   // カード効果処理なし
+	DIMENSIONAL_GATE_SELECT_PIECE, // 次元の扉: ワープ元駒の選択待ち
+	DIMENSIONAL_GATE_SELECT_TARGET, // 次元の扉: ワープ先マスの選択待ち
+	// ... 他のカード効果のフェーズ ...
+};
 
 // ゲームシーン
 class SceneGame:public Scene
@@ -55,32 +62,33 @@ private:
 	Position selectedPos = { -1, -1 };
 	std::vector<Position> legalMoves;
 
-	// CardManagerへのポインタ
-	CardManager* cardManager;
+	CardManager* cardManager; // CardManagerへのポインタ (Initializeで設定が必要)
 
 	// --- カード表示/選択システム用の追加フィールド ---
 
-	// 描画する手札のインデックス (通常、常に手札の0番目を表示すると仮定)
-	// -1 の場合、手札に表示するカードがない
-	int displayHandIndex = 0;
+	// 現在選択中の手札のインデックス (0, 1, 2)。-1 は未選択を意味するが、
+	// ドローされている場合は常にどれかを選択状態にするのが自然なため、0〜2の範囲
+	int selectedHandIndex = 0;
 
-	// 現在選択中の手札のインデックス。カード使用時に盤面ターゲットを選ぶフェーズへ移行
-	int selectedHandIndex = -1;
-
-	// カードが現在使用中（クールダウン中）であるかを示すフラグ
+	// カードが使用中（クールダウン中）であるかを示すフラグ (前の回答から流用)
 	bool isCardInUse = false;
 
-	// カード使用後のクールダウン/ロック時間 (秒)
+	// カード使用後のクールダウン/ロック時間 (秒) (前の回答から流用)
 	const float CARD_COOLDOWN_TIME = 1.0f;
 
-	// クールダウン残り時間
+	// クールダウン残り時間 (前の回答から流用)
 	float cardCooldownTimer = 0.0f;
 
-	// カード描画位置 (画面左下を想定)
-	const int CARD_DISPLAY_X = 50;
-	const int CARD_DISPLAY_Y = 700;
+	// カード描画開始位置 (画面左下を想定)
+	const int CARD_START_X = 50;
+	const int CARD_START_Y = 750;
+	const int CARD_WIDTH = 100;
+	const int CARD_HEIGHT = 140;
+	const int CARD_SPACING = 15; // カード間の間隔
 
-
+	// --- テクスチャ・モデル ---
+	Sprite* cardSprite = nullptr;// 仮カード画像 (赤色の画像) 用のテクスチャ
+	
 	// 動的な回復マス生成のためのカウンター
 	int blackMovedToCommonCount = 0;
 	int whiteMovedToCommonCount = 0;
@@ -114,8 +122,9 @@ private:
 	CardManager whiteCardManager;
 
 	// カード使用のための状態変数
-	// カードをドローする関数
-	//void DrawNewCard(CardManager* cardManager);
+	CardEffectState currentCardEffectState = CardEffectState::NONE;
+	int selectedCardEffectId = -1; // 現在処理中のカードの効果ID
+	Piece* selectedPieceForEffect = nullptr; // カード効果の対象として選択された駒
 
 	// 前ターンに使用されたカードの情報 (運命の反転に使用)
 	UsedCardInfo lastWhiteUsedCard;

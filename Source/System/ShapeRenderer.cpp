@@ -443,6 +443,56 @@ void ShapeRenderer::DrawRect(
 	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 }
 
+void ShapeRenderer::DrawRectBorder(
+	const RenderContext& rc,
+	float dx, float dy, 
+	float dw, float dh, 
+	DirectX::XMFLOAT4 color, 
+	float thickness)
+{
+	// 枠線を描画するため、4つの細い矩形(DrawRect) を使用する。
+
+		// 1. 上側の線
+	DrawRect(
+		rc,                 // ★RenderContextを渡す
+		dx,                 // X座標 (左上)
+		dy,                 // Y座標 (左上)
+		dw,                 // 幅
+		thickness,          // 高さ
+		color
+	);
+
+	// 2. 下側の線
+	DrawRect(
+		rc,                 // ★RenderContextを渡す
+		dx,                 // X座標 (左上)
+		dy + dh - thickness, // Y座標 (下端から太さ分上に移動)
+		dw,                 // 幅
+		thickness,          // 高さ
+		color
+	);
+
+	// 3. 左側の線
+	DrawRect(
+		rc,                 // ★RenderContextを渡す
+		dx,                 // X座標 (左上)
+		dy + thickness,     // Y座標 (上側の線の下端から開始)
+		thickness,          // 幅 (太さ)
+		dh - thickness * 2, // 高さ (上下の線が占有する部分を除外)
+		color
+	);
+
+	// 4. 右側の線
+	DrawRect(
+		rc,                 // ★RenderContextを渡す
+		dx + dw - thickness, // X座標 (右端から太さ分左に移動)
+		dy + thickness,     // Y座標 (上側の線の下端から開始)
+		thickness,          // 幅 (太さ)
+		dh - thickness * 2, // 高さ (上下の線が占有する部分を除外)
+		color
+	);
+}
+
 // 描画実行
 void ShapeRenderer::Render(const RenderContext& rc, const Mesh& mesh, const DirectX::XMFLOAT4X4& transform, const DirectX::XMFLOAT4& color) const
 {

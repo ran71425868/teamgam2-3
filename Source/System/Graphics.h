@@ -8,6 +8,13 @@
 #include "ShapeRenderer.h"
 #include "ModelRenderer.h"
 
+//struct RenderContext
+//{
+//	ID3D11DeviceContext* deviceContext;
+//	RenderState* renderState;
+//	// 必要であれば、その他のコンテキスト情報もここに追加
+//};
+
 // グラフィックス
 class Graphics
 {
