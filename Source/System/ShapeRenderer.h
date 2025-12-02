@@ -49,6 +49,23 @@ public:
 		float x, float y, float w, float h,
 		const DirectX::XMFLOAT4& color) const;
 
+	/**
+	 * @brief ‹éŒ`‚Ì˜gü‚ğ•`‰æ‚µ‚Ü‚·B
+	 * @param dx •`‰æ‹éŒ`‚Ì¶ãXÀ•W
+	 * @param dy •`‰æ‹éŒ`‚Ì¶ãYÀ•W
+	 * @param dw •`‰æ‹éŒ`‚Ì•
+	 * @param dh •`‰æ‹éŒ`‚Ì‚‚³
+	 * @param color ˜gü‚ÌF (RGBA)
+	 * @param thickness ˜gü‚Ì‘¾‚³
+	 */
+	void DrawRectBorder(
+		const RenderContext& rc,
+		float dx, float dy,
+		float dw, float dh,
+		DirectX::XMFLOAT4 color,
+		float thickness
+	);
+
 private:
 	struct Mesh
 	{

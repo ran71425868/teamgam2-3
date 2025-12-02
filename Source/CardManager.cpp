@@ -42,6 +42,13 @@ CardManager::CardManager()
 
 void CardManager::DrawCard()
 {
+
+    // ★修正点: 手札が満杯の場合はドローしない
+    if (isHandFull())
+    {
+        return;
+    }
+
     if (deck.empty())
     {
         // 山札が空の場合は、手札を捨ててシャッフルし、新たな山札として再利用するロジックを実装可能。

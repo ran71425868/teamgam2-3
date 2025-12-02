@@ -70,6 +70,13 @@ void SceneGame::Initialize()
 	//else
 		/*network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);*/
 
+	// CardManagerの初期化 (SceneGame::cardManagerがポインタと仮定)
+	cardManager = new CardManager();
+
+	// 仮カード画像テクスチャのロード (適切なロード関数を使用してください)
+	cardSprite = new Sprite("Data/Sprite/仮カード画像.png");
+
+
 	//カメラ初期設定
 	Graphics& graphics = Graphics::Instance();
 	Camera& camera = Camera::Instance();
@@ -130,6 +137,16 @@ void SceneGame::Finalize()
 		board = nullptr;
 	}
 
+	if (cardManager != nullptr) {
+		delete cardManager;
+		cardManager = nullptr;
+	}
+
+	/*if (cardSprite != nullptr) {
+		delete cardSprite;
+		cardSprite = nullptr;
+	}*/
+
 	for (auto p : pieces) delete p;
 	pieces.clear();
 
@@ -153,7 +170,100 @@ void SceneGame::Update(float elapsedTime)
 			SceneManager::Instance().ChangeScene(new SceneBlackResult);
 		return;
 	}
+
+	// --- カードクールダウン処理 ---
+	if (isCardInUse) {
+		cardCooldownTimer -= elapsedTime;
+		if (cardCooldownTimer <= 0.0f) {
+			isCardInUse = false;
+			cardCooldownTimer = 0.0f;
+		}
+	}
+
 	Mouse& mouseCursor = Input::Instance().GetMouse();
+	GamePad& gamePad = Input::Instance().GetGamePad(); 
+
+	// --- キーボード入力によるカード選択/決定 ---
+	if (!isCardInUse && cardManager->getHandSize() > 0) {
+		size_t handSize = cardManager->getHandSize();
+
+		// Aキー (左へ選択移動)
+		if (gamePad.GetButtonDown() & GamePad::BTN_LEFT) {
+			selectedHandIndex = (selectedHandIndex > 0) ? selectedHandIndex - 1 : 0;
+		}
+
+		// Dキー (右へ選択移動)
+		if (gamePad.GetButtonDown() & GamePad::BTN_RIGHT) {
+			selectedHandIndex = (selectedHandIndex < handSize - 1) ? selectedHandIndex + 1 : (int)handSize - 1;
+		}
+
+		// Spaceキー (カード決定・使用開始)
+		//if (gamePad.GetButtonDown() & GamePad::BTN_X) {
+			// 決定した手札インデックスを保持し、ターゲット選択フェーズへ移行
+			// 注意: selectedHandIndex は既に 0〜2 の範囲で有効なインデックスのはず
+
+			// ターン中のカード使用チェック (CardManager::isUsedCard もチェックする必要がある)
+			//if (!cardManager->isUsedCard) {
+			//	// ここでは selectedHandIndex をそのまま保持し、盤面クリックで効果発動させる
+			//	// selectedHandIndex が -1 ではない状態が、ターゲット選択フェーズを示す
+			//}
+
+		if (mouseCursor.GetButtonDown() & Mouse::BTN_RIGHT)
+		{
+			POINT cardcursor = mouseCursor.GetPosition();
+
+			// --- 1. 盤面クリック座標の取得 ---
+			Position cardclicked = ScreenToBoard(cardcursor.x, cardcursor.y);
+
+			// --- 2. カード効果の適用（Spaceキーで決定済みの場合） ---
+			// selectedHandIndex が 0以上の値で固定されている = ターゲット選択フェーズ
+			if (selectedHandIndex != -1) {
+
+				// CardManagerにカードの使用と破棄を依頼
+				// ※ CardManager::UseCardは手札から削除するため、インデックスは一度しか使えない
+				UsedCardInfo usedInfo = cardManager->UseCard(selectedHandIndex);
+
+				// カード使用成功時 (effectId != -1)
+				if (usedInfo.effectId != -1) {
+
+					// 1. カード効果適用 (ターゲットはクリックされたマス)
+					bool effectSuccess = ApplyCardEffect(usedInfo.effectId, cardclicked);
+
+					if (effectSuccess) {
+						// 2. 成功したらクールダウン開始 (次のターンまで使用不可)
+						isCardInUse = true;
+						cardCooldownTimer = CARD_COOLDOWN_TIME;
+					}
+				}
+
+				// ターゲット選択フェーズを終了
+				selectedHandIndex = -1;
+				// Space決定後のクリックはカード使用に専念させるため、ここでリターン
+				return;
+			}
+
+
+		}
+	}
+
+	// --- カード使用後、クールダウンが終了した場合 ---
+	if (!isCardInUse && cardCooldownTimer > 0.0f) {
+		// カード使用後のクールダウンが終了したが、ターンはまだ続行
+		// ここでは特に何もしない
+	}
+
+	// --- プレイヤーの駒移動が完了し、ターンを終了する判定箇所 ---
+	if (board->getCurrentTurn() == "black") {
+
+		// 1. CardManagerの状態をリセットし、1枚ドロー
+		cardManager->StartTurn();
+
+		// 2. ターン切り替え
+		// SwitchTurn(); 
+
+		// 3. プレイヤー側の場合、選択中のカードをリセット（念のため）
+		selectedHandIndex = 0;
+	}
 
 	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
 		POINT cursor = mouseCursor.GetPosition();
@@ -342,15 +452,15 @@ void SceneGame::Update(float elapsedTime)
 					// 1. 1ダメージを与える
 					movingPiece->takeDamage(1);
 
-// 2. 体力が0になったら死亡とみなし、盤面から削除
-if (movingPiece->getHealth() <= 0) {
-	// 死亡: 盤面（Board）から駒を削除
-	board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
+					// 2. 体力が0になったら死亡とみなし、盤面から削除
+					if (movingPiece->getHealth() <= 0) {
+						// 死亡: 盤面（Board）から駒を削除
+						board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
 
-	// 死亡した駒に対応する Slime も描画リストから削除
-	RemovePieceAt(clicked);
-	board->setPieceAt(clicked, nullptr);
-}
+						// 死亡した駒に対応する Slime も描画リストから削除
+						RemovePieceAt(clicked);
+						board->setPieceAt(clicked, nullptr);
+					}
 				}
 
 				// 動的な回復マス生成ロジック
@@ -439,87 +549,6 @@ if (movingPiece->getHealth() <= 0) {
 			}
 
 		}
-	}
-
-	{
-		//if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT)
-		//{
-		//	//// --- カードクールダウン処理 ---
-		//	if (isCardInUse) {
-		//		cardCooldownTimer -= elapsedTime;
-		//		if (cardCooldownTimer <= 0.0f) {
-		//			isCardInUse = false;
-		//			cardCooldownTimer = 0.0f;
-		//		}
-		//	}
-
-		//	// --- 常に手札の0番目（最も新しく引いたカード）を表示対象とする ---
-		//	if (cardManager->getHandSize() > 0) {
-		//		displayHandIndex = 0;
-		//	}
-		//	else {
-		//		displayHandIndex = -1; // 手札が空
-		//	}
-
-		//	if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
-		//		POINT cursor = mouseCursor.GetPosition();
-
-		//		// --- 1. カード使用判定（画面左下のカードをクリック） ---
-		//		// 表示対象のカードがあり、クールダウン中でないか
-		//		if (displayHandIndex != -1 && !isCardInUse) {
-
-		//			const int CARD_WIDTH = 150;
-		//			const int CARD_HEIGHT = 200;
-
-		//			if (cursor.x >= CARD_DISPLAY_X && cursor.x < CARD_DISPLAY_X + CARD_WIDTH &&
-		//				cursor.y >= CARD_DISPLAY_Y && cursor.y < CARD_DISPLAY_Y + CARD_HEIGHT)
-		//			{
-		//				// クリックされたら、その手札インデックスを選択状態にする
-		//				selectedHandIndex = displayHandIndex;
-
-		//				// DebugLog("手札のカードID " + std::to_string(cardManager->getCardInHand(selectedHandIndex).effectId) + " を選択しました。");
-
-		//				return; // カード操作が完了したので、盤面クリック処理に進まない
-		//			}
-		//		}
-
-		//		// --- 2. 盤面クリック処理（既存のロジック） ---
-
-		//		Position clicked = ScreenToBoard(cursor.x, cursor.y);
-
-		//		if (clicked.isValid()) {
-
-		//			// ... (駒の移動処理ロジック: isLegalMove を判定) ...
-
-		//			// --- 3. カード効果の適用（選択状態の場合） ---
-		//			if (selectedHandIndex != -1) {
-
-		//				// CardManagerにカードの使用と破棄を依頼
-		//				UsedCardInfo usedInfo = cardManager->UseCard(selectedHandIndex);
-
-		//				// カード使用成功時 (UseCardの内部で hand から削除、isUsedCard = true になっている)
-		//				if (usedInfo.effectId != -1) {
-
-		//					// 1. カード効果適用 (ターゲットはクリックされたマス)
-		//					bool effectSuccess = ApplyCardEffect(usedInfo.effectId, clicked);
-
-		//					if (effectSuccess) {
-		//						// 2. 成功したらクールダウン開始
-		//						isCardInUse = true;
-		//						cardCooldownTimer = CARD_COOLDOWN_TIME;
-		//					}
-		//					// ※ effectSuccess が false でも、カードは破棄済み(UseCard内)のため、クールダウンは開始してもよいが、ここでは成功時のみ開始。
-		//				}
-
-		//				// 選択解除
-		//				selectedHandIndex = -1;
-		//				// displayHandIndex は Update の冒頭で自動で更新される
-
-		//				return; // カード使用が完了したので、その後の駒選択ロジックへ進まない
-		//			}
-		//		}
-		//	}
-		//}
 	}
 
 	MoveData recvMove{};
@@ -740,41 +769,82 @@ void SceneGame::Render()
 // GUI描画
 void SceneGame::DrawGUI()
 {
-	//// 1. カードがドローされている場合 (手札)
-	//// 手札の0番目があるか、かつクールダウン中でないか
-	//if (displayHandIndex != -1 && !isCardInUse) {
+	// Graphicsインスタンスを取得
+	Graphics& graphics = Graphics::Instance();
 
-	//	const Card& cardToDisplay = cardManager->getCardInHand(displayHandIndex);
-	//	std::string cardName = cardToDisplay.name;
+	// 描画に必要なレンダラーとコンテキスト情報を取得/作成
+	ShapeRenderer* shapeRenderer = graphics.GetShapeRenderer();
 
-	//	// カードの枠/背景を描画
-	//	// DrawRect(CARD_DISPLAY_X, CARD_DISPLAY_Y, 150, 200, Color::White);
+	// ★RenderContextを作成
+	RenderContext rc = {
+		graphics.GetDeviceContext(), // ID3D11DeviceContext* を取得
+		graphics.GetRenderState()    // RenderState* を取得
+	};
 
-	//	// カード名を描画
-	//	// DrawText(cardName, CARD_DISPLAY_X + 10, CARD_DISPLAY_Y + 10, Color::Black);
+	// --- 0. 選択中のカードの効果説明文の描画 ---
+	size_t handSize = cardManager->getHandSize();
+	// カードが選択されており、かつカードが使用中でない場合
+	if (!isCardInUse && handSize > 0 && selectedHandIndex != -1) {
 
-	//	// カードの効果説明を描画
-	//	// DrawText(cardToDisplay.description, CARD_DISPLAY_X + 10, CARD_DISPLAY_Y + 40, Color::DarkGray);
+		// 選択中のカード情報を取得
+		const Card& selectedCard = cardManager->getCardInHand(selectedHandIndex);
 
-	//	// 選択中の場合は枠の色を変えるなど
-	//	// if (selectedHandIndex == displayHandIndex) {
-	//	//     DrawRectBorder(CARD_DISPLAY_X, CARD_DISPLAY_Y, 150, 200, Color::Yellow);
-	//	// }
-	//}
+		// ★修正点: 描画位置を画面の左上隅に変更 (X=50, Y=50 を想定)
+		float textX = 50.0f;
+		float textY = 50.0f;
 
-	//// 2. カード使用中（クールダウン中）の場合 (＝デッキ全体の使用不可状態)
-	//if (isCardInUse) {
-	//	// ロックされていることを示すUI
-	//	float progress = cardCooldownTimer / CARD_COOLDOWN_TIME;
+		// 説明文の背景として黒い矩形を描画 (読みやすさのため)
+		// カード効果テキスト全体を覆うように、幅を広めに設定
+		shapeRenderer->DrawRect(
+			rc,
+			textX - 10,  // X座標を少しずらしてパディング
+			textY - 10,  // Y座標を少しずらしてパディング
+			400.0f,      // 説明文の最大幅を仮定 (必要に応じて調整してください)
+			600.0f,      // 高さ (複数行のテキストを考慮して大きく設定)
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.7f) // 黒、半透明
+		);
 
-	//	// クールダウンバーの描画 (左下のカード位置にオーバーレイ)
-	//	// DrawRect(CARD_DISPLAY_X, CARD_DISPLAY_Y + 220, 150, 20, Color::DarkRed);
-	//	// DrawRect(CARD_DISPLAY_X, CARD_DISPLAY_Y + 220, 150 * (1.0f - progress), 20, Color::Red);
+		// ここにテキスト描画関数を挿入してください
+		// TextRenderer->DrawText("カード名: " + selectedCard.name, textX, textY, Color::White);
+		// TextRenderer->DrawText("効果: " + selectedCard.description, textX, textY + 30, Color::White);
+	}
 
-	//	// ロックされていることを示すテキスト
-	//	// DrawText("カード使用不可 (CD: " + std::to_string((int)ceil(cardCooldownTimer)) + "s)", 
-	//	//          CARD_DISPLAY_X, CARD_DISPLAY_Y + 250, Color::Red);
-	//}
+	// --- 1. 手札の描画 ---
+
+	for (int i = 0; i < handSize; ++i) {
+
+		// カードの描画位置を計算 (横並び)
+		int cardX = CARD_START_X + (CARD_WIDTH + CARD_SPACING) * i;
+		int cardY = CARD_START_Y;
+
+		// 現在の手札インデックスのカード情報を取得
+		const Card& card = cardManager->getCardInHand(i);
+
+		// --- A. カードの描画 (Sprite::Renderを使用) ---
+		if (cardSprite != nullptr) {
+			cardSprite->Render(
+				rc, // ★作成したRenderContextを使用
+				(float)cardX, (float)cardY, // dx, dy
+				0.0f,                       // dz
+				(float)CARD_WIDTH, (float)CARD_HEIGHT, // dw, dh
+				0.0f,                       // angle
+				1.0f, 1.0f, 1.0f, 1.0f      // r, g, b, a
+			);
+		}
+
+		// --- B. 選択中のハイライト描画 ---
+		if (!isCardInUse && i == selectedHandIndex) {
+			// 選択中のカードの周囲に枠を描画
+			shapeRenderer->DrawRectBorder(rc,cardX, cardY, CARD_WIDTH, CARD_HEIGHT,
+				DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 5.0f);
+
+				
+		}
+
+		// --- C. カード名とIDのテキスト描画 --- 
+		// DrawText("ID:" + std::to_string(card.effectId), cardX + 10, cardY + 40, Color::Black);
+	}
+	
 }
 
 void SceneGame::RemovePieceAt(Position pos)
@@ -975,29 +1045,6 @@ void SceneGame::GenerateHealSpots() {
 	}
 
 }
-
-//void SceneGame::DrawNewCard(CardManager* cardManager) {
-//	// CardManager (または Card.h に定義された全カードリスト) からランダムにカードIDを選択
-//	// ここでは、効果ID 1から9までをランダムに選ぶと仮定します。
-//	// ID 0 (攻撃) は通常移動に相当するため除外。
-//
-//	if (cardManager->isHandFull()) {
-//		return; // 手札が既に満杯なら何もしない
-//	}
-//
-//	// 1. CardManagerに実際のドロー処理を依頼
-//	cardManager->DrawCard();
-//
-//	// 2. SceneGameの描画用変数に、ドローされたカードの情報を反映
-//	// (手札の最後のカードのIDを取得すると仮定)
-//	if (!cardManager->getHand().empty()) {
-//		const Card& drawnCard = cardManager->getHand().back();
-//		this->drawnCardId = drawnCard.id; // カード構造体から ID を取得
-//	}
-//	else {
-//		this->drawnCardId = -1; // ドローできなかった
-//	}
-//}
 
 void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 {

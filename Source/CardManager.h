@@ -13,6 +13,9 @@ private:
     bool isUsedCard;// このターンカードを使ったか
     std::mt19937 generator; // 乱数生成器の宣言
 
+    // ★追加: 手札の最大枚数
+    const size_t MAX_HAND_SIZE = 3;
+
 public:
 
     //手札を参照
@@ -29,6 +32,9 @@ public:
 
     // 手札の特定のインデックスにあるカード情報を取得 (読み取り専用)
     const Card& getCardInHand(size_t index) const { return hand[index]; }
+
+    // ★追加: 手札が最大枚数に達しているかチェック
+    bool isHandFull() const { return hand.size() >= MAX_HAND_SIZE; }
 
     //カードをドロー
     void DrawCard();
