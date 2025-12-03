@@ -195,6 +195,9 @@
     <ClCompile Include="Source\SceneBlackResult.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Source\SceneTutorial.cpp">
+      <Filter>Source\ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External\imgui-docking\imconfig.h">
@@ -378,6 +381,9 @@
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\SceneBlackResult.h">
+      <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SceneTutorial.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
   </ItemGroup>
