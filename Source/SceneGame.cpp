@@ -625,7 +625,7 @@ void SceneGame::Render()
 
 	ModelRenderer* renderer = graphics.GetModelRenderer(); // ←環境に応じて取得方法を調整
 
-	board->Render(rc, renderer);
+	
 
 	//カメラパラメータ設定
 	Camera& camera = Camera::Instance();
@@ -635,6 +635,8 @@ void SceneGame::Render()
 	// 3Dモデル描画
 	{
 		for (auto p : pieces) p->Render(rc, renderer);
+
+		board->Render(rc, renderer);
 
 		// 選択された駒があり、合法手リストが空でなければハイライトを描画
 		if (selectedPos.x != -1 && !legalMoves.empty()) {
