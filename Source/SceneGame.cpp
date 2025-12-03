@@ -142,10 +142,10 @@ void SceneGame::Finalize()
 		cardManager = nullptr;
 	}
 
-	/*if (cardSprite != nullptr) {
+	if (cardSprite != nullptr) {
 		delete cardSprite;
 		cardSprite = nullptr;
-	}*/
+	}
 
 	for (auto p : pieces) delete p;
 	pieces.clear();
@@ -242,7 +242,7 @@ void SceneGame::Update(float elapsedTime)
 				return;
 			}
 
-
+			
 		}
 	}
 
