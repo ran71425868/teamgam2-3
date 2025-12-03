@@ -624,10 +624,8 @@ void SceneGame::Render()
 	rc.renderState = graphics.GetRenderState();
 
 	ModelRenderer* renderer = graphics.GetModelRenderer(); // ←環境に応じて取得方法を調整
-	/*stage->Render(rc, renderer);
-	for (auto p : pieces) p->Render(rc, renderer);*/
 
-	
+	board->Render(rc, renderer);
 
 	//カメラパラメータ設定
 	Camera& camera = Camera::Instance();

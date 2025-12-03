@@ -2,6 +2,8 @@
 #include <memory>
 #include <vector>
 #include "ChessPiece.h"
+#include "System/Model.h"
+#include "System/ModelRenderer.h"
 
 enum class HealType {
     NONE,       // 回復マスではない
@@ -21,7 +23,8 @@ private:
     std::vector<std::vector<std::shared_ptr<ChessPiece>>> grid;
     std::string currentTurn; // "white" or "black"
 
-
+    Model* black_bord = nullptr;
+    Model* white_bord = nullptr;
 public:
     Board();
     Board::Board(const Board& other) {
@@ -68,5 +71,8 @@ public:
 
     // ピン判定用
     void filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& moves) const;
+
+
+    void Render(const RenderContext& rc, ModelRenderer* renderer);
 
 };

@@ -11,6 +11,9 @@
 Board::Board() {
     grid.resize(8, std::vector<std::shared_ptr<ChessPiece>>(8, nullptr));
     currentTurn = "white";
+
+    black_bord = new Model("Data/Model/Stage/black_bord.mdl");
+    white_bord = new Model("Data/Model/Stage/white_bord.mdl");
 }
 
 void Board::initialize() {
@@ -254,4 +257,29 @@ void Board::filterPinnedMoves(const ChessPiece& piece, std::vector<Position>& mo
     }
 
     moves = legal;
+}
+
+void Board::Render(const RenderContext& rc, ModelRenderer* renderer)
+{
+    for (int i = 0; i <= 7; i++)
+    {
+        for (int j = 0; j <= 7; j++)
+        {
+            DirectX::XMFLOAT4X4 bord_transform;
+            DirectX::XMStoreFloat4x4(&bord_transform,
+                DirectX::XMMatrixTranslation(
+                    i * 100.0f,
+                    0.0f,
+                    j * 100.0f
+                )
+            );
+
+
+            if ((static_cast<int>(i) + static_cast<int>(j)) % 2 == 1)
+                renderer->Render(rc, bord_transform, white_bord, ShaderId::Lambert);
+            else
+                renderer->Render(rc, bord_transform, black_bord, ShaderId::Lambert);
+
+        }
+    }
 }
