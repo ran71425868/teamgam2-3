@@ -52,6 +52,7 @@ public:
         }
     }
     void initialize(); // ‰Šú”z’u
+    void tutorial();
     void printBoard() const;
     std::shared_ptr<ChessPiece> getPieceAt(Position pos) const;
     void setPieceAt(Position pos, std::shared_ptr<ChessPiece> piece);

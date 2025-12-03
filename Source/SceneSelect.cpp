@@ -5,7 +5,7 @@
 #include "SceneMultiGame.h"
 #include "SceneManager.h"
 #include "SceneLoading.h"
-
+#include "SceneTutorial.h"
 //初期化
 void SceneSelect::Initialize()
 {
@@ -51,8 +51,8 @@ void SceneSelect::Update(float elapsedTime)
 		Mouse::BTN_LEFT;
 
 	//長方形の描画位置
-	/*DirectX::XMFLOAT2 tutorialleft = { 1560,1560 };
-	DirectX::XMFLOAT2 tutorialright = { 1660,640 };*/
+	DirectX::XMFLOAT2 tutorialleft = { 200,450 };
+	DirectX::XMFLOAT2 tutorialright = { 400,600 };
 
 	DirectX::XMFLOAT2 stageleft = { 800,450 };
 	DirectX::XMFLOAT2 stageright = { 1000,600 };
@@ -62,13 +62,13 @@ void SceneSelect::Update(float elapsedTime)
 
 
 	//ボタンの描画をしているとこに当たり判定
-	/*if (tutorialleft.x < mouseCursor.GetPositionX() && tutorialright.x > mouseCursor.GetPositionX() && tutorialleft.y<mouseCursor.GetPositionY() && tutorialright.y>mouseCursor.GetPositionY())
+	if (tutorialleft.x < mouseCursor.GetPositionX() && tutorialright.x > mouseCursor.GetPositionX() && tutorialleft.y<mouseCursor.GetPositionY() && tutorialright.y>mouseCursor.GetPositionY())
 	{
 		if (mouseCursor.GetButtonDown() & anyButton)
 		{
-			SceneManager::Instance().ChangeScene(new SceneLoading(new SceneMultiGame));
+			SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTutorial));
 		}
-	}*/
+	}
 
 	if (stageleft.x < mouseCursor.GetPositionX() && stageright.x > mouseCursor.GetPositionX() && stageleft.y<mouseCursor.GetPositionY() && stageright.y>mouseCursor.GetPositionY())
 	{
