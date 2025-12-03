@@ -44,12 +44,12 @@ void Board::initialize() {
 
 void Board::tutorial() {
     // ”’‚Ì‹î
-    grid[0][1] = std::make_shared<Pawn>("white", Position{ 1, 0 });
-    grid[0][2] = std::make_shared<Knight>("white", Position{ 2, 0 });
-    grid[0][6] = std::make_shared<Rook>("white", Position{ 6, 0 });
-    grid[0][5] = std::make_shared<Bishop>("white", Position{ 5, 0 });
-    grid[0][3] = std::make_shared<Queen>("white", Position{ 3, 0 });
-    grid[0][4] = std::make_shared<King>("white", Position{ 4, 0 });
+    grid[1][1] = std::make_shared<Pawn>("white", Position{ 1, 1 });
+    grid[1][2] = std::make_shared<Knight>("white", Position{ 2, 1 });
+    grid[1][6] = std::make_shared<Rook>("white", Position{ 6, 1 });
+    grid[1][5] = std::make_shared<Bishop>("white", Position{ 5, 1 });
+    grid[1][3] = std::make_shared<Queen>("white", Position{ 3, 1 });
+    grid[1][4] = std::make_shared<King>("white", Position{ 4, 1 });
 
     for (int i = 0; i < 8; ++i)
         grid[6][i] = std::make_shared<Pawn>("black", Position{ i, 6 });

@@ -33,17 +33,17 @@ void SceneTutorial::Initialize()
 		pieces.push_back(new Piece("black", { i, 6 }, "pawn"));//黒　奥
 	}
 
-	pieces.push_back(new Piece("white", { 1, 0 }, "pawn"));//白　手前
+	pieces.push_back(new Piece("white", { 1, 1 }, "pawn"));//白　手前
 	//king
-	pieces.push_back(new Piece("white", { 4, 0 }, "king"));
+	pieces.push_back(new Piece("white", { 4, 1 }, "king"));
 	//rook
-	pieces.push_back(new Piece("white", { 6, 0 }, "rook"));
+	pieces.push_back(new Piece("white", { 6, 1 }, "rook"));
 	//knight
-	pieces.push_back(new Piece("white", { 2, 0 }, "knight"));
+	pieces.push_back(new Piece("white", { 2, 1 }, "knight"));
 	//bishop
-	pieces.push_back(new Piece("white", { 5, 0 }, "bishop"));
+	pieces.push_back(new Piece("white", { 5, 1 }, "bishop"));
 	//queen
-	pieces.push_back(new Piece("white", { 3, 0 }, "queen"));
+	pieces.push_back(new Piece("white", { 3, 1 }, "queen"));
 
 
 	////king
