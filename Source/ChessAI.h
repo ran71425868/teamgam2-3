@@ -3,11 +3,12 @@
 #include <random>
 #include <vector>
 #include <functional>
-
+#include "Effect.h"
 class ChessAI
 {
 public:
     ChessAI();
+    ~ChessAI();
     void Update(Board* board);  // 黒のターンで自動行動
 
     // SceneGame 側がコールバックを登録できる (from, to)
@@ -33,5 +34,7 @@ private:
 
         return safe;
     }
+
+    Effect* deleteEffect = nullptr;
 
 };

@@ -129,6 +129,8 @@ void SceneGame::Initialize()
 	check= new Sprite("Data/Sprite/check1.png");
 
 	BGM->Play(false);
+
+	deleteEffect = new Effect("Data/Effect/Blow11.efk");
 }
 
 // 終了化
@@ -171,6 +173,8 @@ void SceneGame::Finalize()
 
 	delete BGM;
 	delete ai;
+	delete deleteEffect;
+
 	ai = nullptr;
 
 
@@ -577,7 +581,7 @@ void SceneGame::Update(float elapsedTime)
 					// 2. 攻撃側の体力が防御側の体力未満の場合 (負け)
 					if (attackerHealth < defenderHealth) {
 						// 負け：攻撃側は消滅し、防御側にダメージを与える
-
+						deleteEffect->Play({ selectedPos.x * 100.0f,100.0f,selectedPos.y * 50.0f }, 30.0f);
 						// 描画オブジェクトの削除 (攻撃側)
 						RemovePieceAt(selectedPos);
 						// 盤面からの駒の削除 (攻撃側)
@@ -589,6 +593,7 @@ void SceneGame::Update(float elapsedTime)
 						//  防御側の死亡チェックと削除
 						if (defender->getHealth() <= 0) {
 							// 防御側も死亡した場合、描画と盤面から削除
+							deleteEffect->Play({ clicked.x * 100.0f,100.0f,clicked.y * 100.0f }, 30.0f);
 							RemovePieceAt(clicked);
 							board->setPieceAt(clicked, nullptr);
 						}
@@ -607,7 +612,8 @@ void SceneGame::Update(float elapsedTime)
 					// 勝利：通常通り相手の駒を取得（通常移動のロジックに任せる）
 					// 勝利時は、防御側のSlimeを削除する必要があるため、以下の処理を実行
 					else {
-						RemovePieceAt(clicked); // 取られる駒の Slime を削除
+						deleteEffect->Play({ clicked.x * 100.0f,100.0f,clicked.y * 100.0f }, 30.0f);
+						RemovePieceAt(clicked); // 取られる駒の Slime を削
 
 						board->setPieceAt(clicked, nullptr);
 					}
@@ -677,6 +683,7 @@ void SceneGame::Update(float elapsedTime)
 					// 2. 体力が0になったら死亡とみなし、盤面から削除
 					if (movingPiece->getHealth() <= 0) {
 						// 死亡: 盤面（Board）から駒を削除
+						deleteEffect->Play({ selectedPos.x * 100.0f,100.0f,selectedPos.y * 100.0f }, 100.0f);
 						board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
 
 						// 死亡した駒に対応する Slime も描画リストから削除

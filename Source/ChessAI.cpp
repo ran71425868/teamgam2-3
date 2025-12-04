@@ -1,10 +1,18 @@
 #include "ChessAI.h"
 #include <iostream>
+#include "EffectManager.h"
 
 ChessAI::ChessAI()
 {
     std::random_device rd;
     gen.seed(rd());
+
+    deleteEffect = new Effect("Data/Effect/Blow11.efk");
+}
+
+ChessAI::~ChessAI()
+{
+    delete deleteEffect;
 }
 
 void ChessAI::Update(Board* board)
@@ -146,7 +154,7 @@ found:;*/
             if (attackerHealth < defenderHealth) {
                 // UŒ‚‘¤ (AI) ‚Ì”s–k: UŒ‚‘¤‚ÍˆÚ“®‚¹‚¸AÁ–Å
                 attackerSurvived = false;
-
+                deleteEffect->Play({ from.x * 100.0f,100.0f,from.y * 100.0f }, 100.0f);
                 // 1. ”Õ–Ê‚©‚çUŒ‚‘¤‚ğíœ
                 board->setPieceAt(from, nullptr);
 
@@ -159,6 +167,7 @@ found:;*/
                 // 4. –hŒä‘¤‚Ì€–Sƒ`ƒFƒbƒN
                 if (defender->getHealth() <= 0) {
                     // –hŒä‘¤‚à€–S‚µ‚½ê‡A”Õ–Ê‚©‚çíœ
+                    deleteEffect->Play({ to.x * 100.0f,100.0f,to.y * 100.0f }, 100.0f);
                     board->setPieceAt(to, nullptr);
                     // SceneGame‚É–hŒä‘¤‚Ì•`‰æíœ‚ğˆË—Š (to‚ÌˆÊ’u‚Ìíœ‚ğˆË—Š)
                     // š captured=true ‘Š“–‚Ìˆ—‚ª•K—v‚¾‚ªA‚±‚±‚Å‚Í from->to, true ‚Å‘ã—p
@@ -170,6 +179,7 @@ found:;*/
             }
             else {
                 // UŒ‚‘¤ (AI) ‚ÌŸ—˜: –hŒä‘¤‚ğ”Õ–Ê‚©‚çíœ
+                deleteEffect->Play({to.x * 100.0f,100.0f,to.y * 100.0f }, 100.0f);
                 board->setPieceAt(to, nullptr);
                 // SceneGame‚É–hŒä‘¤‚Ì•`‰æ‚ğíœ‚³‚¹‚é (captured = true, onMoveCallback(from, to, true) ‚Åˆ—‚³‚ê‚é)
 
