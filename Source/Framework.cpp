@@ -61,6 +61,20 @@ Framework::~Framework()
 // 更新処理
 void Framework::Update(float elapsedTime)
 {
+	if (timeR > 1.0f||timeR<0.0f)
+		colr*=-1.0f;
+
+	if (timeg > 1.0f || timeg < 0.0f)
+		colg *= -1.0f;
+
+	if (timeb > 1.0f || timeb < 0.0f)
+		colb *= -1.0f;
+
+	timeR += colr;
+
+	timeg += colg;
+
+	timeb += colb;
 	// インプット更新処理
 	Input::Instance().Update();
 
@@ -82,8 +96,13 @@ void Framework::Render(float elapsedTime)
 	ID3D11DeviceContext* dc = Graphics::Instance().GetDeviceContext();
 
 	// 画面クリア
-	Graphics::Instance().Clear(0, 0, 1, 1);
+#if 1
+	Graphics::Instance().Clear(timeR, timeg, timeb, 1.0f);
 
+#else
+	Graphics::Instance().Clear(0.40f, 0.26f, 0.13f, 1.0f);
+
+#endif
 	// レンダーターゲット設定
 	Graphics::Instance().SetRenderTargets();
 

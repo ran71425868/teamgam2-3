@@ -23,5 +23,12 @@ private:
 	const HWND				hWnd;
 	HDC						hDC;
 	HighResolutionTimer		timer;
+
+	float timeR = 0.0f;
+	float timeg = 0.4f;
+	float timeb = 0.8f;
+	float colr = 0.01f;
+	float colg = 0.01f;
+	float colb = 0.01f;
 };
 
