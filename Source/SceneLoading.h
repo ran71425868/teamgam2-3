@@ -36,4 +36,7 @@ private:
 
 	Scene* nextScene = nullptr;
 	std::thread* thread = nullptr;
+
+	float color = 0.0f;
+	float colortimer = 0.01f;
 };

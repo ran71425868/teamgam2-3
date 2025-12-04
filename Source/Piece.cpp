@@ -22,7 +22,7 @@ Piece::Piece(std::string c, Position boardPos, std::string pType) : color(c), bo
 
     worldPos = BoardToWorld(boardPos);
 
-    moveEffect = new Effect("Data/Effect/Blow11.efk");
+    moveEffect = new Effect("Data/Effect/move.efk");
 
 }
 
@@ -173,7 +173,7 @@ void Piece::SetBoardPosition(Position pos) {
     animDuration = 0.5f; 
     isMoving = true;
 
-    //moveEffect->Play({startPos.x*100.0f,100.0f,startPos.z*100.0f},500.0f);
+    moveEffect->Play({startPos.x*100.0f,100.0f,startPos.z*100.0f},50.0f);
 }
 
 Position Piece::GetBoardPosition() const {

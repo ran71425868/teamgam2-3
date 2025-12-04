@@ -154,7 +154,7 @@ found:;*/
             if (attackerHealth < defenderHealth) {
                 // UŒ‚‘¤ (AI) ‚Ì”s–k: UŒ‚‘¤‚ÍˆÚ“®‚¹‚¸AÁ–Å
                 attackerSurvived = false;
-                deleteEffect->Play({ from.x * 100.0f,100.0f,from.y * 100.0f }, 100.0f);
+                deleteEffect->Play({ from.x * 100.0f,100.0f,from.y * 100.0f }, 30.0f);
                 // 1. ”Õ–Ê‚©‚çUŒ‚‘¤‚ðíœ
                 board->setPieceAt(from, nullptr);
 
@@ -167,7 +167,7 @@ found:;*/
                 // 4. –hŒä‘¤‚ÌŽ€–Sƒ`ƒFƒbƒN
                 if (defender->getHealth() <= 0) {
                     // –hŒä‘¤‚àŽ€–S‚µ‚½ê‡A”Õ–Ê‚©‚çíœ
-                    deleteEffect->Play({ to.x * 100.0f,100.0f,to.y * 100.0f }, 100.0f);
+                    deleteEffect->Play({ to.x * 100.0f,100.0f,to.y * 100.0f }, 30.0f);
                     board->setPieceAt(to, nullptr);
                     // SceneGame‚É–hŒä‘¤‚Ì•`‰æíœ‚ðˆË—Š (to‚ÌˆÊ’u‚Ìíœ‚ðˆË—Š)
                     // š captured=true ‘Š“–‚Ìˆ—‚ª•K—v‚¾‚ªA‚±‚±‚Å‚Í from->to, true ‚Å‘ã—p
@@ -179,7 +179,7 @@ found:;*/
             }
             else {
                 // UŒ‚‘¤ (AI) ‚ÌŸ—˜: –hŒä‘¤‚ð”Õ–Ê‚©‚çíœ
-                deleteEffect->Play({to.x * 100.0f,100.0f,to.y * 100.0f }, 100.0f);
+                deleteEffect->Play({to.x * 100.0f,100.0f,to.y * 100.0f }, 30.0f);
                 board->setPieceAt(to, nullptr);
                 // SceneGame‚É–hŒä‘¤‚Ì•`‰æ‚ðíœ‚³‚¹‚é (captured = true, onMoveCallback(from, to, true) ‚Åˆ—‚³‚ê‚é)
 
@@ -194,6 +194,7 @@ found:;*/
 
             // 2. Ž©ƒ_ƒ[ƒW‚ÅŽ€–S‚µ‚½ê‡
             if (attacker->getHealth() <= 0) {
+                deleteEffect->Play({ from.x * 100.0f,100.0f,from.y * 100.0f }, 30.0f);
                 board->setPieceAt(from, nullptr); // ”Õ–Ê‚©‚çíœ
                 // •`‰æ‚Ìíœ‚ÍAˆÚ“®‚ª‹N‚±‚ç‚È‚¢‚½‚ß from ‚ÌˆÊ’u‚Ìíœ‚ðƒR[ƒ‹ƒoƒbƒN‚ÅˆË—Š
                 if (onMoveCallback) onMoveCallback(from, from, false); // from->from (Ž€–S)
