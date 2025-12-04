@@ -22,6 +22,8 @@ Piece::Piece(std::string c, Position boardPos, std::string pType) : color(c), bo
 
     worldPos = BoardToWorld(boardPos);
 
+    moveEffect = new Effect("Data/Effect/Blow11.efk");
+
 }
 
 Piece::~Piece() {
@@ -40,6 +42,8 @@ Piece::~Piece() {
     delete black_knight;
     delete black_queen;
     delete black_rook;
+
+    delete moveEffect;
 }
 
 void Piece::Update(float elapsedTime) {
@@ -158,6 +162,8 @@ void Piece::SetBoardPosition(Position pos) {
     animTime = 0.0f;
     animDuration = 0.5f; 
     isMoving = true;
+
+    //moveEffect->Play({startPos.x*100.0f,100.0f,startPos.z*100.0f},500.0f);
 }
 
 Position Piece::GetBoardPosition() const {

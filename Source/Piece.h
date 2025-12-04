@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "System/ModelRenderer.h"
 #include "Board.h"
+#include "Effect.h"
 
 class Piece {
 public:
@@ -80,5 +81,7 @@ private:
     bool IsImmobilized = false;
 
     int board_count = 0;
+
+    Effect* moveEffect = nullptr;
 
 };
