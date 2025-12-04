@@ -694,7 +694,7 @@ void SceneGame::Render()
 			// 1. 選択状態の判定
 			bool isSelected = (piecePos.x == selectedPos.x && piecePos.y == selectedPos.y);
 
-			if (isSelected) {
+			if (1) {
 				// 2. 体力情報の取得
 				auto chessPiece = board->getPieceAt(piecePos);
 				if (!chessPiece) continue;
