@@ -38,13 +38,13 @@ public:
         return color;
     }
 
-    /**
-    *@brief 駒の現在の体力を取得する
-    * @return 現在の体力(int)
-    */
+    // ★追加: 体力を取得するメソッド (logicPieceに処理を委譲)
     int getHealth() const {
-        // 既存の private メンバー currentHealth を使用
-        return currentHealth;
+        // ポインタが有効な場合のみ、体力を取得
+        return (logicPiece) ? logicPiece->getHealth() : 0;
+    }
+    int getMaxHealth() const {
+        return (logicPiece) ? logicPiece->getMaxHealth() : 0;
     }
 
     /**
@@ -66,8 +66,11 @@ public:
             currentHealth = 0;
         }
         // 注: setDisplayInfoを呼び出して、体力バーの表示を更新することも可能です。
-        // setDisplayInfo(isSelected, currentHealth, maxHealth); 
+        // setDisplayInfo(is
+        // Selected, currentHealth, maxHealth); 
     }
+
+    void heal(int amount); // ★この宣言を追加する！
 
     // 以前のロジックで必要とされたため、Position取得関数名も修正
     Position getPosition() const {
@@ -122,6 +125,10 @@ private:
 
     // ★追加: 駒が移動不可状態であるかを示すフラグ
     bool IsImmobilized = false;
+
+    // ★追加: 対応する論理駒 (ChessPiece) へのポインタ
+    // BoardがChessPieceオブジェクトの生存期間を管理しているため、ここでは生ポインタを使用
+    ChessPiece* logicPiece = nullptr;
 
     int board_count = 0;
 

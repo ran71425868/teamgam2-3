@@ -198,6 +198,9 @@
     <ClCompile Include="Source\SceneTutorial.cpp">
       <Filter>Source\ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Source\CardEffectProcessor.cpp">
+      <Filter>Source\ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External\imgui-docking\imconfig.h">
@@ -384,6 +387,9 @@
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
     <ClInclude Include="Source\SceneTutorial.h">
+      <Filter>Source\ヘッダーファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\CardEffectProcessor.h">
       <Filter>Source\ヘッダーファイル</Filter>
     </ClInclude>
   </ItemGroup>

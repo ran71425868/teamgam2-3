@@ -15,7 +15,6 @@
 
 using namespace DirectX;
 
-
 // 初期化
 void SceneGame::Initialize()
 {
@@ -72,13 +71,25 @@ void SceneGame::Initialize()
 	//else
 		/*network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);*/
 
+
+	// CardEffectProcessor の初期化
+	// ApplyDamageToAllEnemyPieces をラムダ式でキャプチャし、コールバックとして渡す
+	auto damageCallback = [this](const std::string& enemyColor, int damage) {
+		this->ApplyDamageToAllEnemyPieces(enemyColor, damage);
+		};
+
+	cardProcessor = std::make_unique<CardEffectProcessor>(
+		board,
+		&pieces,
+		&whiteCardManager,
+		&blackCardManager,
+		damageCallback
+	);
+
 	// CardManagerの初期化 (SceneGame::cardManagerがポインタと仮定)
 	cardManager = new CardManager();
 
-	// 仮カード画像テクスチャのロード (適切なロード関数を使用してください)
-	//cardSprite = new Sprite("Data/Sprite/仮カード画像.png");
-
-	// ★追加: 効果IDごとのカード画像をロード
+	// 効果IDごとのカード画像をロード
 	for (int i = 0; i < 10; ++i) {
 		std::string filename = "Data/Sprite/Card_" + std::to_string(i) + ".png";
 		// ※ 実際のファイルパスと拡張子に合わせて修正してください
@@ -153,12 +164,7 @@ void SceneGame::Finalize()
 		cardManager = nullptr;
 	}
 
-	/*if (cardSprite != nullptr) {
-		delete cardSprite;
-		cardSprite = nullptr;
-	}*/
-
-	// ★追加: ロードしたすべてのカードテクスチャを解放
+	// ロードしたすべてのカードテクスチャを解放
 	for (int i = 0; i < 10; ++i) {
 		if (cardSprites[i] != nullptr) {
 			delete cardSprites[i];
@@ -222,16 +228,6 @@ void SceneGame::Update(float elapsedTime)
 		}
 
 		// マウス右クリック (カード決定・使用開始)
-		//if (gamePad.GetButtonDown() & GamePad::BTN_X) {
-			// 決定した手札インデックスを保持し、ターゲット選択フェーズへ移行
-			// 注意: selectedHandIndex は既に 0〜2 の範囲で有効なインデックスのはず
-
-			// ターン中のカード使用チェック (CardManager::isUsedCard もチェックする必要がある)
-			//if (!cardManager->isUsedCard) {
-			//	// ここでは selectedHandIndex をそのまま保持し、盤面クリックで効果発動させる
-			//	// selectedHandIndex が -1 ではない状態が、ターゲット選択フェーズを示す
-			//}
-
 		if (mouseCursor.GetButtonDown() & Mouse::BTN_RIGHT)
 		{
 			POINT cardcursor = mouseCursor.GetPosition();
@@ -239,31 +235,37 @@ void SceneGame::Update(float elapsedTime)
 			// --- 1. 盤面クリック座標の取得 ---
 			Position cardclicked = ScreenToBoard(cardcursor.x, cardcursor.y);
 
-			// --- 2. カード効果の適用（Spaceキーで決定済みの場合） ---
+			// --- 2. カード効果の適用（右クリックで決定済みの場合） ---
 			// selectedHandIndex が 0以上の値で固定されている = ターゲット選択フェーズ
-
-			/*if (selectedHandIndex != -1) {
-
-				// CardManagerにカードの使用と破棄を依頼
-				// ※ CardManager::UseCardは手札から削除するため、インデックスは一度しか使えない
-				UsedCardInfo usedInfo = cardManager->UseCard(selectedHandIndex);
-
-				// カード使用成功時 (effectId != -1)
-				if (usedInfo.effectId != -1) {
-
-					// 1. カード効果適用 (ターゲットはクリックされたマス)
-					bool effectSuccess = ApplyCardEffect(usedInfo.effectId, cardclicked);
-
-					if (effectSuccess) {
-						// 2. 成功したらクールダウン開始 (次のターンまで使用不可)
-						isCardInUse = true;
-						cardCooldownTimer = CARD_COOLDOWN_TIME;
-					}
-				}*/
 			if (selectedHandIndex != -1) {
 
 				// 決定したカードの効果IDを取得し、状態をリセットする前に保存
 				int effectId = cardManager->getCardInHand(selectedHandIndex).effectId;
+
+				//  即時発動カード (ID 0, 5, 8, 9) の処理を CardEffectProcessor に委譲 (★ID: 5 を追加)
+				if (effectId == 0 || effectId == 5 || effectId == 8 || effectId == 9) 
+				{
+
+					cardProcessor->ProcessInstantCard(
+						effectId,
+						board->getCurrentTurn(),
+						cardManager,
+						selectedHandIndex,
+						isCardInUse,
+						cardCooldownTimer,
+						CARD_COOLDOWN_TIME
+					);
+
+					// 絶対の雷 (ID 8) はカード処理後にターン終了を伴う
+					if (effectId == 8) {
+						board->switchTurn();
+					}
+
+					selectedHandIndex = -1; // ハイライト解除
+					return;
+				}
+
+
 
 				// ★次元の扉 (ID: 7) の処理
 				if (effectId == 7) {
@@ -287,7 +289,8 @@ void SceneGame::Update(float elapsedTime)
 				// ターゲット駒の選択が必要な効果かチェック (例: ID 2, 6)
 				// 破滅の刻印 (ID: 6) は自駒単体をターゲットとします。
 				// 生命の祝福 (ID: 2) も自駒単体をターゲットとします。
-				if (effectId == 2 || effectId == 6) {
+				if (effectId == 2 || effectId == 3 || effectId == 6) 
+				{
 					// ターゲット選択フェーズへ移行
 
 					// 1. 選択中のカードの効果IDを保存
@@ -302,48 +305,10 @@ void SceneGame::Update(float elapsedTime)
 					// 4. GUIハイライト用のインデックスはリセット
 					selectedHandIndex = -1;
 
-					// Space決定後のクリックはカード使用に専念させるため、ここでリターン
+					// 右クリックで決定後のクリックはカード使用に専念させるため、ここでリターン
 					return;
 				}
 
-				// 絶対の雷 (ID: 8) の処理
-				if (effectId == 8) {
-
-					std::string currentColor = board->getCurrentTurn();
-					std::string enemyColor = (currentColor == "white") ? "black" : "white";
-
-					// 1. 相手の駒全体に 1 ダメージを適用
-					ApplyDamageToAllEnemyPieces(enemyColor, 1);
-
-					// 2. クールダウンと状態リセット
-					isCardInUse = true;
-					cardCooldownTimer = CARD_COOLDOWN_TIME;
-
-					// 3. カードを破棄
-					cardManager->UseCard(selectedHandIndex);
-
-					// 4. GUIハイライトをリセット
-					selectedHandIndex = -1;
-
-					// 5. カード効果発動後、自身のターンを終了する
-					board->switchTurn();
-
-					return;
-				}
-
-				// 既存の即時発動カードのロジック:
-				UsedCardInfo usedInfo = cardManager->UseCard(selectedHandIndex); // カード破棄
-				bool effectSuccess = ApplyCardEffect(usedInfo.effectId, cardclicked); // マスをターゲットとして効果適用
-
-				if (effectSuccess) {
-					isCardInUse = true;
-					cardCooldownTimer = CARD_COOLDOWN_TIME;
-				}
-
-				// ターゲット選択フェーズを終了
-				selectedHandIndex = -1;
-				// Space決定後のクリックはカード使用に専念させるため、ここでリターン
-				return;
 			}
 
 		
@@ -381,124 +346,24 @@ void SceneGame::Update(float elapsedTime)
 		if (!board->isInsideBoard(clicked)) return; // ボード外なら何もしない
 
 		auto clickedPiece = board->getPieceAt(clicked);
-	// ---  次元の扉 (ID 7) の多段階処理 ---
+	
+		if (currentCardEffectState != CardEffectState::NONE && mouseCursor.GetButtonDown() & Mouse::BTN_LEFT)
+		{
+			// ... (省略: クリック座標の取得) ...
 
-	// 1. ワープ元駒の選択待ち
-		if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_PIECE) {
-
-			// 1.1. 自駒であり、共通マスにいるかチェック
-			if (clickedPiece && IsTargetPiece(clicked, board->getCurrentTurn()) && IsCommonSpot(clicked)) {
-
-				// ワープ元位置を保存
-				selectedPos = clicked;
-
-				// 状態をワープ先選択へ遷移
-				currentCardEffectState = CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET;
-
-				// 選択した駒を一時保存 (駒移動不可フラグに使用するため)
-				// selectedPieceForEffect = clickedPiece; 
-
-				
-				return;
+			// ID 2, 3, 4, 6 のターゲット選択の場合 (★ID: 2 と ID: 3 を追加)
+			if (selectedCardEffectId == 2 || selectedCardEffectId == 3 || selectedCardEffectId == 4 || selectedCardEffectId == 6)
+			{
+				// ★修正: ApplyCardEffect のロジックを CardEffectProcessor に委譲
+				if (cardProcessor->ApplyTargetedEffect(selectedCardEffectId, clicked, board->getCurrentTurn())) {
+					// 成功時: 状態をリセットし、カードを破棄
+					currentCardEffectState = CardEffectState::NONE;
+					selectedCardEffectId = -1;
+				}
+				// 失敗時は状態維持 (再選択待ち)
 			}
-			else {
-				
-				// 無効な駒/マスをクリックした場合、状態は維持
-				return;
-			}
+			return;
 		}
-
-		// 2. ワープ先マスの選択待ち (ワープの実行)
-		else if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET) {
-
-			Position fromPos = selectedPos; // Step 1で保存したワープ元位置
-			Position toPos = clicked;       // 今回クリックしたワープ先位置
-
-			// 2.1. ターゲットが共通マスであるか、かつワープ元と異なるマスかチェック
-			if (IsCommonSpot(clicked) && (fromPos.x != toPos.x || fromPos.y != toPos.y)) {
-
-				auto defender = board->getPieceAt(toPos);
-
-				// 相手駒の有無チェックと取得
-				if (defender && defender->getColor() == board->getCurrentTurn()) {
-					// 自駒がいた場合、ワープ不可
-					std::cout << "次元の扉: ターゲットマスには自身の駒がいないマスを選択してください。" << std::endl;
-					return;
-				}
-
-				// 駒移動処理の実行
-
-				// 1. 相手駒取得 (存在すれば)
-				if (defender) {
-					RemovePieceAt(toPos); // 描画オブジェクトの削除
-					board->setPieceAt(toPos, nullptr); // 盤面上のPieceの削除
-				}
-
-				// 2. ワープ（駒の移動）実行
-				auto slime = FindSlimeAt(fromPos); // 描画オブジェクトを取得
-				if (slime) slime->SetBoardPosition(toPos); // 描画位置を更新
-
-				board->movePiece(fromPos, toPos); // Pieceオブジェクトを盤面上で移動
-
-				// 3. ワープ後の駒移動不可の適用
-				auto warpedPiece = board->getPieceAt(toPos);
-				if (warpedPiece) {
-					// 駒移動ロジックに影響を与えるフラグを設定 (setImmobilizedは存在すると仮定)
-					warpedPiece->setImmobilized(true);
-					// 注: この移動不可は、次のターン開始時などに解除するロジックが必要です。
-				}
-
-				// 4. クールダウンと状態リセット
-				isCardInUse = true;
-				cardCooldownTimer = CARD_COOLDOWN_TIME;
-
-				currentCardEffectState = CardEffectState::NONE;
-				selectedCardEffectId = -1;
-				selectedPos = { -1, -1 };
-				// selectedPieceForEffect = nullptr;
-
-
-				// 5. ターン切り替え
-				board->switchTurn();
-
-				return;
-			}
-			else {
-				
-				return;
-			}
-		}
-		// カード効果のターゲット選択フェーズかチェック
-		else if (currentCardEffectState == CardEffectState::AWAITING_PIECE_SELECTION) {
-
-			// ターゲット駒がクリックされたか確認
-			if (clickedPiece) {
-				// ApplyCardEffectを実行
-				bool effectSuccess = ApplyCardEffect(selectedCardEffectId, clicked);
-
-				if (effectSuccess) {
-					// 成功したらクールダウン開始
-					isCardInUse = true;
-					cardCooldownTimer = CARD_COOLDOWN_TIME;
-				}
-
-				// 選択状態をリセット (成功・失敗に関わらずカードは既に破棄済み)
-				currentCardEffectState = CardEffectState::NONE;
-				selectedCardEffectId = -1;
-				selectedPos = { -1, -1 }; // 盤面選択もリセット
-				legalMoves.clear();
-
-				// カード効果適用後、駒移動処理はスキップ
-				return;
-			}
-			else {
-				// 駒がない場所をクリックした場合:
-				// 処理を継続するか、選択を解除するか、ユーザー体験に応じて決定します。
-				// ここでは、一旦、何もせず選択待ち状態を継続します。
-				return;
-			}
-		}
-
 		// --- 2. 駒が選択されていない場合 (selectedPos.x == -1) ---
 		if (selectedPos.x == -1) {
 			// 自分の駒をクリックした場合、それを選択する
@@ -549,25 +414,6 @@ void SceneGame::Update(float elapsedTime)
 				auto movingPiece = board->getPieceAt(selectedPos);
 				// 取られる駒があれば、その slime を削除
 
-
-				// 駒の移動が成功した後、もしカードが選択されていればここで効果を適用
-				//if (selectedCardId != -1) {
-				//	// 1. カード効果適用
-				//	// targetPos は clicked と同じ
-				//	bool effectSuccess = ApplyCardEffect(selectedCardId, clicked);
-
-				//	if (effectSuccess) {
-				//		// 2. 成功したらクールダウン開始 (破棄)
-				//		isCardInUse = true;
-				//		cardCooldownTimer = CARD_COOLDOWN_TIME;
-				//	}
-
-				//	// 3. 選択解除 (成功/失敗にかかわらず、カードは手札から消えているため)
-				//	selectedCardId = -1;
-
-				//	// ... (ターン切り替えなど) ...
-				//	return;
-				//}
 				auto attacker = board->getPieceAt(selectedPos);
 				auto defender = board->getPieceAt(clicked); // 取られる駒（nullptrの場合もある）
 
@@ -618,12 +464,6 @@ void SceneGame::Update(float elapsedTime)
 						board->setPieceAt(clicked, nullptr);
 					}
 				}
-
-				/*auto captured_piece = board->getPieceAt(clicked); // 移動先の駒を取得
-				if (captured_piece) {
-					// 修正: 取られる駒に対応する Slime オブジェクトをリストから削除する処理を呼び出す
-					RemoveSlimeAt(clicked);
-				}*/
 
 				// 合法な移動を実行
 				board->movePiece(selectedPos, clicked);
@@ -749,11 +589,6 @@ void SceneGame::Update(float elapsedTime)
 					winnerColor = "white";
 				}
 
-				// ★追加: ターン終了時の移動不可フラグの解除
-				for (auto piece : pieces) {
-					// ターン開始時や切り替え時に、前ターンの移動不可フラグをリセットする
-					piece->setImmobilized(false);
-				}
 
 				// ゲームが終了していなければ、ターンを切り替える
 				if (!isGameOver) {
@@ -765,7 +600,7 @@ void SceneGame::Update(float elapsedTime)
 				// 不正な場所をクリックした場合
 
 				// 別の自分の駒をクリックしたかチェックし、選択を切り替えるロジックをここに追加できます。
-				// 修正ロジック 2: 別の自分の駒をクリックしたかチェック
+				// 別の自分の駒をクリックしたかチェック
 				auto currentTurn = board->getCurrentTurn();
 
 				if (clickedPiece && clickedPiece->getColor() == currentTurn) {
@@ -1012,7 +847,7 @@ void SceneGame::DrawGUI()
 	// 描画に必要なレンダラーとコンテキスト情報を取得/作成
 	ShapeRenderer* shapeRenderer = graphics.GetShapeRenderer();
 
-	// ★RenderContextを作成
+	// RenderContextを作成
 	RenderContext rc = {
 		graphics.GetDeviceContext(), // ID3D11DeviceContext* を取得
 		graphics.GetRenderState()    // RenderState* を取得
@@ -1026,7 +861,7 @@ void SceneGame::DrawGUI()
 		// 選択中のカード情報を取得
 		const Card& selectedCard = cardManager->getCardInHand(selectedHandIndex);
 
-		// ★修正点: 描画位置を画面の左上隅に変更 (X=50, Y=50 を想定)
+		// 描画位置を画面の左上隅に変更 (X=50, Y=50 を想定)
 		float textX = 50.0f;
 		float textY = 50.0f;
 
@@ -1042,8 +877,7 @@ void SceneGame::DrawGUI()
 		);
 
 		// ここにテキスト描画関数を挿入してください
-		// TextRenderer->DrawText("カード名: " + selectedCard.name, textX, textY, Color::White);
-		// TextRenderer->DrawText("効果: " + selectedCard.description, textX, textY + 30, Color::White);
+		
 	}
 
 	// --- 1. 手札の描画 ---
@@ -1075,17 +909,7 @@ void SceneGame::DrawGUI()
 				1.0f, 1.0f, 1.0f, 1.0f// r, g, b, a
 			);
 		}
-		//if (cardSprite != nullptr) {
-		//	cardSprite->Render(
-		//		rc, // ★作成したRenderContextを使用
-		//		(float)cardX, (float)cardY, // dx, dy
-		//		0.0f,                       // dz
-		//		(float)CARD_WIDTH, (float)CARD_HEIGHT, // dw, dh
-		//		0.0f,                       // angle
-		//		1.0f, 1.0f, 1.0f, 1.0f      // r, g, b, a
-		//	);
-		//}
-
+	
 		// --- B. 選択中のハイライト描画 ---
 		if (!isCardInUse && i == selectedHandIndex) {
 			// 選択中のカードの周囲に枠を描画
@@ -1096,26 +920,12 @@ void SceneGame::DrawGUI()
 		}
 
 		// --- C. カード名とIDのテキスト描画 --- 
-		// DrawText("ID:" + std::to_string(card.effectId), cardX + 10, cardY + 40, Color::Black);
 	}
 	
 }
 
 void SceneGame::RemovePieceAt(Position pos)
 {
-	//// Slimeオブジェクトのリストを走査し、posと一致するものを削除する
-	//for (auto it = pieces.begin(); it != pieces.end(); ++it) {
-	//	if ((*it)->GetBoardPosition().x == pos.x && (*it)->GetBoardPosition().y == pos.y) {
-	//
-	//		// 削除前にメモリを解放（ヒープ領域で確保している場合）
-	//		delete (*it);
-	//
-	//		// リストから要素を削除
-	//		pieces.erase(it);
-	//		return; // 駒は一つしか存在しないので、見つけたら終了
-	//	}
-	//}
-
 	//board->setPieceAt(pos, nullptr);
 
 	// 描画用リストからも削除
@@ -1126,7 +936,7 @@ void SceneGame::RemovePieceAt(Position pos)
 		{
 			delete* it; // rawポインタなら delete
 			it = pieces.erase(it);
-			return; // ★一つ見つけたらループを抜ける (駒は一マスに一つであるため)
+			return; // 一つ見つけたらループを抜ける (駒は一マスに一つであるため)
 		}
 		else
 		{
@@ -1235,7 +1045,7 @@ Position SceneGame::ScreenToBoard(int screenX, int screenY)
 	return { boardX, boardY };
 }
 
-//Piece を盤面座標から取得
+// Piece を盤面座標から取得
 Piece* SceneGame::FindSlimeAt(Position pos) {
 	for (auto p : pieces) {
 		if (p->GetBoardPosition().x == pos.x &&
@@ -1350,15 +1160,16 @@ void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 	 Position target = effect.targetPos;
 
 	switch (effect.sourceEffectId) {
-	case 3: // 悠久の盟約: 自身の駒全体の体力を2回復
+	case 3: // 悠久の盟約: 自身の駒全体の体力を2回復 (★全体回復ロジックに修正)
 	{
-		 //effect.ownerColor のプレイヤーの全ての駒を探し、2回復させる
-		 for (auto piece : pieces) {
-		     /*if (piece->getColor() == effect.ownerColor) {
-		         piece->heal(2);
-		     }*/
-		 }
-		//std::cout << "悠久の盟約 (ID 3) が発動: " << effect.ownerColor << "側の駒全体を2回復" << std::endl;
+		// effect.ownerColor のプレイヤーの全ての駒を探し、2回復させる
+		for (auto piece : pieces) {
+			// pieces vector に含まれる Piece* の中から、効果の所有者と同じ色の駒のみを回復
+			if (piece && piece->getColor() == effect.ownerColor) {
+				piece->heal(2); // 体力を2回復
+			}
+		}
+		
 	}
 	break;
 
@@ -1374,7 +1185,6 @@ void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 		          }
 		     }
 		 }
-		//std::cout << "破滅の刻印 (ID 6) が発動: ターゲット周囲に2ダメージ" << std::endl;
 	}
 	break;
 
@@ -1394,136 +1204,6 @@ bool SceneGame::IsTargetPiece(Position pos, const std::string& requiredColor) co
 bool SceneGame::IsCommonSpot(Position pos) const
 {
 	return pos.y >= 2 && pos.y <= 5;
-}
-
-bool SceneGame::ApplyCardEffect(int effectId, Position targetPos)
-{
-	// 現在のターンの色
-	std::string currentTurn = board->getCurrentTurn();
-	std::string enemyColor = (currentTurn == "white") ? "black" : "white";
-
-	// ターゲット駒 (このカードは空きマスにも打てる可能性があるため、ここではターゲット駒の存在は必須ではない)
-	 auto targetPiece = board->getPieceAt(targetPos);
-
-	// 乱数生成器 (他の効果用)
-	// ...
-
-	switch (effectId) {
-		// ... (既存の case 0, 2, 3, 4, 5, 6, 7, 8, 9) ...
-
-	case 1: // 焦土の罠 (Trap): 指定した場所の前方 2x3 マスの駒に 1 ダメージ
-	{
-		// ターゲット位置がボード内か確認
-		if (!board->isInsideBoard(targetPos)) {
-			return false; // 無効な位置
-		}
-
-		// 1. ダメージエリアの定義
-		int damage = 1;
-
-		// 進行方向の定義 (白: y軸減少方向へ前方, 黒: y軸増加方向へ前方)
-		// 白 (y=7, 6 から y=0, 1 へ移動) の場合、前方マスは y - 1, y - 2
-		// 黒 (y=0, 1 から y=7, 6 へ移動) の場合、前方マスは y + 1, y + 2
-		const int direction = (currentTurn == "white") ? -1 : 1;
-
-		// 展開エリア: 前方2マス (y+direction*1, y+direction*2)、横幅3マス (x-1, x, x+1)
-		// 前方 2 マス (dy = 1, 2)
-		for (int dy = 1; dy <= 2; ++dy) {
-			// 横幅 3 マス (dx = -1, 0, 1)
-			for (int dx = -1; dx <= 1; ++dx) {
-
-				// ダメージを与えるマスの座標を計算
-				Position damagePos = {
-					targetPos.x + dx,
-					targetPos.y + (direction * dy) // 進行方向へ展開
-				};
-
-				// 2. ボード内チェックとダメージ適用
-				if (board->isInsideBoard(damagePos)) {
-					auto victim = board->getPieceAt(damagePos);
-
-					if (victim) {
-						// 駒が存在する場合、ダメージを与える
-						victim->takeDamage(damage);
-
-						// 死亡チェック (takeDamage後に health <= 0 になったら、リストから削除する処理が必要)
-						 /*if (victim->getHealth() <= 0) { 
-						     board->RemovePieceAt(victim);
-						 }*/
-					}
-				}
-			}
-		}
-
-		// トラップ設置は成功したとみなす
-		return true;
-	}
-
-	case 2: // 生命の祝福 (Buff): 自身の駒単体の体力を3回復
-	{
-		const int healAmount = 3;
-
-		// 1. ターゲット駒が存在し、かつそれが自駒であるかを確認
-		if (targetPiece && IsTargetPiece(targetPos, currentTurn)) {
-
-			// 2. 体力を回復
-			targetPiece->heal(healAmount);
-
-			
-			return true; // 効果適用成功
-		}
-
-		// ターゲットが無効（駒がいない、または敵駒）
-		return false;
-	}
-
-	case 4: // 石化の鎖 (Debuff): 相手の駒単体の移動を制限 (キング使用不可)
-	{
-		// 1. ターゲット駒が存在し、かつそれが敵駒であるかを確認
-		if (targetPiece && IsTargetPiece(targetPos, enemyColor)) {
-
-			// 2. キングではないかを確認
-			if (targetPiece->getType() == "King") {
-				// DebugLog("石化の鎖はキングに使用できません。");
-				return false; // キングには使用不可
-			}
-
-			// 3. 駒の移動を制限
-			targetPiece->setImmobilized(true);
-
-			// DebugLog(targetPiece->getColor() + " の " + targetPiece->getType() + " に移動制限を適用しました。");
-			return true; // 効果適用成功
-		}
-
-		// ターゲットが無効（駒がいない、自駒、または無効なカード使用）
-		return false;
-	}
-
-	case 6: // 破滅の刻印 (Trap): 自身の駒単体に付与、3ターン後に発動
-	{
-		// 1. ターゲット駒が存在し、かつそれが**自駒**であるかを確認
-		if (targetPiece && IsTargetPiece(targetPos, currentTurn)) {
-
-			// 2. 持続効果データを作成
-			ActiveEffect effect(
-				6, // 効果ID
-				3, // 残りターン数
-				targetPos, // ターゲット位置
-				currentTurn // 所有者
-			);
-
-			// 3. ActiveEffectManagerに登録
-			ActiveEffectManager::GetInstance().AddEffect(effect);
-
-			return true; // 効果適用成功
-		}
-		// ターゲットが無効（駒がいない、または敵駒）
-		return false;
-	}
-
-	default:
-		return false;
-	}
 }
 
 //　駒が置かれておらず、かつ回復マスが生成されていない共通マスをランダムに選ぶ

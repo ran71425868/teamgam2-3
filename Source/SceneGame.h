@@ -14,6 +14,8 @@
 #include "ChessAI.h"
 #include "ActiveEffectManager.h"
 #include "CardManager.h"
+#include <memory> // std::unique_ptr のために追加
+#include "CardEffectProcessor.h" // ★追加
 
 enum class CardEffectState
 {
@@ -67,6 +69,13 @@ private:
 
 	CardManager* cardManager; // CardManagerへのポインタ (Initializeで設定が必要)
 
+	// CardManagerのインスタンス (白と黒)
+	CardManager blackCardManager;
+	CardManager whiteCardManager;
+
+	// ★追加: カード効果処理を担うインスタンス
+	std::unique_ptr<CardEffectProcessor> cardProcessor;
+
 	// --- カード表示/選択システム用の追加フィールド ---
 
 	// 現在選択中の手札のインデックス (0, 1, 2)。-1 は未選択を意味するが、
@@ -89,12 +98,14 @@ private:
 	const int CARD_HEIGHT = 145; // 例: 1456 / 10 = 145.6 (手札の高さ)
 	const int CARD_SPACING = 15; // カード間の間隔
 
-	// --- テクスチャ・モデル ---
-	//Sprite* cardSprite = nullptr;// 仮カード画像 (赤色の画像) 用のテクスチャ
-
-	// ★追加: カード効果IDごとのテクスチャを保持する配列(0〜9の10枚)
+	// カード効果IDごとのテクスチャを保持する配列(0〜9の10枚)
 	Sprite * cardSprites[10] = { nullptr };
 	
+	// 前ターンに使用されたカードの情報 (運命の反転に使用)
+	UsedCardInfo lastWhiteUsedCard;
+	UsedCardInfo lastBlackUsedCard;
+
+
 	// 動的な回復マス生成のためのカウンター
 	int blackMovedToCommonCount = 0;
 	int whiteMovedToCommonCount = 0;
@@ -126,18 +137,10 @@ private:
 	// ランダムで回復マスを生成するメソッド
 	void GenerateHealSpots();
 
-	// CardManagerのインスタンス (白と黒)
-	CardManager blackCardManager;
-	CardManager whiteCardManager;
-
 	// カード使用のための状態変数
 	CardEffectState currentCardEffectState = CardEffectState::NONE;
 	int selectedCardEffectId = -1; // 現在処理中のカードの効果ID
 	Piece* selectedPieceForEffect = nullptr; // カード効果の対象として選択された駒
-
-	// 前ターンに使用されたカードの情報 (運命の反転に使用)
-	UsedCardInfo lastWhiteUsedCard;
-	UsedCardInfo lastBlackUsedCard;
 
 	// ActiveEffectManagerの更新に必要な関数
 	void ApplyPersistentEffect(const ActiveEffect& effect);
@@ -151,7 +154,7 @@ private:
 	*/
 	bool IsCommonSpot(Position pos) const;
 
-	bool ApplyCardEffect(int effectId, Position targetPos);
+	//bool ApplyCardEffect(int effectId, Position targetPos);
 
 	ChessAI* ai = nullptr;
 	Sprite* check = nullptr;
