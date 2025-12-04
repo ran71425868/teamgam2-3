@@ -1,6 +1,7 @@
 ﻿#include <random>
 #include <algorithm> // std::shuffle用
 #include "System/Graphics.h"
+#include"System/Audio.h"
 #include <iostream>
 #include "SceneGame.h"
 #include "SceneWhiteResult.h"
@@ -26,6 +27,7 @@ void SceneGame::Initialize()
 	highlightModel = new Model("Data/Model/Stage/yellow_bord.mdl");
 	healSpotModel = new Model("Data/Model/Stage/heal_bord.mdl");
 
+	BGM = Audio::Instance().LoadAudioSource("Data/Sound/Game.wav");
 
 	// 駒を初期配置（例：白と黒のスライム）
 	for (int i = 0; i <= 7; i++)
@@ -120,6 +122,7 @@ void SceneGame::Initialize()
 
 	check= new Sprite("Data/Sprite/check1.png");
 
+	BGM->Play(false);
 }
 
 // 終了化
@@ -152,8 +155,10 @@ void SceneGame::Finalize()
 
 	network.Finalize();
 
+	delete BGM;
 	delete ai;
 	ai = nullptr;
+
 
 }
 
@@ -164,6 +169,7 @@ void SceneGame::Update(float elapsedTime)
 	if (isGameOver) {
 		// ここに結果表示のロジック（未作成）が入る
 		// シーン遷移がないため、結果表示（例：テキスト表示）のみを行う
+		BGM->Stop();
 		if(winnerColor=="white")
 			SceneManager::Instance().ChangeScene(new SceneWhiteResult);
 		else

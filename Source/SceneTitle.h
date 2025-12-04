@@ -2,6 +2,7 @@
 
 #include "System/Sprite.h"
 #include "Scene.h"
+#include "System/AudioSource.h"
 
 //タイトルシーン
 class SceneTitle :public Scene
@@ -27,4 +28,6 @@ public:
 
 private:
 	Sprite* sprite = nullptr;
+
+	AudioSource* BGM = nullptr;
 };

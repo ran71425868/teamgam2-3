@@ -3,6 +3,7 @@
 #include "System/Mouse.h"
 #include "System/Input.h"
 #include "System/Sprite.h"
+#include "System/AudioSource.h"
 #include "Piece.h"
 #include "Board.h"
 #include "Card.h" // UsedCardInfoのために必要
@@ -141,6 +142,8 @@ private:
 
 	ChessAI* ai = nullptr;
 	Sprite* check = nullptr;
+
+	AudioSource* BGM = nullptr;
 
 	int timer = 0;
 	int cooldown = 2;

@@ -5,11 +5,16 @@
 #include "SceneManager.h"
 #include "SceneLoading.h"
 #include "SceneSelect.h"
+#include "System/Audio.h"
 
 //初期化
 void SceneTitle::Initialize()
 {
 	sprite = new Sprite("Data/Sprite/仮タイトル.png");
+
+	BGM = Audio::Instance().LoadAudioSource("Data/Sound/Title.wav");
+
+	BGM->Play(false);
 }
 
 //終了化
@@ -20,6 +25,7 @@ void SceneTitle::Finalize()
 		delete sprite;
 		sprite = nullptr;
 	}
+	delete BGM;
 }
 
 //更新処理
@@ -37,6 +43,7 @@ void SceneTitle::Update(float elapsedTime)
 
 	if (gamePad.GetButtonDown() & anyButton)
 	{
+		BGM->Stop();
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneSelect));
 	}
 }
