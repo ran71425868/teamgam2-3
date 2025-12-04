@@ -41,10 +41,10 @@ void ChessAI::MakeRandomMove(Board* board)
 
         if (!attacker || !defender) continue;
 
-        // ★ 相手キングか？
+      
         if (defender->getType() == "King") {
 
-            // ★ 攻撃側の体力が相手キングより高い（勝てる or 相打ちしない）
+          
             if (attacker->getHealth() > defender->getHealth()) {
 
                 kingKillMoves.push_back({ from, to });
@@ -52,7 +52,6 @@ void ChessAI::MakeRandomMove(Board* board)
         }
     }
 
-    // ★ キングを倒せる手があればそれを最優先で使用
     if (!kingKillMoves.empty()) {
         moves = kingKillMoves;
     }
@@ -63,7 +62,7 @@ void ChessAI::MakeRandomMove(Board* board)
     bool otherPieceHasMoves = false;
 
     for (int y = 0; y < 8; ++y) {
-        if (otherPieceHasMoves) break; // 外側ループを脱出
+        if (otherPieceHasMoves) break;
         for (int x = 0; x < 8; ++x) {
             Position from = { x, y };
             auto piece = board->getPieceAt(from);
@@ -150,13 +149,12 @@ found:;*/
         if (attacker->getColor() == defender->getColor())
             continue;
 
-        // ★ 勝てる or 相打ち：attackerHealth >= defenderHealth
         if (attacker->getHealth() >= defender->getHealth()) {
             safeCaptures.push_back({ from, to });
         }
     }
 
-    // ★ safeCaptures があれば、こちらを優先的に使う
+    
     if (!safeCaptures.empty()) {
         moves = safeCaptures;
     }
@@ -194,7 +192,7 @@ found:;*/
         bool captured = (defender != nullptr);
         bool attackerSurvived = true;
 
-        // --- A. 戦闘判定 ---
+     
         if (defender) {
             int attackerHealth = attacker->getHealth();
             int defenderHealth = defender->getHealth();

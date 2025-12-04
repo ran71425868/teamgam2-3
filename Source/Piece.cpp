@@ -22,7 +22,7 @@ Piece::Piece(std::string c, Position boardPos, std::string pType) : color(c), bo
 
     worldPos = BoardToWorld(boardPos);
 
-    moveEffect = new Effect("Data/Effect/move.efk");
+    moveEffect = new Effect("Data/Effect/move10.efk");
 
 }
 
