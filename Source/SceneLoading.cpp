@@ -37,6 +37,11 @@ void SceneLoading::Update(float elapsedTime)
 	constexpr float speed = 180;
 	angle += speed * elapsedTime;
 
+	if (color > 2.0f || 0.0f > color)
+		colortimer *= -1.0f;
+
+	color += colortimer;
+
 	//次のシーンの準備が完了したらシーンを切り替える
 	if (nextScene->IsReady())
 	{
@@ -70,7 +75,7 @@ void SceneLoading::Render()
 		sprite->Render(rc,
 			positionX, positionY, 0, spriteWidth, spriteHeight,
 			angle,
-			1, 1, 1, 1);
+			color, color, color, 1);
 	}
 }
 
