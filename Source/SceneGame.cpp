@@ -557,7 +557,7 @@ void SceneGame::Update(float elapsedTime)
 					// 2. 攻撃側の体力が防御側の体力未満の場合 (負け)
 					if (attackerHealth < defenderHealth) {
 						// 負け：攻撃側は消滅し、防御側にダメージを与える
-						deleteEffect->Play({ selectedPos.x * 100.0f,100.0f,selectedPos.y * 50.0f }, 30.0f);
+						deleteEffect->Play({ selectedPos.x * 100.0f,100.0f,selectedPos.y * 100.0f }, 30.0f);
 						// 描画オブジェクトの削除 (攻撃側)
 						RemovePieceAt(selectedPos);
 						// 盤面からの駒の削除 (攻撃側)
