@@ -151,6 +151,19 @@ void Piece::Render(const RenderContext& rc, ModelRenderer* renderer) {
    
 }
 
+void Piece::heal(int amount) {
+    // 1. 現在の体力に回復量を加算
+    currentHealth += amount;
+
+    // 2. 最大体力 (maxHealth) を超えないように制限
+    if (currentHealth > maxHealth) {
+        currentHealth = maxHealth;
+    }
+
+    // 注: 体力バーの表示更新は、通常、UpdateやRenderの直前に SceneGame 側で 
+    // setDisplayInfo を呼ぶことで処理されるため、ここでの呼び出しは不要です。
+}
+
 void Piece::SetBoardPosition(Position pos) {
     boardPosition = pos;
 
