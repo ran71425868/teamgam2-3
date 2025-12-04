@@ -20,6 +20,8 @@ enum class CardEffectState
 	DIMENSIONAL_GATE_SELECT_PIECE, // 次元の扉: ワープ元駒の選択待ち
 	DIMENSIONAL_GATE_SELECT_TARGET, // 次元の扉: ワープ先マスの選択待ち
 	// ... 他のカード効果のフェーズ ...
+	// 駒をターゲットとして選択するのを待機する状態
+	AWAITING_PIECE_SELECTION,
 };
 
 // ゲームシーン
@@ -82,12 +84,15 @@ private:
 	// カード描画開始位置 (画面左下を想定)
 	const int CARD_START_X = 50;
 	const int CARD_START_Y = 750;
-	const int CARD_WIDTH = 100;
-	const int CARD_HEIGHT = 140;
+	const int CARD_WIDTH = 81;   // 例: 816 / 10 = 81.6 (手札の幅)
+	const int CARD_HEIGHT = 145; // 例: 1456 / 10 = 145.6 (手札の高さ)
 	const int CARD_SPACING = 15; // カード間の間隔
 
 	// --- テクスチャ・モデル ---
-	Sprite* cardSprite = nullptr;// 仮カード画像 (赤色の画像) 用のテクスチャ
+	//Sprite* cardSprite = nullptr;// 仮カード画像 (赤色の画像) 用のテクスチャ
+
+	// ★追加: カード効果IDごとのテクスチャを保持する配列(0〜9の10枚)
+	Sprite * cardSprites[10] = { nullptr };
 	
 	// 動的な回復マス生成のためのカウンター
 	int blackMovedToCommonCount = 0;
@@ -136,6 +141,11 @@ private:
 
 	// ターゲット駒が自分の駒か敵の駒かを判定するヘルパー関数
 	bool IsTargetPiece(Position pos, const std::string& requiredColor) const;
+
+	/**
+	* @brief 指定された位置が共通マス (y=2 から y=5) であるかを判定
+	*/
+	bool IsCommonSpot(Position pos) const;
 
 	bool ApplyCardEffect(int effectId, Position targetPos);
 

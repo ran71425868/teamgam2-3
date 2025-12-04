@@ -12,6 +12,24 @@ public:
 
     void SetBoardPosition(Position pos);
     Position GetBoardPosition() const;
+    
+   
+    /**@brief 駒の移動不可状態を設定する
+       * @param immobilized trueで移動不可、falseで移動可能
+       */
+    void setImmobilized(bool immobilized) {
+        IsImmobilized = immobilized;
+    }
+
+      
+
+    /**
+     * @brief 駒が移動不可状態であるかを取得する
+     * @return trueなら移動不可
+     */
+    bool isImmobilized() const {
+        return IsImmobilized;
+    }
 
     void setDisplayInfo(bool isSelected, int currentHealth, int maxHealth);
 
@@ -57,6 +75,9 @@ private:
     float animTime = 0.0f;
     float animDuration = 0.0f;     
     bool isMoving = false;
+
+    // ★追加: 駒が移動不可状態であるかを示すフラグ
+    bool IsImmobilized = false;
 
     int board_count = 0;
 
