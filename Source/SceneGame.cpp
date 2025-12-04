@@ -612,7 +612,7 @@ void SceneGame::Update(float elapsedTime)
 					// 勝利：通常通り相手の駒を取得（通常移動のロジックに任せる）
 					// 勝利時は、防御側のSlimeを削除する必要があるため、以下の処理を実行
 					else {
-						deleteEffect->Play({ clicked.x * 100.0f,100.0f,clicked.y * 100.0f }, 30.0f);
+						deleteEffect->Play({ clicked.x * 100.0f,100.0f,clicked.y * 100.0f }, 1000.0f);
 						RemovePieceAt(clicked); // 取られる駒の Slime を削
 
 						board->setPieceAt(clicked, nullptr);
