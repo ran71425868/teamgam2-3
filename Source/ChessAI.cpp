@@ -33,6 +33,30 @@ void ChessAI::Update(Board* board)
 void ChessAI::MakeRandomMove(Board* board)
 {
     std::vector<std::pair<Position, Position>> moves;
+    std::vector<std::pair<Position, Position>> kingKillMoves;
+
+    for (auto& [from, to] : moves) {
+        auto attacker = board->getPieceAt(from);
+        auto defender = board->getPieceAt(to);
+
+        if (!attacker || !defender) continue;
+
+        // ★ 相手キングか？
+        if (defender->getType() == "King") {
+
+            // ★ 攻撃側の体力が相手キングより高い（勝てる or 相打ちしない）
+            if (attacker->getHealth() > defender->getHealth()) {
+
+                kingKillMoves.push_back({ from, to });
+            }
+        }
+    }
+
+    // ★ キングを倒せる手があればそれを最優先で使用
+    if (!kingKillMoves.empty()) {
+        moves = kingKillMoves;
+    }
+
 
     bool kingInCheck = board->isKingInCheck("black");
 
@@ -112,6 +136,30 @@ found:;*/
 
 
     if (moves.empty()) return;
+
+
+    std::vector<std::pair<Position, Position>> safeCaptures;
+
+    for (auto& [from, to] : moves) {
+        auto attacker = board->getPieceAt(from);
+        auto defender = board->getPieceAt(to);
+
+        if (!attacker || !defender)
+            continue;
+
+        if (attacker->getColor() == defender->getColor())
+            continue;
+
+        // ★ 勝てる or 相打ち：attackerHealth >= defenderHealth
+        if (attacker->getHealth() >= defender->getHealth()) {
+            safeCaptures.push_back({ from, to });
+        }
+    }
+
+    // ★ safeCaptures があれば、こちらを優先的に使う
+    if (!safeCaptures.empty()) {
+        moves = safeCaptures;
+    }
 
    /* std::uniform_int_distribution<int> dist(0, (int)moves.size() - 1);
     auto [from, to] = moves[dist(gen)];
