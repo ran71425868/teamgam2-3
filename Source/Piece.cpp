@@ -105,7 +105,7 @@ void Piece::Render(const RenderContext& rc, ModelRenderer* renderer) {
     }
 
     // ---  体力バーの描画ロジック (選択時のみ) ---
-    if (!isSelected) {
+    if (isSelected) {
 
         // 1. 体力比率を計算 (0.0 から 1.0)
         float healthRatio = (float)currentHealth / maxHealth;
