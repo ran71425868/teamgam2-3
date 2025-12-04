@@ -280,7 +280,7 @@ void SceneGame::Update(float elapsedTime)
 					return;
 				}
 
-				// ★追加: ターゲット駒の選択が必要な効果かチェック (例: ID 2, 6)
+				// ターゲット駒の選択が必要な効果かチェック (例: ID 2, 6)
 				// 破滅の刻印 (ID: 6) は自駒単体をターゲットとします。
 				// 生命の祝福 (ID: 2) も自駒単体をターゲットとします。
 				if (effectId == 2 || effectId == 6) {
@@ -299,6 +299,31 @@ void SceneGame::Update(float elapsedTime)
 					selectedHandIndex = -1;
 
 					// Space決定後のクリックはカード使用に専念させるため、ここでリターン
+					return;
+				}
+
+				// 絶対の雷 (ID: 8) の処理
+				if (effectId == 8) {
+
+					std::string currentColor = board->getCurrentTurn();
+					std::string enemyColor = (currentColor == "white") ? "black" : "white";
+
+					// 1. 相手の駒全体に 1 ダメージを適用
+					ApplyDamageToAllEnemyPieces(enemyColor, 1);
+
+					// 2. クールダウンと状態リセット
+					isCardInUse = true;
+					cardCooldownTimer = CARD_COOLDOWN_TIME;
+
+					// 3. カードを破棄
+					cardManager->UseCard(selectedHandIndex);
+
+					// 4. GUIハイライトをリセット
+					selectedHandIndex = -1;
+
+					// 5. カード効果発動後、自身のターンを終了する
+					board->switchTurn();
+
 					return;
 				}
 
@@ -352,7 +377,7 @@ void SceneGame::Update(float elapsedTime)
 		if (!board->isInsideBoard(clicked)) return; // ボード外なら何もしない
 
 		auto clickedPiece = board->getPieceAt(clicked);
-		// --- ★追加ロジック: 次元の扉 (ID 7) の多段階処理 ---
+	// ---  次元の扉 (ID 7) の多段階処理 ---
 
 	// 1. ワープ元駒の選択待ち
 		if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_PIECE) {
@@ -369,11 +394,11 @@ void SceneGame::Update(float elapsedTime)
 				// 選択した駒を一時保存 (駒移動不可フラグに使用するため)
 				// selectedPieceForEffect = clickedPiece; 
 
-				std::cout << "次元の扉: ワープ先となる共通マスを選択してください。" << std::endl;
+				
 				return;
 			}
 			else {
-				std::cout << "次元の扉: 共通マス上の自身の駒を選択してください。" << std::endl;
+				
 				// 無効な駒/マスをクリックした場合、状態は維持
 				return;
 			}
@@ -428,7 +453,6 @@ void SceneGame::Update(float elapsedTime)
 				selectedPos = { -1, -1 };
 				// selectedPieceForEffect = nullptr;
 
-				std::cout << "次元の扉: ワープ成功。ターンを終了します。" << std::endl;
 
 				// 5. ターン切り替え
 				board->switchTurn();
@@ -436,11 +460,11 @@ void SceneGame::Update(float elapsedTime)
 				return;
 			}
 			else {
-				std::cout << "次元の扉: ターゲットマスは、ワープ元と異なる共通マス (y=2〜5) でなければなりません。" << std::endl;
+				
 				return;
 			}
 		}
-		// ★追加ロジック: カード効果のターゲット選択フェーズかチェック
+		// カード効果のターゲット選択フェーズかチェック
 		else if (currentCardEffectState == CardEffectState::AWAITING_PIECE_SELECTION) {
 
 			// ターゲット駒がクリックされたか確認
@@ -478,7 +502,7 @@ void SceneGame::Update(float elapsedTime)
 				auto color = clickedPiece->getColor();
 				auto currentTurn = board->getCurrentTurn();
 
-				// ★追加: 駒が移動不可状態ではないかチェック
+				// 駒が移動不可状態ではないかチェック
 				if (clickedPiece->isImmobilized()) {
 					return; // 選択をキャンセル
 				}
@@ -1101,6 +1125,48 @@ void SceneGame::RemovePieceAt(Position pos)
 		{
 			++it;
 		}
+	}
+}
+
+void SceneGame::ApplyDamageToAllEnemyPieces(const std::string& enemyColor, int damage)
+{
+	// ダメージ適用後に削除される駒のリスト
+	std::vector<Piece*> piecesToRemove;
+
+	// 1. 全ての駒をチェック
+	for (Piece* piece : pieces)
+	{
+		if (piece == nullptr) continue;
+
+		// 2. 敵駒であるかチェック
+		if(piece->getColor() == enemyColor)
+		{
+			// 3. ダメージを適用 (Piece::takeDamage を呼び出し)
+			piece->takeDamage(damage); 
+
+			int newHealth = piece->getHealth(); 
+
+			// 4. HPが0以下になったら削除リストに追加
+			if (newHealth <= 0)
+			{
+				piecesToRemove.push_back(piece);
+			}
+		}
+	
+	}
+
+	// 5. 削除リスト内の駒をゲーム盤から削除
+	for (Piece* piece : piecesToRemove)
+	{
+		// 盤面上の位置を取得
+		Position pos = piece->getPosition(); // ChessPiece::getPosition() を使用
+
+		// 駒の削除処理を実行
+		RemovePieceAt(pos); // SceneGameの既存の削除関数を使用
+
+		// 盤面 (Board) からもポインタをnullにする
+		board->setPieceAt(pos, nullptr);
+
 	}
 }
 

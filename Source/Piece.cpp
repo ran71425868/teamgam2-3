@@ -144,11 +144,8 @@ void Piece::Render(const RenderContext& rc, ModelRenderer* renderer) {
         // 暫定的な描画: モデルが未定義の場合、デバッグとして四角を描画するなどしてください。
         // モデルを描画する場合は、上記のコメントアウトを外し、適切な Model* と ShaderId を設定してください。
     }
-
    
 }
-
-
 
 void Piece::SetBoardPosition(Position pos) {
     boardPosition = pos;

@@ -21,8 +21,6 @@ public:
         IsImmobilized = immobilized;
     }
 
-      
-
     /**
      * @brief 駒が移動不可状態であるかを取得する
      * @return trueなら移動不可
@@ -30,6 +28,51 @@ public:
     bool isImmobilized() const {
         return IsImmobilized;
     }
+
+    /**
+     * @brief 駒の色を取得する
+     * @return 駒の色 ("white" または "black")
+     */
+    const std::string& getColor() const {
+        return color;
+    }
+
+    /**
+    *@brief 駒の現在の体力を取得する
+    * @return 現在の体力(int)
+    */
+    int getHealth() const {
+        // 既存の private メンバー currentHealth を使用
+        return currentHealth;
+    }
+
+    /**
+     * @brief 駒のタイプを取得する
+     * @return 駒のタイプ ("king", "pawn" など)
+     */
+    const std::string& getType() const {
+        // 既存の private メンバー pieceType を使用
+        return pieceType;
+    }
+
+    /**
+     * @brief ダメージを適用する
+     * @param damage 適用するダメージ量
+     */
+    void takeDamage(int damage) {
+        currentHealth -= damage;
+        if (currentHealth < 0) {
+            currentHealth = 0;
+        }
+        // 注: setDisplayInfoを呼び出して、体力バーの表示を更新することも可能です。
+        // setDisplayInfo(isSelected, currentHealth, maxHealth); 
+    }
+
+    // 以前のロジックで必要とされたため、Position取得関数名も修正
+    Position getPosition() const {
+        return GetBoardPosition();
+    }
+
 
     void setDisplayInfo(bool isSelected, int currentHealth, int maxHealth);
 

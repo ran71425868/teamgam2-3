@@ -96,7 +96,7 @@ void Framework::Render(float elapsedTime)
 	ID3D11DeviceContext* dc = Graphics::Instance().GetDeviceContext();
 
 	// ‰æ–ÊƒNƒŠƒA
-#if 1
+#if 0
 	Graphics::Instance().Clear(timeR, timeg, timeb, 1.0f);
 
 #else

@@ -114,6 +114,9 @@ private:
 
 	void RemovePieceAt(Position pos);
 
+	// ★追加: 特定の色のすべての駒にダメージを与える
+	void ApplyDamageToAllEnemyPieces(const std::string& enemyColor, int damage);
+
 	Position ScreenToBoard(int screenX, int screenY);
 	Piece* FindSlimeAt(Position pos);
 
