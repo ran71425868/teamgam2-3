@@ -167,6 +167,7 @@ private:
 
 	int timer = 0;
 	int cooldown = 2;
+	int endtimer = 0.0f;
 
 	Effect* deleteEffect = nullptr;
 };

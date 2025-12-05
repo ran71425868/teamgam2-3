@@ -217,17 +217,18 @@ void SceneGame::Finalize()
 void SceneGame::Update(float elapsedTime)
 {
 	// ガード処理：ゲーム終了時は処理を停止
-	if (isGameOver) {
+	if (isGameOver && endtimer >= 200.0f) {
 		// ここに結果表示のロジック（未作成）が入る
 		// シーン遷移がないため、結果表示（例：テキスト表示）のみを行う
 		BGM->Stop();
-		if(winnerColor=="white")
+		if (winnerColor == "white")
 			SceneManager::Instance().ChangeScene(new SceneWhiteResult);
 		else
 			SceneManager::Instance().ChangeScene(new SceneBlackResult);
 		return;
 	}
 
+if(!isGameOver){
 	// --- カードクールダウン処理 ---
 	if (isCardInUse) {
 		cardCooldownTimer -= elapsedTime;
@@ -256,7 +257,7 @@ void SceneGame::Update(float elapsedTime)
 	}
 
 	Mouse& mouseCursor = Input::Instance().GetMouse();
-	GamePad& gamePad = Input::Instance().GetGamePad(); 
+	GamePad& gamePad = Input::Instance().GetGamePad();
 
 	// --- キーボード入力によるカード選択/決定 ---
 	if (!isCardInUse && cardManager->getHandSize() > 0) {
@@ -288,7 +289,7 @@ void SceneGame::Update(float elapsedTime)
 				int effectId = cardManager->getCardInHand(selectedHandIndex).effectId;
 
 				//  即時発動カード (ID 0, 5, 8, 9) の処理を CardEffectProcessor に委譲 (★ID: 5 を追加)
-				if (effectId == 0 || effectId == 5 || effectId == 8 || effectId == 9) 
+				if (effectId == 0 || effectId == 5 || effectId == 8 || effectId == 9)
 				{
 
 					cardProcessor->ProcessInstantCard(
@@ -330,7 +331,7 @@ void SceneGame::Update(float elapsedTime)
 				}
 
 				// ターゲット駒の選択が必要な効果かチェック (例: ID 2, 3, 6)
-				if (effectId == 2 || effectId == 3 || effectId == 6) 
+				if (effectId == 2 || effectId == 3 || effectId == 6)
 				{
 					// ターゲット選択フェーズへ移行
 
@@ -556,7 +557,7 @@ void SceneGame::Update(float elapsedTime)
 					// 勝利：通常通り相手の駒を取得（通常移動のロジックに任せる）
 					// 勝利時は、防御側のSlimeを削除する必要があるため、以下の処理を実行
 					else {
-						deleteEffect->Play({ clicked.x * 100.0f,100.0f,clicked.y * 100.0f }, 1000.0f);
+						deleteEffect->Play({ clicked.x * 100.0f,100.0f,clicked.y * 100.0f }, 30.0f);
 						RemovePieceAt(clicked); // 取られる駒の Slime を削
 
 						board->setPieceAt(clicked, nullptr);
@@ -605,7 +606,7 @@ void SceneGame::Update(float elapsedTime)
 						}
 					}
 				}
-				
+
 				if (piece) piece->SetBoardPosition(clicked);
 
 				MoveData move{ 1, selectedPos.x, selectedPos.y, clicked.x, clicked.y };
@@ -715,7 +716,7 @@ void SceneGame::Update(float elapsedTime)
 			}
 		}
 	}
-
+}
 	MoveData recvMove{};
 	if (network.ReceiveMove(recvMove)) {
 		Position from{ recvMove.fromX, recvMove.fromY };
@@ -752,6 +753,9 @@ void SceneGame::Update(float elapsedTime)
 		timer++;
 	}
 
+	if (isGameOver)
+		endtimer++;
+
 	if (!isGameOver&&timer>=120) {
 		ai->Update(board);
 		blackMovedToCommonCount++;
@@ -766,6 +770,7 @@ void SceneGame::Update(float elapsedTime)
 		isGameOver = true;
 		winnerColor = "white";
 	}
+
 }
 
 // 描画処理
