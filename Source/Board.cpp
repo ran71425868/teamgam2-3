@@ -296,3 +296,15 @@ void Board::Render(const RenderContext& rc, ModelRenderer* renderer)
         }
     }
 }
+
+bool Board::wouldMoveGiveCheck(Position from, Position to, const std::string& enemyColor)
+{
+    // 1. 現在の盤面をコピー
+    Board temp = *this;
+
+    // 2. 仮想的に駒を移動
+    temp.movePiece(from, to);
+
+    // 3. 移動後に敵キングがチェックされているか判定
+    return temp.isKingInCheck(enemyColor);
+}

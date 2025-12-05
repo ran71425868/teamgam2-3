@@ -76,4 +76,6 @@ public:
 
     void Render(const RenderContext& rc, ModelRenderer* renderer);
 
+    bool wouldMoveGiveCheck(Position from, Position to, const std::string& enemyColor);
+
 };

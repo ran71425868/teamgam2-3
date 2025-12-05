@@ -73,7 +73,7 @@ void ChessAI::MakeRandomMove(Board* board)
             for (auto& to : legalMoves) {
                 if (to.isValid()) {
                     otherPieceHasMoves = true;
-                    break; // 内側ループを脱出
+                    break;
                 }
             }
         }
@@ -158,35 +158,26 @@ found:;*/
     if (!safeCaptures.empty()) {
         moves = safeCaptures;
     }
+    std::vector<std::pair<Position, Position>> checkMoves;
 
-   /* std::uniform_int_distribution<int> dist(0, (int)moves.size() - 1);
-    auto [from, to] = moves[dist(gen)];
-
-    bool capturedBefore = (board->getPieceAt(to) != nullptr);
-
-    board->movePiece(from, to);
-
-    auto movedPiece = board->getPieceAt(to);
-    if (movedPiece) {
-        movedPiece->takeDamage(1);
-        if (movedPiece->getHealth() <= 0) {
-            board->setPieceAt(to, nullptr);
-
-            if (onMoveCallback) {
-                onMoveCallback(from, to, true);
-            }
+    for (auto& [from, to] : moves) {
+        // 移動したと仮定してチェックできるか確認
+        if (board->wouldMoveGiveCheck(from, to, "white")) {
+            checkMoves.push_back({ from, to });
         }
     }
 
-    if (onMoveCallback) {
-        onMoveCallback(from, to, capturedBefore);
-    }*/
+    // チェックできる手があるならそれを最優先
+    if (!checkMoves.empty()) {
+        moves = checkMoves;
+    }
+
 
     std::uniform_int_distribution<int> dist(0, (int)moves.size() - 1);
     auto [from, to] = moves[dist(gen)];
 
-    auto attacker = board->getPieceAt(from); // 動かす駒 (AI)
-    auto defender = board->getPieceAt(to);   // 取られる駒 (Player)
+    auto attacker = board->getPieceAt(from);
+    auto defender = board->getPieceAt(to);
 
     if (attacker) {
         bool captured = (defender != nullptr);
@@ -215,10 +206,7 @@ found:;*/
                     // 防御側も死亡した場合、盤面から削除
                     deleteEffect->Play({ to.x * 100.0f,100.0f,to.y * 100.0f }, 30.0f);
                     board->setPieceAt(to, nullptr);
-                    // SceneGameに防御側の描画削除を依頼 (toの位置の削除を依頼)
-                    // ★ captured=true 相当の処理が必要だが、ここでは from->to, true で代用
-                    // ただし、attackerは移動していないので、toの削除だけを依頼する専用コールバックがないと難しい。
-                    // 暫定的に onMoveCallback(to, to, false) で to の位置の描画削除を依頼する
+
                     if (onMoveCallback) onMoveCallback(to, to, false);
                 }
 
@@ -227,28 +215,25 @@ found:;*/
                 // 攻撃側 (AI) の勝利: 防御側を盤面から削除
                 deleteEffect->Play({to.x * 100.0f,100.0f,to.y * 100.0f }, 30.0f);
                 board->setPieceAt(to, nullptr);
-                // SceneGameに防御側の描画を削除させる (captured = true, onMoveCallback(from, to, true) で処理される)
 
             }
         }
 
-        // --- B. 移動と自傷ダメージ ---
         if (attackerSurvived) {
 
-            // 1. 移動する前に自傷ダメージ
             attacker->takeDamage(1);
 
-            // 2. 自傷ダメージで死亡した場合
+
             if (attacker->getHealth() <= 0) {
                 deleteEffect->Play({ from.x * 100.0f,100.0f,from.y * 100.0f }, 30.0f);
                 board->setPieceAt(from, nullptr); // 盤面から削除
-                // 描画の削除は、移動が起こらないため from の位置の削除をコールバックで依頼
-                if (onMoveCallback) onMoveCallback(from, from, false); // from->from (死亡)
+
+                if (onMoveCallback) onMoveCallback(from, from, false);
             }
             else {
-                // 3. 生きていれば移動を実行
+
                 board->movePiece(from, to);
-                // SceneGameに移動を通知 (描画オブジェクトの位置更新のため)
+          
                 if (onMoveCallback) onMoveCallback(from, to, captured);
             }
         }
