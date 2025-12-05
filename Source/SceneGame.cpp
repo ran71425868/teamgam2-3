@@ -28,41 +28,56 @@ void SceneGame::Initialize()
 
 	BGM = Audio::Instance().LoadAudioSource("Data/Sound/Game.wav");
 
+	// 視覚オブジェクトを生成し、対応する論理オブジェクトとリンクさせるヘルパー関数
+	auto createAndLinkPiece = [&](const std::string& color, Position pos, const std::string& type) {
+		Piece* p = new Piece(color, pos, type);
+
+		// 盤面上のChessPieceを取得し、Pieceに設定
+		// Board::getPieceAt が ChessPiece* を返すことを想定
+		ChessPiece* logicPiece = board->getPieceAt(pos).get();
+		if (logicPiece) {
+			p->SetLogicPiece(logicPiece);
+		}
+
+		pieces.push_back(p);
+		};
+
+
 	// 駒を初期配置（例：白と黒のスライム）
+	// ポーン
 	for (int i = 0; i <= 7; i++)
 	{
-		pieces.push_back(new Piece("white", { i, 1 },"pawn"));//白　手前
-		pieces.push_back(new Piece("black", { i, 6 },"pawn"));//黒　奥
+		createAndLinkPiece("white", { i, 1 }, "pawn"); // 白　手前
+		createAndLinkPiece("black", { i, 6 }, "pawn"); // 黒　奥
 	}
 	
-	//king
-	pieces.push_back(new Piece("white", { 4, 0 },"king"));
-	//rook
-	pieces.push_back(new Piece("white", { 0, 0 },"rook"));
-	pieces.push_back(new Piece("white", { 7, 0 },"rook"));
-	//knight
-	pieces.push_back(new Piece("white", { 1, 0 },"knight"));
-	pieces.push_back(new Piece("white", { 6, 0 },"knight"));
-	//bishop
-	pieces.push_back(new Piece("white", { 2, 0 },"bishop"));
-	pieces.push_back(new Piece("white", { 5, 0 },"bishop"));
-	//queen
-	pieces.push_back(new Piece("white", { 3, 0 },"queen"));
+	// king
+	createAndLinkPiece("white", { 4, 0 }, "king");
+	// rook
+	createAndLinkPiece("white", { 0, 0 }, "rook");
+	createAndLinkPiece("white", { 7, 0 }, "rook");
+	// knight
+	createAndLinkPiece("white", { 1, 0 }, "knight");
+	createAndLinkPiece("white", { 6, 0 }, "knight");
+	// bishop
+	createAndLinkPiece("white", { 2, 0 }, "bishop");
+	createAndLinkPiece("white", { 5, 0 }, "bishop");
+	// queen
+	createAndLinkPiece("white", { 3, 0 }, "queen");
 
-
-	//king
-	pieces.push_back(new Piece("black", { 4, 7 },"king"));
-	//rook
-	pieces.push_back(new Piece("black", { 0, 7 },"rook"));
-	pieces.push_back(new Piece("black", { 7, 7 },"rook"));
-	//knight
-	pieces.push_back(new Piece("black", { 1, 7 },"knight"));
-	pieces.push_back(new Piece("black", { 6, 7 },"knight"));
-	//bishop
-	pieces.push_back(new Piece("black", { 2, 7 },"bishop"));
-	pieces.push_back(new Piece("black", { 5, 7 },"bishop"));
-	//queen
-	pieces.push_back(new Piece("black", { 3, 7 },"queen"));
+	// king
+	createAndLinkPiece("black", { 4, 7 }, "king");
+	// rook
+	createAndLinkPiece("black", { 0, 7 }, "rook");
+	createAndLinkPiece("black", { 7, 7 }, "rook");
+	// knight
+	createAndLinkPiece("black", { 1, 7 }, "knight");
+	createAndLinkPiece("black", { 6, 7 }, "knight");
+	// bishop
+	createAndLinkPiece("black", { 2, 7 }, "bishop");
+	createAndLinkPiece("black", { 5, 7 }, "bishop");
+	// queen
+	createAndLinkPiece("black", { 3, 7 }, "queen");
 
 	
 	//isServer = true; // ← サーバー側なら true / クライアントなら false に設定
@@ -766,11 +781,14 @@ void SceneGame::Render()
 
 			if (1) {
 				// 2. 体力情報の取得
-				auto chessPiece = board->getPieceAt(piecePos);
-				if (!chessPiece) continue;
+				/*auto chessPiece = board->getPieceAt(piecePos);
+				if (!chessPiece) continue;*/
 
-				int currentHealth = chessPiece->getHealth();
-				int maxHealth = chessPiece->getMaxHealth();
+				int currentHealth = p->getHealth(); // Pieceオブジェクトから直接取得
+				int maxHealth = p->getMaxHealth();   // Pieceオブジェクトから直接取得
+
+				if (currentHealth == 0) continue; // 論理駒がリンクされていないか、HPが0なら描画しない
+
 				float healthRatio = (float)currentHealth / maxHealth;
 
 				// 3. 3D位置を計算 (駒の頭上に出現させるためのワールド座標)

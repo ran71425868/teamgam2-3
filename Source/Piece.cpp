@@ -1,6 +1,6 @@
 #include "Piece.h"
 
-Piece::Piece(std::string c, Position boardPos, std::string pType) : color(c), boardPosition(boardPos), pieceType(pType) {
+Piece::Piece(const std::string c, Position boardPos, const std::string pType) : color(c), boardPosition(boardPos), pieceType(pType) {
     //白駒
     white_bishop = new Model("Data/Model/Chesspiece/bishop_white.mdl");
     white_pawn = new Model("Data/Model/Chesspiece/pown_white.mdl");
@@ -149,6 +149,17 @@ void Piece::Render(const RenderContext& rc, ModelRenderer* renderer) {
         // モデルを描画する場合は、上記のコメントアウトを外し、適切な Model* と ShaderId を設定してください。
     }
    
+}
+
+/**
+ * @brief ダメージを適用する (論理駒に処理を委譲)
+ * @param damage 適用するダメージ量
+ */
+void Piece::takeDamage(int damage) {
+    if (logicPiece) {
+        // ★修正点: 実際のダメージ計算は論理オブジェクトに任せる
+        logicPiece->takeDamage(damage);
+    }
 }
 
 void Piece::heal(int amount) {

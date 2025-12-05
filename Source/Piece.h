@@ -5,7 +5,7 @@
 
 class Piece {
 public:
-    Piece(std::string color, Position boardPos, std::string pieceType);
+    Piece(const std::string color, Position boardPos, const std::string pieceType);
     ~Piece();
 
     void Update(float elapsedTime);
@@ -38,6 +38,15 @@ public:
         return color;
     }
 
+    // ★追加: 論理駒ポインタを設定するメソッド
+    void SetLogicPiece(ChessPiece* piece) {
+        logicPiece = piece;
+        // setPositionメソッドがPieceにもある場合、ここで設定します
+        if (piece) {
+            boardPosition = piece->getPosition();
+        }
+    }
+
     // ★追加: 体力を取得するメソッド (logicPieceに処理を委譲)
     int getHealth() const {
         // ポインタが有効な場合のみ、体力を取得
@@ -60,15 +69,8 @@ public:
      * @brief ダメージを適用する
      * @param damage 適用するダメージ量
      */
-    void takeDamage(int damage) {
-        currentHealth -= damage;
-        if (currentHealth < 0) {
-            currentHealth = 0;
-        }
-        // 注: setDisplayInfoを呼び出して、体力バーの表示を更新することも可能です。
-        // setDisplayInfo(is
-        // Selected, currentHealth, maxHealth); 
-    }
+    void takeDamage(int damage);
+        
 
     void heal(int amount); // ★この宣言を追加する！
 
