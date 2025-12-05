@@ -111,6 +111,12 @@ void SceneGame::Initialize()
 		cardSprites[i] = new Sprite(filename.c_str());
 	}
 
+	// ここから追加: 効果IDごとのカード説明画像をロード
+	for (int i = 0; i < 10; ++i) {
+		std::string filename = "Data/Sprite/Card_Desc_" + std::to_string(i) + ".png";
+		cardDescriptionSprites[i] = new Sprite(filename.c_str());
+	}
+
 	//カメラ初期設定
 	Graphics& graphics = Graphics::Instance();
 	Camera& camera = Camera::Instance();
@@ -179,11 +185,17 @@ void SceneGame::Finalize()
 		cardManager = nullptr;
 	}
 
-	// ロードしたすべてのカードテクスチャを解放
 	for (int i = 0; i < 10; ++i) {
 		if (cardSprites[i] != nullptr) {
 			delete cardSprites[i];
 			cardSprites[i] = nullptr;
+		}
+	}
+
+	for (int i = 0; i < 10; ++i) {
+		if (cardDescriptionSprites[i] != nullptr) {
+			delete cardDescriptionSprites[i];
+			cardDescriptionSprites[i] = nullptr;
 		}
 	}
 
@@ -223,6 +235,24 @@ void SceneGame::Update(float elapsedTime)
 			isCardInUse = false;
 			cardCooldownTimer = 0.0f;
 		}
+	}
+
+	// =======================================================
+	// ★ [最優先] ターン切り替わり時の持続効果処理の実行
+	// =======================================================
+	std::string currentTurn = board->getCurrentTurn();
+
+	if (currentTurn != lastTurnColor) {
+
+		// ActiveEffectManager にターン経過を通知し、効果を処理させる
+		ActiveEffectManager::GetInstance().ProcessTurnEffects(
+			currentTurn,
+			[this](const ActiveEffect& effect) {
+				ApplyPersistentEffect(effect); // ID 10 がここで実行され、移動不可が解除される
+			}
+		);
+
+		lastTurnColor = currentTurn; // 前ターンを更新
 	}
 
 	Mouse& mouseCursor = Input::Instance().GetMouse();
@@ -280,8 +310,6 @@ void SceneGame::Update(float elapsedTime)
 					return;
 				}
 
-
-
 				// ★次元の扉 (ID: 7) の処理
 				if (effectId == 7) {
 					// ターゲット選択フェーズへ移行 (ワープ元駒の選択待ち)
@@ -301,9 +329,7 @@ void SceneGame::Update(float elapsedTime)
 					return;
 				}
 
-				// ターゲット駒の選択が必要な効果かチェック (例: ID 2, 6)
-				// 破滅の刻印 (ID: 6) は自駒単体をターゲットとします。
-				// 生命の祝福 (ID: 2) も自駒単体をターゲットとします。
+				// ターゲット駒の選択が必要な効果かチェック (例: ID 2, 3, 6)
 				if (effectId == 2 || effectId == 3 || effectId == 6) 
 				{
 					// ターゲット選択フェーズへ移行
@@ -323,10 +349,7 @@ void SceneGame::Update(float elapsedTime)
 					// 右クリックで決定後のクリックはカード使用に専念させるため、ここでリターン
 					return;
 				}
-
 			}
-
-		
 		}
 	}
 
@@ -343,9 +366,8 @@ void SceneGame::Update(float elapsedTime)
 		cardManager->StartTurn();
 
 		// 2. ターン切り替え
-		// SwitchTurn(); 
 
-		// 3. プレイヤー側の場合、選択中のカードをリセット（念のため）
+		// 3. プレイヤー側の場合、選択中のカードをリセット
 		selectedHandIndex = 0;
 	}
 
@@ -360,25 +382,88 @@ void SceneGame::Update(float elapsedTime)
 		Position clicked = ScreenToBoard(cursor.x, cursor.y);
 		if (!board->isInsideBoard(clicked)) return; // ボード外なら何もしない
 
-		auto clickedPiece = board->getPieceAt(clicked);
-	
-		if (currentCardEffectState != CardEffectState::NONE && mouseCursor.GetButtonDown() & Mouse::BTN_LEFT)
-		{
-			// ... (省略: クリック座標の取得) ...
+		// =======================================================
+		// ★ [最優先] カード効果のターゲット選択ロジック
+		// =======================================================
 
-			// ID 2, 3, 4, 6 のターゲット選択の場合 (★ID: 2 と ID: 3 を追加)
-			if (selectedCardEffectId == 2 || selectedCardEffectId == 3 || selectedCardEffectId == 4 || selectedCardEffectId == 6)
+		// 状態が NONE でない場合、カード効果のターゲット選択処理に専念する
+		if (currentCardEffectState != CardEffectState::NONE)
+		{
+			// ID 2, 3, 4, 6 のターゲット選択の場合 (AWAITING_PIECE_SELECTION)
+			if (currentCardEffectState == CardEffectState::AWAITING_PIECE_SELECTION)
 			{
-				// ★修正: ApplyCardEffect のロジックを CardEffectProcessor に委譲
+				// ApplyTargetedEffect は、成功した場合に true を返し、カード使用後のクールダウン処理などを CardEffectProcessor 側で実施
 				if (cardProcessor->ApplyTargetedEffect(selectedCardEffectId, clicked, board->getCurrentTurn())) {
-					// 成功時: 状態をリセットし、カードを破棄
+					// 成功時: 状態をリセット
 					currentCardEffectState = CardEffectState::NONE;
 					selectedCardEffectId = -1;
+					// Note: ApplyTargetedEffect内でターン終了が必要な場合は処理済みと想定
 				}
 				// 失敗時は状態維持 (再選択待ち)
+				return; // カードターゲット選択に専念するため、駒の移動処理には進まない
 			}
-			return;
+
+			// DIMENSIONAL_GATE_SELECT_PIECE (ID 7) の処理 (ワープ元駒の選択待ち)
+			if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_PIECE) {
+				// CardEffectProcessor に駒の選択ロジックを委譲
+				// selectedPieceForEffect に選択された Piece* を一時保存
+				Piece* pieceToMove = FindSlimeAt(clicked); // 描画オブジェクトを取得
+
+				if (pieceToMove && pieceToMove->getColor() == board->getCurrentTurn()) {
+					// 1. 選択した駒 (Piece*) を一時保存
+					selectedPieceForEffect = pieceToMove;
+					// 2. 論理駒 (ChessPiece*) が存在するかチェック
+					ChessPiece* logicPiece = board->getPieceAt(clicked).get();
+					if (logicPiece) {
+						// 3. 成功時: 状態を「ワープ先マス選択待ち」に移行
+						currentCardEffectState = CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET;
+						// ★ワープ先候補の計算と格納 (全ての空きマス)
+						dimensionalGateTargets.clear();
+						for (int y = 0; y < 8; ++y) {
+							for (int x = 0; x < 8; ++x) {
+								Position p = { x, y };
+								// 駒が置かれていないマスを候補とする (前回の修正で空きマスのみワープ可となったため)
+								if (!board->getPieceAt(p)) {
+									dimensionalGateTargets.push_back(p);
+								}
+							}
+						}
+					}
+				}
+				// 失敗時は状態維持 (再選択待ち)
+				return; // カードターゲット選択に専念するため、移動処理には進まない
+			}
+
+			// DIMENSIONAL_GATE_SELECT_TARGET (ID 7) の処理 (ワープ先マスの選択待ち)
+			if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET) {
+				// CardEffectProcessor にターゲットマスの選択ロジックを委譲
+
+				// ApplyDimensionalGate は、成功した場合に true を返す（駒の移動と状態リセットを含む）
+				// この関数は Board::movePiece を内部で呼び出す必要があります。
+				if (cardProcessor->ApplyDimensionalGate(selectedCardEffectId, clicked, board->getCurrentTurn(), selectedPieceForEffect)) {
+
+					// 描画オブジェクトの位置を更新
+					if (selectedPieceForEffect) {
+						selectedPieceForEffect->SetBoardPosition(clicked);
+					}
+
+					// 成功時: 状態をリセット
+					currentCardEffectState = CardEffectState::NONE;
+					selectedCardEffectId = -1;
+					selectedPieceForEffect = nullptr; // 一時保存駒もリセット
+
+					// ★ワープ先ハイライトをクリア
+					dimensionalGateTargets.clear();
+
+					// カード使用によるターン終了（次元の扉の効果として）
+					//board->switchTurn();
+				}
+				// 失敗時は状態維持 (再選択待ち)
+				return; // カードターゲット選択に専念するため、移動処理には進まない
+			}
 		}
+
+		auto clickedPiece = board->getPieceAt(clicked);
 		// --- 2. 駒が選択されていない場合 (selectedPos.x == -1) ---
 		if (selectedPos.x == -1) {
 			// 自分の駒をクリックした場合、それを選択する
@@ -420,14 +505,12 @@ void SceneGame::Update(float elapsedTime)
 				}
 			}
 
-			
 			if (isLegalMove) {
 				// slime の位置も更新
 				auto piece = FindSlimeAt(selectedPos);
 
 				// 修正: 移動する駒を取得（自傷と死亡判定のため）
 				auto movingPiece = board->getPieceAt(selectedPos);
-				// 取られる駒があれば、その slime を削除
 
 				auto attacker = board->getPieceAt(selectedPos);
 				auto defender = board->getPieceAt(clicked); // 取られる駒（nullptrの場合もある）
@@ -590,7 +673,6 @@ void SceneGame::Update(float elapsedTime)
 					}
 				}
 
-
 				// 選択を解除し、ターンを切り替える
 				selectedPos = { -1, -1 };
 				legalMoves.clear();
@@ -603,7 +685,6 @@ void SceneGame::Update(float elapsedTime)
 					isGameOver = true;
 					winnerColor = "white";
 				}
-
 
 				// ゲームが終了していなければ、ターンを切り替える
 				if (!isGameOver) {
@@ -632,7 +713,6 @@ void SceneGame::Update(float elapsedTime)
 					legalMoves.clear();
 				}
 			}
-
 		}
 	}
 
@@ -647,16 +727,12 @@ void SceneGame::Update(float elapsedTime)
 
 	for (auto p : pieces) p->Update(elapsedTime);
 
-
 	//カメラコントローラー更新処理
-
 	DirectX::XMFLOAT3 Poswhite{ 400.0f,0.0f,300.0f };
 	DirectX::XMFLOAT3 Posblack{ 400.0f,0.0f,600.0f };
 
-
 	DirectX::XMFLOAT3 target;
 
-	//DirectX::XMFLOAT3 target;
 	target.x = Poswhite.x;
 	target.y = 0.0f;
 	target.z = Posblack.z - Poswhite.z;
@@ -676,7 +752,6 @@ void SceneGame::Update(float elapsedTime)
 		timer++;
 	}
 
-
 	if (!isGameOver&&timer>=120) {
 		ai->Update(board);
 		blackMovedToCommonCount++;
@@ -691,7 +766,6 @@ void SceneGame::Update(float elapsedTime)
 		isGameOver = true;
 		winnerColor = "white";
 	}
-
 }
 
 // 描画処理
@@ -709,8 +783,6 @@ void SceneGame::Render()
 	rc.renderState = graphics.GetRenderState();
 
 	ModelRenderer* renderer = graphics.GetModelRenderer(); // ←環境に応じて取得方法を調整
-
-	
 
 	//カメラパラメータ設定
 	Camera& camera = Camera::Instance();
@@ -734,9 +806,7 @@ void SceneGame::Render()
 					DirectX::XMMatrixTranslation(
 						move.x * 100.0f, // X座標
 						2.0f,            // 駒より少し高い位置
-						move.y * 100.0f  // Z座標
-					)
-				);
+						move.y * 100.0f));// Z座標
 
 				// ハイライトモデルを描画
 				renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
@@ -753,14 +823,32 @@ void SceneGame::Render()
 						DirectX::XMMatrixTranslation(
 							x * 100.0f,
 							2.0f, // 盤面の高さ
-							y * 100.0f
-						)
-					);
+							y * 100.0f));
 					// マスのタイプに応じて異なるテクスチャや色で描画しても良い
 					 modelRenderer->Render(rc, transform, healSpotModel, ShaderId::Lambert);
 				}
 			}
+		}
 
+		if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET)
+		{
+			// dimensionalGateTargets に格納された全ての空きマスを描画
+			for (const auto& pos : dimensionalGateTargets)
+			{
+				float x = pos.x;
+				float z = pos.y;
+				// 盤面座標 (move.x, move.y) をワールド座標に変換
+				DirectX::XMFLOAT4X4 transform;
+				DirectX::XMStoreFloat4x4(&transform,
+					DirectX::XMMatrixTranslation(
+						x * 100.0f, // X座標
+						2.0f,            // 駒より少し高い位置
+						z * 100.0f));// Z座標
+
+				// ハイライトモデルを描画
+				renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
+			}
+			
 		}
 		//エフェクトマネージャー描画
 		EffectManager::Instance().Render(rc.view, rc.projection);
@@ -768,7 +856,6 @@ void SceneGame::Render()
 
 	// 3Dデバッグ描画
 	{
-		
 	}
 
 	// 2Dスプライト描画
@@ -781,9 +868,6 @@ void SceneGame::Render()
 
 			if (1) {
 				// 2. 体力情報の取得
-				/*auto chessPiece = board->getPieceAt(piecePos);
-				if (!chessPiece) continue;*/
-
 				int currentHealth = p->getHealth(); // Pieceオブジェクトから直接取得
 				int maxHealth = p->getMaxHealth();   // Pieceオブジェクトから直接取得
 
@@ -820,8 +904,7 @@ void SceneGame::Render()
 					startY,
 					barWidth,
 					barHeight,
-					DirectX::XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f) // 黒い背景色
-				);
+					DirectX::XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f)); // 黒い背景色
 
 				// 6. 現在の体力（塗りつぶし）を描画
 				float currentBarWidth = barWidth * healthRatio;
@@ -839,11 +922,9 @@ void SceneGame::Render()
 					startY,
 					currentBarWidth,
 					barHeight,
-					barColor
-				);
+					barColor);
 			}
 		}
-
 	}
 	if (board->isKingInCheck("black") || board->isKingInCheck("white"))
 	{
@@ -852,8 +933,6 @@ void SceneGame::Render()
 			0,
 			1, 1, 1, 1);
 	}
-
-
 }
 
 // GUI描画
@@ -879,27 +958,42 @@ void SceneGame::DrawGUI()
 		// 選択中のカード情報を取得
 		const Card& selectedCard = cardManager->getCardInHand(selectedHandIndex);
 
-		// 描画位置を画面の左上隅に変更 (X=50, Y=50 を想定)
-		float textX = 50.0f;
-		float textY = 50.0f;
+		// 描画位置とサイズの定義 (画面左上隅を起点とする)
+		const float CARD_DESC_X = 50.0f; // 描画開始 X 座標
+		const float CARD_DESC_Y = 50.0f; // 描画開始 Y 座標
+		const float DESC_WIDTH = 300.0f; // 説明画像の幅
+		const float DESC_HEIGHT = 400.0f; // 説明画像の高さ
 
 		// 説明文の背景として黒い矩形を描画 (読みやすさのため)
-		// カード効果テキスト全体を覆うように、幅を広めに設定
 		shapeRenderer->DrawRect(
 			rc,
-			textX - 10,  // X座標を少しずらしてパディング
-			textY - 10,  // Y座標を少しずらしてパディング
-			400.0f,      // 説明文の最大幅を仮定 (必要に応じて調整してください)
-			600.0f,      // 高さ (複数行のテキストを考慮して大きく設定)
-			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.7f) // 黒、半透明
-		);
+			CARD_DESC_X - 10,  // X座標を少しずらしてパディング
+			CARD_DESC_Y - 10,  // Y座標を少しずらしてパディング
+			DESC_WIDTH + 20.0f, // 画像サイズに合わせて幅を設定
+			DESC_HEIGHT + 20.0f, // 画像サイズに合わせて高さを設定
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.7f));// 黒、半透明
 
-		// ここにテキスト描画関数を挿入してください
-		
+		// cardDescriptionSprites を使用
+		int effectId = selectedCard.effectId;
+		Sprite* descriptionSprite = nullptr;
+
+		// effectId を使って対応する説明スプライトを取得
+		if (effectId >= 0 && effectId < 10) {
+			descriptionSprite = cardDescriptionSprites[effectId];
+		}
+
+		if (descriptionSprite != nullptr) {
+			descriptionSprite->Render(
+				rc,
+				CARD_DESC_X, CARD_DESC_Y, // dx, dy (描画開始位置)
+				0.0f, // dz
+				DESC_WIDTH, DESC_HEIGHT, // 説明画像用のサイズ
+				0.0f, // angle
+				1.0f, 1.0f, 1.0f, 1.0f);// r, g, b, a
+		}
 	}
 
 	// --- 1. 手札の描画 ---
-
 	for (int i = 0; i < handSize; ++i) {
 
 		// カードの描画位置を計算 (横並び)
@@ -924,8 +1018,7 @@ void SceneGame::DrawGUI()
 				0.0f,// dz
 				(float)CARD_WIDTH, (float)CARD_HEIGHT, // ★修正済みの定数を使用
 				0.0f,// angle
-				1.0f, 1.0f, 1.0f, 1.0f// r, g, b, a
-			);
+				1.0f, 1.0f, 1.0f, 1.0f);// r, g, b, a
 		}
 	
 		// --- B. 選択中のハイライト描画 ---
@@ -933,13 +1026,10 @@ void SceneGame::DrawGUI()
 			// 選択中のカードの周囲に枠を描画
 			shapeRenderer->DrawRectBorder(rc,cardX, cardY, CARD_WIDTH, CARD_HEIGHT,
 				DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 5.0f);
-
-				
 		}
 
 		// --- C. カード名とIDのテキスト描画 --- 
 	}
-	
 }
 
 void SceneGame::RemovePieceAt(Position pos)
@@ -987,7 +1077,6 @@ void SceneGame::ApplyDamageToAllEnemyPieces(const std::string& enemyColor, int d
 				piecesToRemove.push_back(piece);
 			}
 		}
-	
 	}
 
 	// 5. 削除リスト内の駒をゲーム盤から削除
@@ -1001,15 +1090,12 @@ void SceneGame::ApplyDamageToAllEnemyPieces(const std::string& enemyColor, int d
 
 		// 盤面 (Board) からもポインタをnullにする
 		board->setPieceAt(pos, nullptr);
-
 	}
 }
 
 //マウス座標 → 盤面座標変換
 Position SceneGame::ScreenToBoard(int screenX, int screenY)
 {
-	using namespace DirectX;
-
 	// スクリーンサイズ
 	int screenWidth = Graphics::Instance().GetScreenWidth();
 	int screenHeight = Graphics::Instance().GetScreenHeight();
@@ -1167,15 +1253,13 @@ void SceneGame::GenerateHealSpots() {
 		Position pos = commonSpots[i];
 		healSpots[pos.y][pos.x] = { HealType::COMMON, true };
 	}
-
 }
 
 void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 {
 	// 発動した効果に応じてゲーム状態を変化させる
-
-	auto targetPiece = board->getPieceAt(effect.targetPos);
-	 Position target = effect.targetPos;
+	/*auto targetPiece = board->getPieceAt(effect.targetPos);
+	 Position target = effect.targetPos;*/
 
 	switch (effect.sourceEffectId) {
 	case 3: // 悠久の盟約: 自身の駒全体の体力を2回復 (★全体回復ロジックに修正)
@@ -1187,7 +1271,6 @@ void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 				piece->heal(2); // 体力を2回復
 			}
 		}
-		
 	}
 	break;
 
@@ -1205,6 +1288,22 @@ void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 		 }
 	}
 	break;
+
+	case 10: // ★移動不可解除
+	{
+		// ターゲット位置の駒を再度取得し直す
+		// （もし駒がいない場合は何もしない）
+		auto pieceToUnblock = board->getPieceAt(effect.targetPos); // 論理駒 (shared_ptr<ChessPiece>)
+
+		if (pieceToUnblock) {
+			// 駒の移動不可状態を解除
+			pieceToUnblock->setImmobilized(false);
+		}
+
+		// 【重要】ここで解除されても、SceneGame::Update の駒選択時に
+		//         再度 immobilize されていないか確認してください。
+		break;
+	}
 
 	default:
 		// 未知の持続効果

@@ -3,7 +3,11 @@
 #include "ActiveEffect.h"
 #include <vector>
 #include <string>
-//#include <memory> // std::unique_ptr用
+#include <memory> // std::unique_ptr用
+#include <functional>
+
+// コールバック関数型の定義 (SceneGame::ApplyPersistentEffect のシグネチャに合わせる)
+using EffectCallback = std::function<void(const ActiveEffect&)>;
 
 /**
  * @brief ゲーム内の持続的なカード効果を一元管理するシングルトンクラス
@@ -52,4 +56,9 @@ public:
      * @return 打ち消した効果の数
      */
     int CancelEffect(int targetEffectId, const std::string& enemyColor);
+
+
+    // ★追加: ターン経過時の効果処理を実行する関数
+    // effectCallback: ターンが0になった効果を SceneGame::ApplyPersistentEffect に送るコールバック
+    void ProcessTurnEffects(const std::string& currentTurn, EffectCallback effectCallback);
 };

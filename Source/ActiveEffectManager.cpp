@@ -79,3 +79,40 @@ int ActiveEffectManager::CancelEffect(int targetEffectId, const std::string& ene
 
     return cancelledCount;
 }
+// ★追加: ターン経過時の効果処理を実行する関数
+void ActiveEffectManager::ProcessTurnEffects(const std::string& currentTurn, EffectCallback effectCallback)
+{
+    std::vector<ActiveEffect> effectsToKeep;
+
+    // 1. 全ての持続効果をチェック
+    for (auto& effect : activeEffects) {
+
+        // ターン切り替えで効果を発動するのは、その効果の所有者ではないプレイヤーのターンが始まった時
+        // 例: 白が仕掛けた効果は、黒のターン開始時に発動する（ターンを消費する）。
+
+        // ここでは、効果の所有者が現在ターンではない場合にのみ、ターン数を減らすと仮定します。
+        // もし「カードを使ったプレイヤーのターン終了時にカウントが進む」仕様であれば、
+        // この if 文の条件を見直してください。
+
+        // 【一般的な仕様に合わせた処理】: ターンが切り替わった時点で、
+        // 全ての効果の残りターン数を減らす
+
+        effect.remainingTurns--; // 残りターン数を減らす
+
+        // 2. ターン数が 0 になった効果を処理し、コールバックで SceneGame に渡す
+        if (effect.remainingTurns <= 0) {
+
+            // 効果を発動
+            effectCallback(effect);
+
+            // remainingTurns が 0 以下になった効果はリストから除外されるため、effectsToKeepには追加しない
+        }
+        else {
+            // まだターンが残っている効果はリストに残す
+            effectsToKeep.push_back(effect);
+        }
+    }
+
+    // 3. リストを更新 (ターンが残っている効果のみを残す)
+    activeEffects = std::move(effectsToKeep);
+}

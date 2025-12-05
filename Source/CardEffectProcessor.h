@@ -9,6 +9,9 @@
 #include "CardManager.h" 
 #include "ActiveEffectManager.h" 
 
+// コールバック関数型の定義 (SceneGame::ApplyPersistentEffect のシグネチャに合わせる)
+using EffectCallback = std::function<void(const ActiveEffect&)>;
+
 class CardEffectProcessor {
 private:
     // ゲームの状態へのポインタ
@@ -22,6 +25,11 @@ private:
 
     // 補助関数: 駒の検索 (SceneGame::FindSlimeAt() と同様のロジック)
     Piece* FindPieceAt(Position pos);
+
+    // Note: 駒の削除に必要な RemovePieceAt に相当するロジック、
+    // または SceneGame::RemovePieceAt を呼び出すコールバック関数が必要です。
+    // 現状の CardEffectProcessor では駒の削除が不完全なため、駒リストから削除するヘルパーを追加します。
+    void RemovePieceFromList(Position pos);
 
 public:
     // コンストラクタ
@@ -43,4 +51,9 @@ public:
      */
     void ProcessInstantCard(int effectId, const std::string& currentTurn, CardManager* cardManager,
         int selectedHandIndex, bool& isCardInUse, float& cardCooldownTimer, const float CARD_COOLDOWN_TIME);
+
+    // 次元への扉 (ID 7) の効果を適用
+    bool ApplyDimensionalGate(int effectId, Position targetPos, const std::string& currentTurn, Piece* pieceToMove);
+
+
 };

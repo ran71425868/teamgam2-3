@@ -73,7 +73,10 @@ private:
 	CardManager blackCardManager;
 	CardManager whiteCardManager;
 
-	// ★追加: カード効果処理を担うインスタンス
+	std::vector<Position> dimensionalGateTargets; // ワープ可能な空きマスのリスト
+
+
+	// カード効果処理を担うインスタンス
 	std::unique_ptr<CardEffectProcessor> cardProcessor;
 
 	// --- カード表示/選択システム用の追加フィールド ---
@@ -100,11 +103,13 @@ private:
 
 	// カード効果IDごとのテクスチャを保持する配列(0〜9の10枚)
 	Sprite * cardSprites[10] = { nullptr };
+
+	// ★追加: カード説明用のスプライト配列
+	Sprite* cardDescriptionSprites[10];
 	
 	// 前ターンに使用されたカードの情報 (運命の反転に使用)
 	UsedCardInfo lastWhiteUsedCard;
 	UsedCardInfo lastBlackUsedCard;
-
 
 	// 動的な回復マス生成のためのカウンター
 	int blackMovedToCommonCount = 0;
@@ -125,7 +130,7 @@ private:
 
 	void RemovePieceAt(Position pos);
 
-	// ★追加: 特定の色のすべての駒にダメージを与える
+	// 特定の色のすべての駒にダメージを与える
 	void ApplyDamageToAllEnemyPieces(const std::string& enemyColor, int damage);
 
 	Position ScreenToBoard(int screenX, int screenY);
@@ -145,7 +150,6 @@ private:
 	// ActiveEffectManagerの更新に必要な関数
 	void ApplyPersistentEffect(const ActiveEffect& effect);
 
-
 	// ターゲット駒が自分の駒か敵の駒かを判定するヘルパー関数
 	bool IsTargetPiece(Position pos, const std::string& requiredColor) const;
 
@@ -154,10 +158,10 @@ private:
 	*/
 	bool IsCommonSpot(Position pos) const;
 
-	//bool ApplyCardEffect(int effectId, Position targetPos);
-
 	ChessAI* ai = nullptr;
 	Sprite* check = nullptr;
+	// ★追加: 前のターンがどちらの色だったかを記憶する
+	std::string lastTurnColor = "white";
 
 	AudioSource* BGM = nullptr;
 

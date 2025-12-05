@@ -1,6 +1,7 @@
 // CardEffectProcessor.cpp
 #include "CardEffectProcessor.h"
 #include <iostream>
+#include "ActiveEffectManager.h"
 #include <algorithm>
 
 // SceneGame::piecesから駒を探す (SceneGame::FindSlimeAt() に相当)
@@ -12,7 +13,24 @@ Piece* CardEffectProcessor::FindPieceAt(Position pos) {
     }
     return nullptr;
 }
+/**
+ * @brief 指定位置の Piece* オブジェクトを pieces リストから削除します。
+ * @param pos 削除対象の駒のボード座標
+ */
+void CardEffectProcessor::RemovePieceFromList(Position pos) {
+    auto& pieces_ref = *pieces; // std::vector<Piece*>* から参照を取得
 
+    auto it = std::remove_if(pieces_ref.begin(), pieces_ref.end(),
+        [pos](Piece* p) {
+            if (p) {
+                return p->GetBoardPosition().x == pos.x && p->GetBoardPosition().y == pos.y;
+            }
+            return false;
+        });
+
+    // 削除された要素を実際にリストから除去
+    pieces_ref.erase(it, pieces_ref.end());
+}
 // コンストラクタ
 CardEffectProcessor::CardEffectProcessor(Board* b, std::vector<Piece*>* p, CardManager* wcm, CardManager* bcm,
     std::function<void(const std::string&, int)> damageCallback)
@@ -68,9 +86,12 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
                         // 駒が存在する場合、ダメージを与える
                         victim->takeDamage(damage);
 
-                        // 死亡チェック (takeDamage後に health <= 0 になったら、リストから削除する処理が必要)
+                        // 死亡チェック
                         if (victim->getHealth() <= 0) {
-                            //board->RemovePieceAt(victim);
+                            // 論理ボードから削除
+                            board->setPieceAt(damagePos, nullptr);
+                            // 描画リストから削除 (★追加)
+                            RemovePieceFromList(damagePos);
                         }
                     }
                 }
@@ -81,16 +102,25 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
 
     }
         		
-    case 2: // 生命の祝福 (Buff): 自身の駒単体の体力を3回復
+    // 生命の祝福 (Buff): 自身の駒単体の体力を3回復
+    case 2:
     {
         const int healAmount = 3;
 
-        // 1. ターゲット駒が存在し、かつそれが自駒であるかを確認
-        if (targetPiece && IsTargetPiece(targetPos, currentTurn)) {
+        // 1. BoardからChessPiece (スマートポインタ) を取得
+        std::shared_ptr<ChessPiece> sharedPiece = board->getPieceAt(targetPos);
 
-            // 2. 体力を回復
-            targetPiece->heal(healAmount);
+        // 2. 駒が存在し、かつそれが現在のターンプレイヤーの駒であるかを確認
+        // sharedPiece->get() で生のポインタ (ChessPiece*) を取得し、NULLチェックを兼ねる
+        if (sharedPiece && sharedPiece->getColor() == currentTurn) {
 
+            // 3. 論理オブジェクト (ChessPiece) の体力を回復
+            sharedPiece->heal(healAmount);
+
+            // 4. 描画オブジェクト (Piece) の更新
+            // Pieceオブジェクトは通常、SceneGame::Updateで体力表示を更新しますが、
+            // 即時反映を確実にするため、ここで Piece* を取得して更新処理を呼び出す必要があるかもしれません。
+            // (SceneGame::FindSlimeAt()のようなヘルパー関数が必要)
 
             return true; // 効果適用成功
         }
@@ -219,4 +249,72 @@ void CardEffectProcessor::ProcessInstantCard(int effectId, const std::string& cu
         cardCooldownTimer = CARD_COOLDOWN_TIME;
         cardManager->UseCard(selectedHandIndex);
     }
+}
+
+// =================================================================
+// ★ 追加: 次元への扉 (ID 7) の効果を適用
+// =================================================================
+bool CardEffectProcessor::ApplyDimensionalGate(int effectId, Position targetPos, const std::string& currentTurn, Piece* pieceToMove)
+{
+    // 1. 基本的なチェック
+    if (effectId != 7 || !board->isInsideBoard(targetPos) || !pieceToMove) {
+        return false;
+    }
+
+    // 2. ワープ元の座標を取得
+    Position originalPos = pieceToMove->GetBoardPosition();
+    if (originalPos.x == -1) {
+        return false;
+    }
+
+    // 3. ワープする駒の論理的なChessPiece*を取得
+    auto logicPieceToMove = board->getPieceAt(originalPos);
+    if (!logicPieceToMove || logicPieceToMove->getColor() != currentTurn) {
+        // 自駒でなければ対象外
+        return false;
+    }
+
+    // =================================================================
+    // 4. ターゲットマスに駒がいるかを確認（いる場合はワープ不可）
+    // =================================================================
+    auto targetLogicPiece = board->getPieceAt(targetPos);
+
+    if (targetLogicPiece) {
+        // ターゲットマスに何らかの駒がいる場合、ワープは失敗する
+        // デバッグログなど: "次元への扉の効果適用失敗: ワープ先に駒が存在します。"
+        return false;
+    }
+
+    // 5. 論理的な駒の移動 (Boardオブジェクトを更新)
+    // - 元のマスを空にする
+    board->setPieceAt(originalPos, nullptr);
+
+    // - 移動先のマスに駒を配置し、位置情報も更新
+    logicPieceToMove->setPosition(targetPos);
+    board->setPieceAt(targetPos, logicPieceToMove);
+
+    // =================================================================
+    // ★ 6. 【修正】ワープ後の移動不可 (Immobilized) 適用と解除効果の付与
+    // =================================================================
+
+    // a. 駒を移動不可状態にする
+    // このフラグは、SceneGame::Update の駒選択ロジックで参照されます。
+    logicPieceToMove->setImmobilized(true);
+
+    // b. 1ターン後に移動不可を解除するための持続効果を付与
+    Position immobilizedTarget = targetPos; // ワープ先の座標をターゲットとする
+
+    // ID 10: 移動不可解除効果 (1ターン持続)
+    ActiveEffect unblockEffect(
+        10,            // ★新しい効果ID: 10 (移動不可解除)
+        1,             // 残りターン数: 1 (次のターン開始時に発動/解除)
+        immobilizedTarget, // ターゲット位置
+        currentTurn    // 所有者
+    );
+
+    // ActiveEffectManagerに登録
+    ActiveEffectManager::GetInstance().AddEffect(unblockEffect);
+
+    // 7. 成功
+    return true;
 }
