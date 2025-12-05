@@ -33,13 +33,36 @@ void ChessAI::Update(Board* board)
 void ChessAI::MakeRandomMove(Board* board)
 {
     std::vector<std::pair<Position, Position>> moves;
+    std::vector<std::pair<Position, Position>> kingKillMoves;
+
+    for (auto& [from, to] : moves) {
+        auto attacker = board->getPieceAt(from);
+        auto defender = board->getPieceAt(to);
+
+        if (!attacker || !defender) continue;
+
+      
+        if (defender->getType() == "King") {
+
+          
+            if (attacker->getHealth() > defender->getHealth()) {
+
+                kingKillMoves.push_back({ from, to });
+            }
+        }
+    }
+
+    if (!kingKillMoves.empty()) {
+        moves = kingKillMoves;
+    }
+
 
     bool kingInCheck = board->isKingInCheck("black");
 
     bool otherPieceHasMoves = false;
 
     for (int y = 0; y < 8; ++y) {
-        if (otherPieceHasMoves) break; // 外側ループを脱出
+        if (otherPieceHasMoves) break;
         for (int x = 0; x < 8; ++x) {
             Position from = { x, y };
             auto piece = board->getPieceAt(from);
@@ -113,6 +136,29 @@ found:;*/
 
     if (moves.empty()) return;
 
+
+    std::vector<std::pair<Position, Position>> safeCaptures;
+
+    for (auto& [from, to] : moves) {
+        auto attacker = board->getPieceAt(from);
+        auto defender = board->getPieceAt(to);
+
+        if (!attacker || !defender)
+            continue;
+
+        if (attacker->getColor() == defender->getColor())
+            continue;
+
+        if (attacker->getHealth() >= defender->getHealth()) {
+            safeCaptures.push_back({ from, to });
+        }
+    }
+
+    
+    if (!safeCaptures.empty()) {
+        moves = safeCaptures;
+    }
+
    /* std::uniform_int_distribution<int> dist(0, (int)moves.size() - 1);
     auto [from, to] = moves[dist(gen)];
 
@@ -146,7 +192,7 @@ found:;*/
         bool captured = (defender != nullptr);
         bool attackerSurvived = true;
 
-        // --- A. 戦闘判定 ---
+     
         if (defender) {
             int attackerHealth = attacker->getHealth();
             int defenderHealth = defender->getHealth();
