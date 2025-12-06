@@ -97,7 +97,11 @@ void ActiveEffectManager::ProcessTurnEffects(const std::string& currentTurn, Eff
         // 【一般的な仕様に合わせた処理】: ターンが切り替わった時点で、
         // 全ての効果の残りターン数を減らす
 
-        effect.remainingTurns--; // 残りターン数を減らす
+        //  効果の所有者(effect.ownerColor)と現在のターン(currentTurn)が一致する場合のみ、
+        //          残りターン数を減らす
+        if (effect.ownerColor == currentTurn) {
+            effect.remainingTurns--; // 残りターン数を減らす
+        }
 
         // 2. ターン数が 0 になった効果を処理し、コールバックで SceneGame に渡す
         if (effect.remainingTurns <= 0) {

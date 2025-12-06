@@ -11,8 +11,6 @@
 #include "Piece.h"
 #include "EffectManager.h"
 #include <DirectXMath.h>
-
-
 using namespace DirectX;
 
 // 初期化
@@ -41,7 +39,6 @@ void SceneGame::Initialize()
 
 		pieces.push_back(p);
 		};
-
 
 	// 駒を初期配置（例：白と黒のスライム）
 	// ポーン
@@ -79,27 +76,18 @@ void SceneGame::Initialize()
 	// queen
 	createAndLinkPiece("black", { 3, 7 }, "queen");
 
-	
-	//isServer = true; // ← サーバー側なら true / クライアントなら false に設定
-	//if (isServer)
-	//	network.Initialize(NetworkManager::Mode::Server, "0.0.0.0", 50000);
-	//else
-		/*network.Initialize(NetworkManager::Mode::Client, "192.168.0.2", 50000);*/
-
-
 	// CardEffectProcessor の初期化
 	// ApplyDamageToAllEnemyPieces をラムダ式でキャプチャし、コールバックとして渡す
 	auto damageCallback = [this](const std::string& enemyColor, int damage) {
 		this->ApplyDamageToAllEnemyPieces(enemyColor, damage);
-		};
+	};
 
 	cardProcessor = std::make_unique<CardEffectProcessor>(
 		board,
 		&pieces,
 		&whiteCardManager,
 		&blackCardManager,
-		damageCallback
-	);
+		damageCallback);
 
 	// CardManagerの初期化 (SceneGame::cardManagerがポインタと仮定)
 	cardManager = new CardManager();
@@ -107,7 +95,6 @@ void SceneGame::Initialize()
 	// 効果IDごとのカード画像をロード
 	for (int i = 0; i < 10; ++i) {
 		std::string filename = "Data/Sprite/Card_" + std::to_string(i) + ".png";
-		// ※ 実際のファイルパスと拡張子に合わせて修正してください
 		cardSprites[i] = new Sprite(filename.c_str());
 	}
 
@@ -123,15 +110,13 @@ void SceneGame::Initialize()
 	camera.SetLookAt(
 		DirectX::XMFLOAT3(0,10,-10),//視点
 		DirectX::XMFLOAT3(0,0,0),//注視点
-		DirectX::XMFLOAT3(0,1,0)//上方向
-	);
-
+		DirectX::XMFLOAT3(0,1,0));//上方向
+	
 	camera.SetPerspectiveFov(
 		DirectX::XMConvertToRadians(45),//視野角
 		graphics.GetScreenWidth() / graphics.GetScreenHeight(),//画面アスペクト比
 		0.1f,//クリップ距離(近)
-		10000.0f//クリップ距離(遠)
-		);
+		10000.0f);//クリップ距離(遠)
 
 	cameraController = new CameraController;
 
@@ -202,15 +187,11 @@ void SceneGame::Finalize()
 	for (auto p : pieces) delete p;
 	pieces.clear();
 
-	network.Finalize();
-
 	delete BGM;
 	delete ai;
 	delete deleteEffect;
 
 	ai = nullptr;
-
-
 }
 
 // 更新処理
@@ -250,8 +231,7 @@ if(!isGameOver){
 			currentTurn,
 			[this](const ActiveEffect& effect) {
 				ApplyPersistentEffect(effect); // ID 10 がここで実行され、移動不可が解除される
-			}
-		);
+			});
 
 		lastTurnColor = currentTurn; // 前ターンを更新
 	}
@@ -285,6 +265,13 @@ if(!isGameOver){
 			// selectedHandIndex が 0以上の値で固定されている = ターゲット選択フェーズ
 			if (selectedHandIndex != -1) {
 
+				
+				// 1. カードが使用済みでないか、インデックスが有効かチェック
+				if (!cardManager->isCardUsable(selectedHandIndex)) {
+					// カードが使用済み（isUsedCard = true）の場合、またはインデックスが無効な場合は、
+					// カード使用処理全体をスキップし、リターンする
+					return;
+				}
 				// 決定したカードの効果IDを取得し、状態をリセットする前に保存
 				int effectId = cardManager->getCardInHand(selectedHandIndex).effectId;
 
@@ -299,8 +286,7 @@ if(!isGameOver){
 						selectedHandIndex,
 						isCardInUse,
 						cardCooldownTimer,
-						CARD_COOLDOWN_TIME
-					);
+						CARD_COOLDOWN_TIME);
 
 					// 絶対の雷 (ID 8) はカード処理後にターン終了を伴う
 					if (effectId == 8) {
@@ -311,10 +297,26 @@ if(!isGameOver){
 					return;
 				}
 
-				// ★次元の扉 (ID: 7) の処理
+				// 焦土の罠(ID: 1) の処理を ID 7 の前に移動・追加
+				if (effectId == 1) {
+					// ターゲット選択フェーズへ移行 (マス選択待ち)
+					selectedCardEffectId = effectId;
+					cardManager->UseCard(selectedHandIndex); // 破棄
+
+					// 状態を「マス選択待ち」に設定
+					currentCardEffectState = CardEffectState::AWAITING_SQUARE_TARGET;
+
+					selectedHandIndex = -1;
+
+					// 合法なターゲットマスを計算し、リストに格納
+					CalculateCardTargetCandidates(effectId);
+
+					return;
+				}
+
+				// 次元の扉 (ID: 7) の処理
 				if (effectId == 7) {
 					// ターゲット選択フェーズへ移行 (ワープ元駒の選択待ち)
-
 					// 1. 選択中のカードの効果IDを保存
 					selectedCardEffectId = effectId;
 
@@ -330,11 +332,10 @@ if(!isGameOver){
 					return;
 				}
 
-				// ターゲット駒の選択が必要な効果かチェック (例: ID 2, 3, 6)
-				if (effectId == 2 || effectId == 3 || effectId == 6)
+				// ターゲット駒の選択が必要な効果かチェック (ID 2, 3, 4, 6)
+				if (effectId == 2 || effectId == 3 || effectId == 4 || effectId == 6)
 				{
 					// ターゲット選択フェーズへ移行
-
 					// 1. 選択中のカードの効果IDを保存
 					selectedCardEffectId = effectId;
 
@@ -346,6 +347,9 @@ if(!isGameOver){
 
 					// 4. GUIハイライト用のインデックスはリセット
 					selectedHandIndex = -1;
+
+					// 5. ★追加: 合法なターゲット駒を計算し、リストに格納
+					CalculateCardTargetCandidates(effectId); // ← 新しいヘルパー関数を呼び出す
 
 					// 右クリックで決定後のクリックはカード使用に専念させるため、ここでリターン
 					return;
@@ -390,15 +394,40 @@ if(!isGameOver){
 		// 状態が NONE でない場合、カード効果のターゲット選択処理に専念する
 		if (currentCardEffectState != CardEffectState::NONE)
 		{
+			// ID 1 のターゲット選択の場合 (AWAITING_SQUARE_TARGET)
+			if (currentCardEffectState == CardEffectState::AWAITING_SQUARE_TARGET) {
+				// ApplyTargetedEffect に処理を委譲（ID 1 はターゲットマスのみを使用）
+				if (cardProcessor->ApplyTargetedEffect(selectedCardEffectId, clicked, board->getCurrentTurn())) {
+					// カード使用成功時の共通処理
+					isCardInUse = true;
+					cardCooldownTimer = CARD_COOLDOWN_TIME;
+
+					// 成功時: 状態をリセット
+					currentCardEffectState = CardEffectState::NONE;
+					selectedCardEffectId = -1;
+
+					// ターゲット候補をクリア
+					cardTargetCandidates.clear();
+				}
+				// 失敗時は状態維持 (再選択待ち)
+				return; // カードターゲット選択に専念するため、駒の移動処理には進まない
+			}
+
 			// ID 2, 3, 4, 6 のターゲット選択の場合 (AWAITING_PIECE_SELECTION)
 			if (currentCardEffectState == CardEffectState::AWAITING_PIECE_SELECTION)
 			{
 				// ApplyTargetedEffect は、成功した場合に true を返し、カード使用後のクールダウン処理などを CardEffectProcessor 側で実施
 				if (cardProcessor->ApplyTargetedEffect(selectedCardEffectId, clicked, board->getCurrentTurn())) {
+					// カード使用成功時の共通処理
+					isCardInUse = true;
+					cardCooldownTimer = CARD_COOLDOWN_TIME;
+					
 					// 成功時: 状態をリセット
 					currentCardEffectState = CardEffectState::NONE;
 					selectedCardEffectId = -1;
-					// Note: ApplyTargetedEffect内でターン終了が必要な場合は処理済みと想定
+
+					// ★追加: ターゲット候補をクリア
+					cardTargetCandidates.clear(); // ← クリア
 				}
 				// 失敗時は状態維持 (再選択待ち)
 				return; // カードターゲット選択に専念するため、駒の移動処理には進まない
@@ -418,7 +447,7 @@ if(!isGameOver){
 					if (logicPiece) {
 						// 3. 成功時: 状態を「ワープ先マス選択待ち」に移行
 						currentCardEffectState = CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET;
-						// ★ワープ先候補の計算と格納 (全ての空きマス)
+						// ワープ先候補の計算と格納 (全ての空きマス)
 						dimensionalGateTargets.clear();
 						for (int y = 0; y < 8; ++y) {
 							for (int x = 0; x < 8; ++x) {
@@ -453,7 +482,7 @@ if(!isGameOver){
 					selectedCardEffectId = -1;
 					selectedPieceForEffect = nullptr; // 一時保存駒もリセット
 
-					// ★ワープ先ハイライトをクリア
+					// ワープ先ハイライトをクリア
 					dimensionalGateTargets.clear();
 
 					// カード使用によるターン終了（次元の扉の効果として）
@@ -697,7 +726,6 @@ if(!isGameOver){
 				// 不正な場所をクリックした場合
 
 				// 別の自分の駒をクリックしたかチェックし、選択を切り替えるロジックをここに追加できます。
-				// 別の自分の駒をクリックしたかチェック
 				auto currentTurn = board->getCurrentTurn();
 
 				if (clickedPiece && clickedPiece->getColor() == currentTurn) {
@@ -742,9 +770,6 @@ if(!isGameOver){
 	cameraController->SetTarget(target);
 	cameraController->Update(elapsedTime);
 
-	//ステージ更新処理
-	//stage->Update(elapsedTime);
-	
 	//エフェクトマネージャー更新処理
 	EffectManager::Instance().Update(elapsedTime);
 
@@ -770,7 +795,6 @@ if(!isGameOver){
 		isGameOver = true;
 		winnerColor = "white";
 	}
-
 }
 
 // 描画処理
@@ -818,6 +842,23 @@ void SceneGame::Render()
 			}
 		}
 
+		// --- 2.カードターゲット候補のハイライト ---
+		if ((currentCardEffectState == CardEffectState::AWAITING_PIECE_SELECTION || currentCardEffectState == CardEffectState::AWAITING_SQUARE_TARGET) && !cardTargetCandidates.empty()) {
+
+			for (const auto& pos : cardTargetCandidates) {
+				// 盤面座標 (move.x, move.y) をワールド座標に変換
+				DirectX::XMFLOAT4X4 transform;
+				DirectX::XMStoreFloat4x4(&transform,
+					DirectX::XMMatrixTranslation(
+						pos.x * 100.0f, // X座標
+						2.0f,            // 駒より少し高い位置
+						pos.y * 100.0f ));// Z座標
+
+				// ハイライトモデルを描画
+				renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
+			}
+		}
+
 		// 回復マスの描画 (仮のロジック)
 		for (int y = 0; y < 8; ++y) {
 			for (int x = 0; x < 8; ++x) {
@@ -853,7 +894,6 @@ void SceneGame::Render()
 				// ハイライトモデルを描画
 				renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
 			}
-			
 		}
 		//エフェクトマネージャー描画
 		EffectManager::Instance().Render(rc.view, rc.projection);
@@ -1267,30 +1307,70 @@ void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 	 Position target = effect.targetPos;*/
 
 	switch (effect.sourceEffectId) {
-	case 3: // 悠久の盟約: 自身の駒全体の体力を2回復 (★全体回復ロジックに修正)
+	case 3:// 悠久の盟約: 自身の駒全体の体力を2回復
 	{
-		// effect.ownerColor のプレイヤーの全ての駒を探し、2回復させる
-		for (auto piece : pieces) {
-			// pieces vector に含まれる Piece* の中から、効果の所有者と同じ色の駒のみを回復
-			if (piece && piece->getColor() == effect.ownerColor) {
-				piece->heal(2); // 体力を2回復
+		const int healAmount = 2;
+
+		// 8x8 のボード全体を走査
+		for (int y = 0; y < 8; ++y) {
+			for (int x = 0; x < 8; ++x) {
+				Position pos = { x, y };
+
+				// 1. Boardから論理駒 (shared_ptr<ChessPiece>) を取得
+				auto logicPiece = board->getPieceAt(pos);
+
+				// 2. 駒が存在し、効果の所有者と同じ色であるかを確認
+				if (logicPiece && logicPiece->getColor() == effect.ownerColor) {
+
+					// 3. 論理駒の体力を回復
+					logicPiece->heal(healAmount);
+
+					// ★補足: 描画駒 (Piece*) の体力ゲージの更新は、
+					// 	    通常、SceneGame::Update 内で logicPiece のHPを参照して行われます。
+				}
 			}
 		}
 	}
 	break;
 
-	case 6: // 破滅の刻印: 自身を中心とする周囲8マスに2ダメージ
+	case 6: // 破滅の刻印: 自身を中心とする周囲8マスに2ダメージ + 無条件自爆
 	{
-		// targetPiece (刻印を付与された駒) を中心に周囲8マス（3x3の範囲）内の全駒にダメージを与える
-		 for (int dy = -1; dy <= 1; ++dy) {
-		     for (int dx = -1; dx <= 1; ++dx) {
-		         Position damagePos = {effect.targetPos.x + dx, effect.targetPos.y + dy};
-		          if (board->isInsideBoard(damagePos) && (dx != 0 || dy != 0)) {
-		              auto victim = board->getPieceAt(damagePos);
-		              if (victim) victim->takeDamage(2);
-		          }
-		     }
-		 }
+		Position selfDestructPos = effect.targetPos;
+		const int damage = 2;
+
+		// 1. 周囲8マスにダメージを与える (周囲の死亡チェックは維持)
+		for (int dy = -1; dy <= 1; ++dy) {
+			for (int dx = -1; dx <= 1; ++dx) {
+				Position damagePos = { selfDestructPos.x + dx, selfDestructPos.y + dy };
+
+				// ボード内で、かつターゲット駒自身ではないマスをチェック
+				if (board->isInsideBoard(damagePos) && (dx != 0 || dy != 0)) {
+					auto victim = board->getPieceAt(damagePos);
+
+					if (victim) {
+						// ダメージ適用
+						victim->takeDamage(damage);
+
+						// 死亡チェックと削除
+						if (victim->getHealth() <= 0) {
+							board->setPieceAt(damagePos, nullptr);
+							RemovePieceAt(damagePos);
+						}
+					}
+				}
+			}
+		}
+
+		// 2. ★無条件自爆処理: 刻印を付与されていた駒自身を削除
+
+		// 刻印駒がその位置にいるか確認 (いなければ何もしない)
+		if (board->getPieceAt(selfDestructPos)) {
+			// 論理ボードから削除
+			board->setPieceAt(selfDestructPos, nullptr);
+			// 描画リストから削除
+			RemovePieceAt(selfDestructPos);
+		}
+
 	}
 	break;
 
@@ -1326,6 +1406,56 @@ bool SceneGame::IsTargetPiece(Position pos, const std::string& requiredColor) co
 bool SceneGame::IsCommonSpot(Position pos) const
 {
 	return pos.y >= 2 && pos.y <= 5;
+}
+
+void SceneGame::CalculateCardTargetCandidates(int effectId)
+{
+	cardTargetCandidates.clear();
+	std::string currentTurn = board->getCurrentTurn();
+	std::string enemyColor = (currentTurn == "white") ? "black" : "white";
+
+	for (int y = 0; y < 8; ++y) {
+		for (int x = 0; x < 8; ++x) {
+			Position pos = { x, y };
+			auto piece = board->getPieceAt(pos);
+
+			if (piece) {
+				bool isLegalTarget = false;
+				std::string targetColor = piece ? piece->getColor() : "";
+				std::string targetType = piece ? piece->getType() : "";
+
+				switch (effectId) {
+
+				case 1: // 焦土の罠 (Trap): 共有マス内の空きマスに設置
+					// ターゲット位置が共有マス (y=2 から y=5) 内であり、かつ駒が置かれていないこと
+					if (y >= 2 && y <= 5 && !piece) {
+						isLegalTarget = true;
+					}
+					break;
+
+				case 2: // 生命の祝福 (Buff): 自身の駒単体の体力を回復
+				case 3: // 悠久の盟約 (Buff): 自身の駒全体に付与 (★トリガーとして自駒が必要)
+				case 6: // 破滅の刻印 (Trap): 自身の駒単体に付与
+					// 自駒がターゲット
+					if (targetColor == currentTurn) {
+						isLegalTarget = true;
+					}
+					break;
+
+				case 4: // 石化の鎖 (Debuff): 敵の駒に付与 (キング以外)
+					// 敵駒がターゲット、かつキングではない
+					if (targetColor == enemyColor && targetType != "King") {
+						isLegalTarget = true;
+					}
+					break;
+				}
+
+				if (isLegalTarget) {
+					cardTargetCandidates.push_back(pos);
+				}
+			}
+		}
+	}
 }
 
 //　駒が置かれておらず、かつ回復マスが生成されていない共通マスをランダムに選ぶ

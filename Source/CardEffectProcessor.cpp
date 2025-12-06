@@ -54,7 +54,7 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
 
     switch (effectId) {
 
-        // 焦土の罠 (Trap): 指定した場所の前方 2x3 マスの駒に 1 ダメージ
+    // 焦土の罠 (Trap): 指定した場所の前方 2x3 マスの駒に 1 ダメージ
     case 1:
     {
         // ターゲット位置がボード内か確認
@@ -62,13 +62,22 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
             return false; // 無効な位置
         }
 
+        // ターゲット位置が共有マス (y=2 から y=5) 内であり、かつ駒が置かれていないこと
+        bool isCommonSpot = (targetPos.y >= 2 && targetPos.y <= 5);
+        bool isTargetEmpty = !board->getPieceAt(targetPos);
+
+        if (!isCommonSpot || !isTargetEmpty) {
+            // トラップは共有マス内の空きマスにしか設置できない
+            return false;
+        }
+
         // 1. ダメージエリアの定義
         int damage = 1;
 
         // 進行方向の定義 (白: y軸減少方向へ前方, 黒: y軸増加方向へ前方)
-        // 白 (y=7, 6 から y=0, 1 へ移動) の場合、前方マスは y - 1, y - 2
-        // 黒 (y=0, 1 から y=7, 6 へ移動) の場合、前方マスは y + 1, y + 2
-        const int direction = (currentTurn == "white") ? -1 : 1;
+        // 白 (y=7, 6 から y=0, 1 へ移動) の場合、前方マスは y +1, y + 2
+        // 黒 (y=0, 1 から y=7, 6 へ移動) の場合、前方マスは y - 1, y - 2
+        const int direction = (currentTurn == "white") ? 1 : -1; // 白: +1 (Y増加), 黒: -1 (Y減少)
 
         // 展開エリア: 前方2マス (y+direction*1, y+direction*2)、横幅3マス (x-1, x, x+1)
         // 前方 2 マス (dy = 1, 2)
@@ -103,7 +112,6 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
         }
         // トラップ設置は成功したとみなす
         return true;
-
     }
         		
     // 生命の祝福 (Buff): 自身の駒単体の体力を3回復
@@ -162,22 +170,48 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
     // case 4: 石化の鎖 (Debuff)
     case 4:
     {
+        // ターゲット駒が存在し、かつそれが敵駒であるかを確認
         if (targetPiece && IsTargetPiece(targetPos, enemyColor)) {
+
+            // キングは対象外
             if (targetPiece->getType() == "King") {
-                
                 return false;
             }
-            targetPiece->setImmobilized(true);
-           
-            return true;
+
+            auto logicPiece = board->getPieceAt(targetPos);
+
+            if (logicPiece) {
+                // 移動不可を適用
+                logicPiece->setImmobilized(true);
+
+                // 1ターン後に移動不可を解除するための持続効果を付与
+                ActiveEffect unblockEffect(
+                    10, // 効果ID: 10 (移動不可解除)
+                    1,  // 残りターン数: 1
+                    targetPos, // ターゲット位置
+                    enemyColor // 所有者: ターゲット駒の持ち主（敵）
+                );
+                ActiveEffectManager::GetInstance().AddEffect(unblockEffect);
+
+                return true; // 適用成功
+            }
         }
-        return false;
+        return false; // ターゲットが無効
     }
 
     // case 6: 破滅の刻印 (Trap)
     case 6:
     {
         if (targetPiece && IsTargetPiece(targetPos, currentTurn)) {
+
+            // 論理駒 (shared_ptr<ChessPiece>) を取得
+            auto logicPiece = board->getPieceAt(targetPos);
+
+            // 2. 駒を移動不可状態にする
+            if (logicPiece) {
+                logicPiece->setImmobilized(true);
+            }
+
             ActiveEffect effect(6, 3, targetPos, currentTurn);
             ActiveEffectManager::GetInstance().AddEffect(effect);
             return true;
@@ -187,9 +221,6 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
 
     // ... その他のターゲット選択が必要なカードロジック (ID 1, 2, 7など) もここに追加
     
-
-
-
     default:
         return false;
     }
@@ -201,6 +232,7 @@ void CardEffectProcessor::ProcessInstantCard(int effectId, const std::string& cu
 
     std::string enemyColor = (currentTurn == "white") ? "black" : "white";
     bool cardUsed = false;
+    bool shouldDrawAfterUse = false; // ドロー処理を遅延させるフラグ
 
     switch (effectId) {
     case 0: // 運命の反転: 相手の持続効果を打ち消し
@@ -242,8 +274,8 @@ void CardEffectProcessor::ProcessInstantCard(int effectId, const std::string& cu
 
     case 9: // 叡智の探求: カードをランダムでドロー
     {
-        cardManager->DrawCard();
         cardUsed = true;
+        shouldDrawAfterUse = true; // ★カード使用後のドローを要求
         break;
     }
 
@@ -252,10 +284,17 @@ void CardEffectProcessor::ProcessInstantCard(int effectId, const std::string& cu
     }
 
     if (cardUsed) {
-        // 成功時共通処理
+        // 1. 成功時共通処理
         isCardInUse = true;
         cardCooldownTimer = CARD_COOLDOWN_TIME;
-        cardManager->UseCard(selectedHandIndex);
+
+        // 2. 使用したカードを手札から取り除く
+        cardManager->UseCard(selectedHandIndex); // ここで手札が1枚減る
+
+        // 3. 遅延していたドロー処理を実行
+        if (shouldDrawAfterUse) {
+            cardManager->DrawCard(); // 手札が減ったため、ドローが成功する可能性が高くなる
+        }
     }
 }
 

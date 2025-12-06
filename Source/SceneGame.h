@@ -22,9 +22,14 @@ enum class CardEffectState
 	NONE,                   // カード効果処理なし
 	DIMENSIONAL_GATE_SELECT_PIECE, // 次元の扉: ワープ元駒の選択待ち
 	DIMENSIONAL_GATE_SELECT_TARGET, // 次元の扉: ワープ先マスの選択待ち
+
 	// ... 他のカード効果のフェーズ ...
 	// 駒をターゲットとして選択するのを待機する状態
 	AWAITING_PIECE_SELECTION,
+	// 敵駒/自駒を問わず、ターゲット駒1つを選択する待ち状態
+	AWAITING_SINGLE_PIECE_TARGET,
+	// 盤面上のマスをターゲットとして選択するのを待機する状態
+	AWAITING_SQUARE_TARGET,
 };
 
 // ゲームシーン
@@ -104,7 +109,7 @@ private:
 	// カード効果IDごとのテクスチャを保持する配列(0〜9の10枚)
 	Sprite * cardSprites[10] = { nullptr };
 
-	// ★追加: カード説明用のスプライト配列
+	//  カード説明用のスプライト配列
 	Sprite* cardDescriptionSprites[10];
 	
 	// 前ターンに使用されたカードの情報 (運命の反転に使用)
@@ -147,6 +152,9 @@ private:
 	int selectedCardEffectId = -1; // 現在処理中のカードの効果ID
 	Piece* selectedPieceForEffect = nullptr; // カード効果の対象として選択された駒
 
+	// カード効果のターゲット候補の座標リスト
+	std::vector<Position> cardTargetCandidates; // ← これを追加
+
 	// ActiveEffectManagerの更新に必要な関数
 	void ApplyPersistentEffect(const ActiveEffect& effect);
 
@@ -157,6 +165,9 @@ private:
 	* @brief 指定された位置が共通マス (y=2 から y=5) であるかを判定
 	*/
 	bool IsCommonSpot(Position pos) const;
+
+	// カードのターゲット候補を計算するヘルパー関数
+	void CalculateCardTargetCandidates(int effectId);
 
 	ChessAI* ai = nullptr;
 	Sprite* check = nullptr;

@@ -25,7 +25,7 @@ CardManager::CardManager()
         Card("悠久の盟約", CardType::Buff, "自身の駒全体の体力を4ターン経過後に2回復", 3, true), // ★持続効果
         Card("石化の鎖", CardType::Debuff, "相手の駒単体の移動を制限(キングには使用不可)", 4, false), // 即時適用（移動制限）
         Card("沈黙の呪文", CardType::Debuff, "相手のカードを1ターン使用不可", 5, false), // 即時適用（ターン限定）
-        Card("破滅の刻印", CardType::Trap, "自身の駒単体に付与、3ターン後に自身を中心とする周囲8マスに2ダメージ", 6, true), // ★持続効果
+        Card("破滅の刻印", CardType::Trap, "自身の駒単体に付与、3ターン後に自身を中心とする周囲8マスに自爆して2ダメージ、発動後付与した駒は消滅", 6, true), // ★持続効果
         Card("次元の扉", CardType::Buff, "共有マス内で自身の駒単体をワープ、相手の駒取得かつワープ後の駒移動不可", 7, false), // 即時ワープ
         Card("絶対の雷", CardType::Debuff, "相手の駒全体に1ダメージ、カード使用後自身のターン終了", 8, false), // 即時ダメージ
         Card("叡智の探求", CardType::Buff, "カードをランダムでドロー", 9, false) // 即時ドロー
@@ -43,7 +43,7 @@ CardManager::CardManager()
 void CardManager::DrawCard()
 {
 
-    // ★修正点: 手札が満杯の場合はドローしない
+    // 手札が満杯の場合はドローしない
     if (isHandFull())
     {
         return;
@@ -60,6 +60,7 @@ void CardManager::DrawCard()
     deck.pop_back();
 
     hand.push_back(drawn);
+
 }
 
 // -----------------------------------------------------------------

@@ -35,6 +35,11 @@ public:
 
     // ★追加: 手札が最大枚数に達しているかチェック
     bool isHandFull() const { return hand.size() >= MAX_HAND_SIZE; }
+    
+    // ★カードが使用可能かチェック
+    bool isCardUsable(size_t index) const {
+        return !isUsedCard && index < hand.size(); // isUsedCard フラグを確認
+    }
 
     //カードをドロー
     void DrawCard();
