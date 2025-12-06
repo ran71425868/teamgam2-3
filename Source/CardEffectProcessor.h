@@ -55,5 +55,7 @@ public:
     // ŽŸŒ³‚Ö‚Ì”à (ID 7) ‚ÌŒø‰Ê‚ð“K—p
     bool ApplyDimensionalGate(int effectId, Position targetPos, const std::string& currentTurn, Piece* pieceToMove);
 
-
+    Effect* magic = nullptr;
+    Effect* heal = nullptr;
+    Effect* thunder = nullptr;
 };

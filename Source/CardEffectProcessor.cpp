@@ -34,7 +34,11 @@ void CardEffectProcessor::RemovePieceFromList(Position pos) {
 // コンストラクタ
 CardEffectProcessor::CardEffectProcessor(Board* b, std::vector<Piece*>* p, CardManager* wcm, CardManager* bcm,
     std::function<void(const std::string&, int)> damageCallback)
-    : board(b), pieces(p), whiteCardManager(wcm), blackCardManager(bcm), ApplyDamageCallback(damageCallback) {
+    : board(b), pieces(p), whiteCardManager(wcm), blackCardManager(bcm), ApplyDamageCallback(damageCallback)
+{
+    magic = new Effect("Data/Effect/magic.efk");
+    heal = new Effect("Data/Effect/heal.efk");
+    thunder= new Effect("Data/Effect/thunder.efk");
 }
 
 // ターゲット駒が、指定した色であるかをチェックする補助関数
@@ -116,7 +120,7 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
 
             // 3. 論理オブジェクト (ChessPiece) の体力を回復
             sharedPiece->heal(healAmount);
-
+            heal->Play({ targetPos.x * 100.0f,10.0f,targetPos.y * 100.0f }, 50);
             // 4. 描画オブジェクト (Piece) の更新
             // Pieceオブジェクトは通常、SceneGame::Updateで体力表示を更新しますが、
             // 即時反映を確実にするため、ここで Piece* を取得して更新処理を呼び出す必要があるかもしれません。
@@ -133,7 +137,10 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
     case 3: 
     {
         // 1. ターゲット駒が存在し、かつそれが自駒であるかを確認 (カード発動のトリガーとして使用)
+
+       heal->Play({ 3.5 * 100.0f,10.0f,3.5 * 100.0f }, 200);
         if (targetPiece && IsTargetPiece(targetPos, currentTurn)) {
+
 
             // 2. 持続効果データを作成 (ID 3, 4ターン後に発動)
             // 全体効果のため、targetPos は無効な位置を登録
@@ -228,6 +235,7 @@ void CardEffectProcessor::ProcessInstantCard(int effectId, const std::string& cu
             ApplyDamageCallback(enemyColor, 1);
             cardUsed = true;
         }
+        thunder->Play({3.5 * 100.0f, 10.0f, 3.5 * 100.0f }, 200);
         // ★ターン終了処理は SceneGame::Update 側で行う
         break;
     }
@@ -288,11 +296,11 @@ bool CardEffectProcessor::ApplyDimensionalGate(int effectId, Position targetPos,
     // 5. 論理的な駒の移動 (Boardオブジェクトを更新)
     // - 元のマスを空にする
     board->setPieceAt(originalPos, nullptr);
-
+    magic->Play({ originalPos.x * 100.0f,10.0f,originalPos.y * 100.0f }, 100);
     // - 移動先のマスに駒を配置し、位置情報も更新
     logicPieceToMove->setPosition(targetPos);
     board->setPieceAt(targetPos, logicPieceToMove);
-
+    magic->Play({ targetPos.x * 100.0f,10.0f,targetPos.y * 100.0f }, 100);
     // =================================================================
     // ★ 6. 【修正】ワープ後の移動不可 (Immobilized) 適用と解除効果の付与
     // =================================================================
