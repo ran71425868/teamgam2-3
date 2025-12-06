@@ -159,8 +159,8 @@ void SceneGame::Initialize()
 	};
 
 	check= new Sprite("Data/Sprite/check1.png");
-	BGM->SetVolume(0.1f);
 	BGM->Play(false);
+	BGM->SetVolume(0.4f);
 
 	deleteEffect = new Effect("Data/Effect/Blow11.efk");
 }

@@ -14,8 +14,8 @@ void SceneTitle::Initialize()
 
 	BGM = Audio::Instance().LoadAudioSource("Data/Sound/Title.wav");
 
-	BGM->SetVolume(0.1f);
 	BGM->Play(false);
+	BGM->SetVolume(0.4f);
 }
 
 //I—¹‰»
