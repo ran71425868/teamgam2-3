@@ -141,7 +141,19 @@ private:
 
 	ChessAI* ai = nullptr;
 	Sprite* check = nullptr;
+	Sprite* tutorial[6] = {};
+	Sprite* pawn = nullptr;
+	Sprite* rook = nullptr;
+	Sprite* knight = nullptr;
+	Sprite* bishop = nullptr;
+	Sprite* queen = nullptr;
+	Sprite* king = nullptr;
+	Sprite* next = nullptr;
+
+	int switch_state = 0;
 
 	int timer = 0;
 	int cooldown = 2;
+
+	std::string explanation;
 };
