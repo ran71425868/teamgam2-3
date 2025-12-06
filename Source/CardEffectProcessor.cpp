@@ -235,7 +235,7 @@ void CardEffectProcessor::ProcessInstantCard(int effectId, const std::string& cu
             ApplyDamageCallback(enemyColor, 1);
             cardUsed = true;
         }
-        thunder->Play({3.5 * 100.0f, 10.0f, 3.5 * 100.0f }, 200);
+        thunder->Play({3.5 * 100.0f, 10.0f, 3.5 * 100.0f }, 150);
         // ★ターン終了処理は SceneGame::Update 側で行う
         break;
     }
@@ -296,11 +296,11 @@ bool CardEffectProcessor::ApplyDimensionalGate(int effectId, Position targetPos,
     // 5. 論理的な駒の移動 (Boardオブジェクトを更新)
     // - 元のマスを空にする
     board->setPieceAt(originalPos, nullptr);
-    magic->Play({ originalPos.x * 100.0f,10.0f,originalPos.y * 100.0f }, 100);
+    magic->Play({ originalPos.x * 100.0f,10.0f,originalPos.y * 100.0f }, 50);
     // - 移動先のマスに駒を配置し、位置情報も更新
     logicPieceToMove->setPosition(targetPos);
     board->setPieceAt(targetPos, logicPieceToMove);
-    magic->Play({ targetPos.x * 100.0f,10.0f,targetPos.y * 100.0f }, 100);
+    magic->Play({ targetPos.x * 100.0f,10.0f,targetPos.y * 100.0f }, 50);
     // =================================================================
     // ★ 6. 【修正】ワープ後の移動不可 (Immobilized) 適用と解除効果の付与
     // =================================================================
