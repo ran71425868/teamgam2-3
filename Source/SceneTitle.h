@@ -3,6 +3,8 @@
 #include "System/Sprite.h"
 #include "Scene.h"
 #include "System/AudioSource.h"
+#include "System/Mouse.h"
+#include "System/Input.h"
 
 //タイトルシーン
 class SceneTitle :public Scene

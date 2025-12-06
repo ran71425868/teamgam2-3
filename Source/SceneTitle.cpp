@@ -32,17 +32,27 @@ void SceneTitle::Finalize()
 //更新処理
 void SceneTitle::Update(float elapsedTime)
 {
+	Mouse& mouseCursor = Input::Instance().GetMouse();
+
+	const MouseButton anyButton =
+		Mouse::BTN_LEFT;
 	GamePad& gamePad = Input::Instance().GetGamePad();
 
 	//なにかボタンを押したらゲームシーンへ切り替え
-	const GamePadButton anyButton =
+	const GamePadButton anykeyButton =
 		  GamePad::BTN_A
 		| GamePad::BTN_B
 		| GamePad::BTN_X
 		| GamePad::BTN_Y
 		;
 
-	if (gamePad.GetButtonDown() & anyButton)
+	if (gamePad.GetButtonDown() & anykeyButton)
+	{
+		BGM->Stop();
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneSelect));
+	}
+
+	if (mouseCursor.GetButtonDown() & anyButton)
 	{
 		BGM->Stop();
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneSelect));
