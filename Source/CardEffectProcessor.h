@@ -58,4 +58,6 @@ public:
     Effect* magic = nullptr;
     Effect* heal = nullptr;
     Effect* thunder = nullptr;
+    Effect* flame = nullptr;
+    Effect* seal = nullptr;
 };

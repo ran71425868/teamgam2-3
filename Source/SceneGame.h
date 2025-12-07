@@ -181,4 +181,5 @@ private:
 	int endtimer = 0.0f;
 
 	Effect* deleteEffect = nullptr;
+	Effect* flame = nullptr;
 };

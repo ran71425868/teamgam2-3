@@ -39,6 +39,8 @@ CardEffectProcessor::CardEffectProcessor(Board* b, std::vector<Piece*>* p, CardM
     magic = new Effect("Data/Effect/magic.efk");
     heal = new Effect("Data/Effect/heal.efk");
     thunder= new Effect("Data/Effect/thunder.efk");
+    flame = new Effect("Data/Effect/flame.efk");
+    seal = new Effect("Data/Effect/seal.efk");
 }
 
 // ターゲット駒が、指定した色であるかをチェックする補助関数
@@ -90,7 +92,7 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
                     targetPos.x + dx,
                     targetPos.y + (direction * dy) // 進行方向へ展開
                 };
-
+                flame->Play({ damagePos.x * 100.0f,0.0f,damagePos.y * 100.0f }, 50.0f);
                 // 2. ボード内チェックとダメージ適用
                 if (board->isInsideBoard(damagePos)) {
                     auto victim = board->getPieceAt(damagePos);
@@ -98,7 +100,7 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
                     if (victim) {
                         // 駒が存在する場合、ダメージを与える
                         victim->takeDamage(damage);
-
+                        
                         // 死亡チェック
                         if (victim->getHealth() <= 0) {
                             // 論理ボードから削除
@@ -211,7 +213,7 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
             if (logicPiece) {
                 logicPiece->setImmobilized(true);
             }
-
+            seal->Play({ targetPos.x * 100.0f,100.0f,targetPos.y * 100.0f }, 50.0f);
             ActiveEffect effect(6, 3, targetPos, currentTurn);
             ActiveEffectManager::GetInstance().AddEffect(effect);
             return true;

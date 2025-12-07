@@ -148,6 +148,7 @@ void SceneGame::Initialize()
 	BGM->SetVolume(0.4f);
 
 	deleteEffect = new Effect("Data/Effect/Blow11.efk");
+	flame= new Effect("Data/Effect/flame.efk");
 }
 
 // 終了化
@@ -1343,6 +1344,7 @@ void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 			for (int dx = -1; dx <= 1; ++dx) {
 				Position damagePos = { selfDestructPos.x + dx, selfDestructPos.y + dy };
 
+				flame->Play({ selfDestructPos.x * 100.0f,0.0f,selfDestructPos.y * 100.0f }, 5000.0f);
 				// ボード内で、かつターゲット駒自身ではないマスをチェック
 				if (board->isInsideBoard(damagePos) && (dx != 0 || dy != 0)) {
 					auto victim = board->getPieceAt(damagePos);
