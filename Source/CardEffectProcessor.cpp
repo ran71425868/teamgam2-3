@@ -162,7 +162,8 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
     {
         // 1. ターゲット駒が存在し、かつそれが自駒であるかを確認 (カード発動のトリガーとして使用)
 
-       heal->Play({ 3.5 * 100.0f,10.0f,3.5 * 100.0f }, 200);
+      
+       seal->Play({ targetPos.x * 100.0f, 10.0f, targetPos.y * 100.0f }, 150.0f);
         if (targetPiece && IsTargetPiece(targetPos, currentTurn)) {
 
 
@@ -211,7 +212,7 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
                 // 1ターン後に移動不可を解除するための持続効果を付与
                 ActiveEffect unblockEffect(
                     10, // 効果ID: 10 (移動不可解除)
-                    1,  // 残りターン数: 1
+                    2,  // 残りターン数: 1
                     targetPos, // ターゲット位置
                     enemyColor // 所有者: ターゲット駒の持ち主（敵）
                 );

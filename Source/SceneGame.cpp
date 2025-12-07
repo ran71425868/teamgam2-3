@@ -155,6 +155,7 @@ void SceneGame::Initialize()
 
 	deleteEffect = new Effect("Data/Effect/Blow11.efk");
 	flame= new Effect("Data/Effect/flame.efk");
+	Heal = new Effect("Data/Effect/heal.efk");
 }
 
 // 終了化
@@ -204,6 +205,8 @@ void SceneGame::Finalize()
 
 	delete ai;
 	delete deleteEffect;
+	delete flame;
+	delete Heal;
 
 	ai = nullptr;
 }
@@ -1353,6 +1356,8 @@ void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 		for (int y = 0; y < 8; ++y) {
 			for (int x = 0; x < 8; ++x) {
 				Position pos = { x, y };
+
+				Heal->Play({ 3.5 * 100.0f,10.0f,3.5 * 100.0f }, 200);
 
 				// 1. Boardから論理駒 (shared_ptr<ChessPiece>) を取得
 				auto logicPiece = board->getPieceAt(pos);

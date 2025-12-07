@@ -189,4 +189,5 @@ private:
 
 	Effect* deleteEffect = nullptr;
 	Effect* flame = nullptr;
+	Effect* Heal = nullptr;
 };
