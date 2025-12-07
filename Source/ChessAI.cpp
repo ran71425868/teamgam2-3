@@ -1,5 +1,6 @@
 #include "ChessAI.h"
 #include <iostream>
+#include"System/Audio.h"
 #include "EffectManager.h"
 
 ChessAI::ChessAI()
@@ -8,6 +9,10 @@ ChessAI::ChessAI()
     gen.seed(rd());
 
     deleteEffect = new Effect("Data/Effect/Blow11.efk");
+    MOVESE = Audio::Instance().LoadAudioSource("Data/Sound/oku1.wav");
+
+    DEFSE = Audio::Instance().LoadAudioSource("Data/Sound/k1.wav");
+    ATKSE = Audio::Instance().LoadAudioSource("Data/Sound/k3.wav");
 }
 
 ChessAI::~ChessAI()
@@ -26,6 +31,8 @@ void ChessAI::Update(Board* board)
     if (!hasMoved)
     {
         MakeRandomMove(board);
+        MOVESE->Play(false);
+        MOVESE->SetVolume(0.4f);
         hasMoved = true;
     }
 }
@@ -197,6 +204,8 @@ found:;*/
 
                 // 2. –hŒä‘¤‚Éƒ_ƒ[ƒW‚ð—^‚¦‚é
                 defender->takeDamage(attackerHealth);
+                DEFSE->Play(false);
+                DEFSE->SetVolume(0.4f);
 
                 // 3. UŒ‚‘¤‚Ì•`‰æíœ‚ðˆË—Š (ˆÚ“®Œ³‚Å‚ÌŽ€–S‚ðŽ¦‚·‚½‚ßAfrom->from)
                 if (onMoveCallback) onMoveCallback(from, from, false);
@@ -215,7 +224,8 @@ found:;*/
                 // UŒ‚‘¤ (AI) ‚ÌŸ—˜: –hŒä‘¤‚ð”Õ–Ê‚©‚çíœ
                 deleteEffect->Play({to.x * 100.0f,100.0f,to.y * 100.0f }, 30.0f);
                 board->setPieceAt(to, nullptr);
-
+                ATKSE->Play(false);
+                ATKSE->SetVolume(0.4f);
             }
         }
 

@@ -3,6 +3,7 @@
 #include <iostream>
 #include "ActiveEffectManager.h"
 #include <algorithm>
+#include <System/Audio.h>
 
 // SceneGame::piecesから駒を探す (SceneGame::FindSlimeAt() に相当)
 Piece* CardEffectProcessor::FindPieceAt(Position pos) {
@@ -36,6 +37,14 @@ CardEffectProcessor::CardEffectProcessor(Board* b, std::vector<Piece*>* p, CardM
     std::function<void(const std::string&, int)> damageCallback)
     : board(b), pieces(p), whiteCardManager(wcm), blackCardManager(bcm), ApplyDamageCallback(damageCallback)
 {
+
+    SINGLEHEALSE = Audio::Instance().LoadAudioSource("Data/Sound/ステータス治療1.wav");
+    WHOLEHEALSE = Audio::Instance().LoadAudioSource("Data/Sound/ステータス治療2.wav");
+    WARP = Audio::Instance().LoadAudioSource("Data/Sound/ワープ.wav");
+    BOMB = Audio::Instance().LoadAudioSource("Data/Sound/g1.wav");
+    THUNDERSE = Audio::Instance().LoadAudioSource("Data/Sound/雷魔法1.wav");
+    ROCKSE = Audio::Instance().LoadAudioSource("Data/Sound/close_locker.wav");
+
     magic = new Effect("Data/Effect/magic.efk");
     heal = new Effect("Data/Effect/heal.efk");
     thunder= new Effect("Data/Effect/thunder.efk");
@@ -112,6 +121,9 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
                 }
             }
         }
+        BOMB->Play(false);
+        BOMB->SetVolume(0.6f);
+
         // トラップ設置は成功したとみなす
         return true;
     }
@@ -131,6 +143,8 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
             // 3. 論理オブジェクト (ChessPiece) の体力を回復
             sharedPiece->heal(healAmount);
             heal->Play({ targetPos.x * 100.0f,10.0f,targetPos.y * 100.0f }, 50);
+            SINGLEHEALSE->Play(false);
+            SINGLEHEALSE->SetVolume(0.4f);
             // 4. 描画オブジェクト (Piece) の更新
             // Pieceオブジェクトは通常、SceneGame::Updateで体力表示を更新しますが、
             // 即時反映を確実にするため、ここで Piece* を取得して更新処理を呼び出す必要があるかもしれません。
@@ -164,6 +178,9 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
             // 3. ActiveEffectManagerに登録
             ActiveEffectManager::GetInstance().AddEffect(effect);
 
+            WHOLEHEALSE->Play(false);
+            WHOLEHEALSE->SetVolume(0.4f);
+
             return true; // 効果適用成功
         }
         return false; // ターゲットが無効（駒がいない、または敵駒）
@@ -185,6 +202,9 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
             if (logicPiece) {
                 // 移動不可を適用
                 logicPiece->setImmobilized(true);
+                ROCKSE->Play(false);
+                ROCKSE->SetVolume(0.6f);
+
 
                 // 1ターン後に移動不可を解除するための持続効果を付与
                 ActiveEffect unblockEffect(
@@ -214,6 +234,7 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
                 logicPiece->setImmobilized(true);
             }
             seal->Play({ targetPos.x * 100.0f,100.0f,targetPos.y * 100.0f }, 50.0f);
+           
             ActiveEffect effect(6, 3, targetPos, currentTurn);
             ActiveEffectManager::GetInstance().AddEffect(effect);
             return true;
@@ -270,6 +291,8 @@ void CardEffectProcessor::ProcessInstantCard(int effectId, const std::string& cu
             cardUsed = true;
         }
         thunder->Play({3.5 * 100.0f, 10.0f, 3.5 * 100.0f }, 150);
+        THUNDERSE->Play(false);
+        THUNDERSE->SetVolume(0.4f);
         // ★ターン終了処理は SceneGame::Update 側で行う
         break;
     }
@@ -347,6 +370,8 @@ bool CardEffectProcessor::ApplyDimensionalGate(int effectId, Position targetPos,
     logicPieceToMove->setPosition(targetPos);
     board->setPieceAt(targetPos, logicPieceToMove);
     magic->Play({ targetPos.x * 100.0f,10.0f,targetPos.y * 100.0f }, 50);
+    WARP->Play(false);
+    WARP->SetVolume(0.7f);
     // =================================================================
     // ★ 6. 【修正】ワープ後の移動不可 (Immobilized) 適用と解除効果の付与
     // =================================================================
