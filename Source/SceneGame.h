@@ -102,8 +102,8 @@ private:
 	// カード描画開始位置 (画面左下を想定)
 	const int CARD_START_X = 50;
 	const int CARD_START_Y = 750;
-	const int CARD_WIDTH = 81;   // 例: 816 / 10 = 81.6 (手札の幅)
-	const int CARD_HEIGHT = 145; // 例: 1456 / 10 = 145.6 (手札の高さ)
+	const int CARD_WIDTH = 100;   // 例: 816 / 10 = 81.6 (手札の幅)
+	const int CARD_HEIGHT = 160; // 例: 1456 / 10 = 145.6 (手札の高さ)
 	const int CARD_SPACING = 15; // カード間の間隔
 
 	// カード効果IDごとのテクスチャを保持する配列(0〜9の10枚)

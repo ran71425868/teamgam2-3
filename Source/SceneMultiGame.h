@@ -100,8 +100,8 @@ private:
 	const int RIGHT_DESC_X = 1450;       // 右側の説明文表示位置
 	const int RIGHT_DESC_Y = 50;
 
-	const int CARD_WIDTH = 81;   // 例: 816 / 10 = 81.6 (手札の幅)
-	const int CARD_HEIGHT = 145; // 例: 1456 / 10 = 145.6 (手札の高さ)
+	const int CARD_WIDTH = 100;   // 例: 816 / 10 = 81.6 (手札の幅)
+	const int CARD_HEIGHT = 160; // 例: 1456 / 10 = 145.6 (手札の高さ)
 	const int CARD_SPACING = 15; // カード間の間隔
 
 	// カード効果IDごとのテクスチャを保持する配列(0〜9の10枚)
@@ -191,8 +191,10 @@ private:
 	Sprite* tutorial = nullptr;
 	Sprite* next = nullptr;
 	int switch_state = 0;
+	int count = 1;
 
 	Effect* deleteEffect = nullptr;
 	Effect* flame = nullptr;
 	Effect* heal = nullptr;
+	Effect* Prohibited = nullptr;
 };

@@ -51,7 +51,6 @@ CardEffectProcessor::CardEffectProcessor(Board* b, std::vector<Piece*>* p, CardM
     flame = new Effect("Data/Effect/flame.efk");
     seal = new Effect("Data/Effect/seal.efk");
     break_card = new Effect("Data/Effect/break.efk");
-    Prohibited = new Effect("Data/Effect/ice.efk");
 }
 
 // ターゲット駒が、指定した色であるかをチェックする補助関数
@@ -284,7 +283,7 @@ void CardEffectProcessor::ProcessInstantCard(int effectId, const std::string& cu
 
         // 例として、CardManagerに setCardUseDisabled(bool) 関数があると仮定した場合の処理
         // enemyCardManager->setCardUseDisabled(true); 
-        Prohibited->Play({ 3.5 * 100.0f,0.0f,3.5 * 100.0f }, 300.0f);
+       
         cardUsed = true;
         break;
     }
