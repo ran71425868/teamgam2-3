@@ -175,6 +175,13 @@ private:
 	std::string lastTurnColor = "white";
 
 	AudioSource* BGM = nullptr;
+	AudioSource* ATKSE = nullptr;
+	AudioSource* DEFSE = nullptr;
+	AudioSource* MOVESE = nullptr;
+	AudioSource* Unauthorized_Click = nullptr;
+	AudioSource* Click = nullptr;
+
+	AudioSource* BOMB2 = nullptr;
 
 	int timer = 0;
 	int cooldown = 2;

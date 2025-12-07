@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include "Effect.h"
+#include <System/AudioSource.h>
 class ChessAI
 {
 public:
@@ -34,6 +35,10 @@ private:
 
         return safe;
     }
+
+    AudioSource* MOVESE = nullptr;
+    AudioSource* ATKSE = nullptr;
+    AudioSource* DEFSE = nullptr;
 
     Effect* deleteEffect = nullptr;
 

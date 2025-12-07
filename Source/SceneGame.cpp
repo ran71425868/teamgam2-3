@@ -25,6 +25,12 @@ void SceneGame::Initialize()
 	healSpotModel = new Model("Data/Model/Stage/heal_bord.mdl");
 
 	BGM = Audio::Instance().LoadAudioSource("Data/Sound/Game.wav");
+	DEFSE = Audio::Instance().LoadAudioSource("Data/Sound/k1.wav");
+	ATKSE = Audio::Instance().LoadAudioSource("Data/Sound/k3.wav");
+	MOVESE = Audio::Instance().LoadAudioSource("Data/Sound/oku1.wav");
+	Unauthorized_Click = Audio::Instance().LoadAudioSource("Data/Sound/ビープ音4_1.wav");
+	Click = Audio::Instance().LoadAudioSource("Data/Sound/決定ボタンを押す2.wav");
+	BOMB2 = Audio::Instance().LoadAudioSource("Data/Sound/爆発2.wav");
 
 	// 視覚オブジェクトを生成し、対応する論理オブジェクトとリンクさせるヘルパー関数
 	auto createAndLinkPiece = [&](const std::string& color, Position pos, const std::string& type) {
@@ -145,7 +151,7 @@ void SceneGame::Initialize()
 
 	check= new Sprite("Data/Sprite/check1.png");
 	BGM->Play(false);
-	BGM->SetVolume(0.4f);
+	BGM->SetVolume(0.3f);
 
 	deleteEffect = new Effect("Data/Effect/Blow11.efk");
 	flame= new Effect("Data/Effect/flame.efk");
@@ -189,6 +195,13 @@ void SceneGame::Finalize()
 	pieces.clear();
 
 	delete BGM;
+	delete ATKSE;
+	delete DEFSE;
+	delete MOVESE;
+	delete Unauthorized_Click;
+	delete Click;
+	delete BOMB2;
+
 	delete ai;
 	delete deleteEffect;
 
@@ -258,7 +271,7 @@ if(!isGameOver){
 		if (mouseCursor.GetButtonDown() & Mouse::BTN_RIGHT)
 		{
 			POINT cardcursor = mouseCursor.GetPosition();
-			
+
 			// --- 1. 盤面クリック座標の取得 ---
 			Position cardclicked = ScreenToBoard(cardcursor.x, cardcursor.y);
 
@@ -266,11 +279,12 @@ if(!isGameOver){
 			// selectedHandIndex が 0以上の値で固定されている = ターゲット選択フェーズ
 			if (selectedHandIndex != -1) {
 
-				
 				// 1. カードが使用済みでないか、インデックスが有効かチェック
 				if (!cardManager->isCardUsable(selectedHandIndex)) {
 					// カードが使用済み（isUsedCard = true）の場合、またはインデックスが無効な場合は、
 					// カード使用処理全体をスキップし、リターンする
+					Unauthorized_Click->Play(false);
+					Unauthorized_Click->SetVolume(0.4f);
 					return;
 				}
 				// 決定したカードの効果IDを取得し、状態をリセットする前に保存
@@ -279,6 +293,8 @@ if(!isGameOver){
 				//  即時発動カード (ID 0, 5, 8, 9) の処理を CardEffectProcessor に委譲 (★ID: 5 を追加)
 				if (effectId == 0 || effectId == 5 || effectId == 8 || effectId == 9)
 				{
+					Click->Play(false);
+					Click->SetVolume(0.6f);
 
 					cardProcessor->ProcessInstantCard(
 						effectId,
@@ -291,6 +307,9 @@ if(!isGameOver){
 
 					// 絶対の雷 (ID 8) はカード処理後にターン終了を伴う
 					if (effectId == 8) {
+
+						Click->Play(false);
+						Click->SetVolume(0.6f);
 						board->switchTurn();
 					}
 
@@ -300,6 +319,9 @@ if(!isGameOver){
 
 				// 焦土の罠(ID: 1) の処理を ID 7 の前に移動・追加
 				if (effectId == 1) {
+
+					Click->Play(false);
+					Click->SetVolume(0.6f);
 					// ターゲット選択フェーズへ移行 (マス選択待ち)
 					selectedCardEffectId = effectId;
 					cardManager->UseCard(selectedHandIndex); // 破棄
@@ -317,6 +339,9 @@ if(!isGameOver){
 
 				// 次元の扉 (ID: 7) の処理
 				if (effectId == 7) {
+
+					Click->Play(false);
+					Click->SetVolume(0.6f);
 					// ターゲット選択フェーズへ移行 (ワープ元駒の選択待ち)
 					// 1. 選択中のカードの効果IDを保存
 					selectedCardEffectId = effectId;
@@ -336,6 +361,8 @@ if(!isGameOver){
 				// ターゲット駒の選択が必要な効果かチェック (ID 2, 3, 4, 6)
 				if (effectId == 2 || effectId == 3 || effectId == 4 || effectId == 6)
 				{
+					Click->Play(false);
+					Click->SetVolume(0.6f);
 					// ターゲット選択フェーズへ移行
 					// 1. 選択中のカードの効果IDを保存
 					selectedCardEffectId = effectId;
@@ -532,6 +559,7 @@ if(!isGameOver){
 			for (auto& move : legalMoves) {
 				if (move.x == clicked.x && move.y == clicked.y) {
 					isLegalMove = true;
+					
 					break; // 合法な移動先を見つけたのでループを抜ける
 				}
 			}
@@ -564,6 +592,8 @@ if(!isGameOver){
 
 						// 防御側に自駒の体力分のダメージを与える
 						defender->takeDamage(attackerHealth);
+						DEFSE->Play(false);
+						DEFSE->SetVolume(0.4f);
 
 						//  防御側の死亡チェックと削除
 						if (defender->getHealth() <= 0) {
@@ -590,12 +620,17 @@ if(!isGameOver){
 						deleteEffect->Play({ clicked.x * 100.0f,100.0f,clicked.y * 100.0f }, 30.0f);
 						RemovePieceAt(clicked); // 取られる駒の Slime を削
 
+						ATKSE->Play(false);
+						ATKSE->SetVolume(0.4f);
+
 						board->setPieceAt(clicked, nullptr);
 					}
 				}
 
 				// 合法な移動を実行
 				board->movePiece(selectedPos, clicked);
+				MOVESE->Play(false);
+				MOVESE->SetVolume(0.4f);
 
 				{
 					Position currentPos = clicked;
@@ -740,6 +775,8 @@ if(!isGameOver){
 					// パターンB: 何もないマスや敵の駒をクリック → 選択解除
 					// シンプルに選択解除のみを行う
 					selectedPos = { -1, -1 };
+					Unauthorized_Click->Play(false);
+					Unauthorized_Click->SetVolume(0.4f);
 					legalMoves.clear();
 				}
 			}
@@ -1345,6 +1382,9 @@ void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 				Position damagePos = { selfDestructPos.x + dx, selfDestructPos.y + dy };
 
 				flame->Play({ selfDestructPos.x * 100.0f,0.0f,selfDestructPos.y * 100.0f }, 100.0f);
+				BOMB2->Play(false);
+				BOMB2->SetVolume(0.6f);
+
 				// ボード内で、かつターゲット駒自身ではないマスをチェック
 				if (board->isInsideBoard(damagePos) && (dx != 0 || dy != 0)) {
 					auto victim = board->getPieceAt(damagePos);

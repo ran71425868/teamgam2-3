@@ -8,6 +8,7 @@
 #include "Piece.h" 
 #include "CardManager.h" 
 #include "ActiveEffectManager.h" 
+#include <System/AudioSource.h>
 
 // コールバック関数型の定義 (SceneGame::ApplyPersistentEffect のシグネチャに合わせる)
 using EffectCallback = std::function<void(const ActiveEffect&)>;
@@ -54,6 +55,14 @@ public:
 
     // 次元への扉 (ID 7) の効果を適用
     bool ApplyDimensionalGate(int effectId, Position targetPos, const std::string& currentTurn, Piece* pieceToMove);
+
+    AudioSource* SINGLEHEALSE = nullptr;
+    AudioSource* WHOLEHEALSE = nullptr;
+    AudioSource* WARP = nullptr;
+    AudioSource* BOMB = nullptr;
+    AudioSource* THUNDERSE = nullptr;
+    AudioSource* ROCKSE = nullptr;
+
 
     Effect* magic = nullptr;
     Effect* heal = nullptr;
