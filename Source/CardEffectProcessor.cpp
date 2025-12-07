@@ -310,6 +310,11 @@ bool CardEffectProcessor::ApplyDimensionalGate(int effectId, Position targetPos,
         return false;
     }
 
+    // ターゲット位置が共有マス (y=2 から y=5) か確認
+    if (targetPos.y < 2 || targetPos.y > 5) {
+        return false; // 共有マス以外にはワープ不可
+    }
+
     // 2. ワープ元の座標を取得
     Position originalPos = pieceToMove->GetBoardPosition();
     if (originalPos.x == -1) {
