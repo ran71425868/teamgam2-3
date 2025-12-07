@@ -32,6 +32,7 @@ void SceneMultiGame::Initialize()
 	Click = Audio::Instance().LoadAudioSource("Data/Sound/決定ボタンを押す2.wav");
 	BOMB2 = Audio::Instance().LoadAudioSource("Data/Sound/爆発2.wav");
 	WHOLEHEALSE = Audio::Instance().LoadAudioSource("Data/Sound/ステータス治療2.wav");
+	ROCK = Audio::Instance().LoadAudioSource("Data/Sound/氷魔法2.wav");
 
 	// 視覚オブジェクトを生成し、対応する論理オブジェクトとリンクさせるヘルパー関数
 	auto createAndLinkPiece = [&](const std::string& color, Position pos, const std::string& type) {
@@ -289,13 +290,14 @@ void SceneMultiGame::Update(float elapsedTime)
 					}
 					// 決定したカードの効果IDを取得し、状態をリセットする前に保存
 					int effectId = cardManager->getCardInHand(selectedHandIndex).effectId;
-					deleteEffect->Play({ -240.0f,0.0f,0.0f }, 30.0f);
 
 					// ID 5 (沈黙の呪文) の個別処理
 					if (effectId == 5)
 					{
 						Click->Play(false);
 						Click->SetVolume(0.6f);
+						ROCK->Play(false);
+						ROCK->SetVolume(0.6f);
 
 						std::string currentTurn = board->getCurrentTurn();
 						std::string enemyColor = (currentTurn == "white") ? "black" : "white";
@@ -1044,8 +1046,8 @@ void SceneMultiGame::DrawGUI()
 	// ===========================================================
 	//  共通描画設定
 	// ===========================================================
-	const float DESC_WIDTH = 300.0f;
-	const float DESC_HEIGHT = 400.0f;
+	const float DESC_WIDTH = 400.0f;
+	const float DESC_HEIGHT = 550.0f;
 
 	// ===========================================================
 	//  1. 左側 (白プレイヤー) の手札描画

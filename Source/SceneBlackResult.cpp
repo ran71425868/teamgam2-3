@@ -4,12 +4,20 @@
 #include "System/Input.h"
 #include "SceneManager.h"
 #include "SceneGame.h"
+#include <System/Audio.h>
+
 
 //初期化
 void SceneBlackResult::Initialize()
 {
 	sprite = new Sprite("Data/Sprite/仮リザルト.png");
 	win = new Sprite("Data/Sprite/black_win.png");
+	
+
+	BGM = Audio::Instance().LoadAudioSource("Data/Sound/PerituneMaterial_Wonder2.wav");
+
+	BGM->Play(false);
+	BGM->SetVolume(0.4f);
 }
 
 //終了化
@@ -20,23 +28,20 @@ void SceneBlackResult::Finalize()
 		delete sprite;
 		sprite = nullptr;
 	}
+	delete BGM;
 }
 
 //更新処理
 void SceneBlackResult::Update(float elapsedTime)
 {
-	GamePad& gamePad = Input::Instance().GetGamePad();
+	Mouse& mouseCursor = Input::Instance().GetMouse();
 
-	//なにかボタンを押したらゲームシーンへ切り替え
-	const GamePadButton anyButton =
-		GamePad::BTN_A
-		| GamePad::BTN_B
-		| GamePad::BTN_X
-		| GamePad::BTN_Y
-		;
+	const MouseButton anyButton =
+		Mouse::BTN_LEFT;
 
-	if (gamePad.GetButtonDown() & anyButton)
+	if (mouseCursor.GetButtonDown() & anyButton)
 	{
+		BGM->Stop();
 		SceneManager::Instance().ChangeScene(new SceneTitle);
 	}
 }

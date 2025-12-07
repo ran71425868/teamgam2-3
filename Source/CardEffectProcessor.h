@@ -61,6 +61,7 @@ public:
     AudioSource* BOMB = nullptr;
     AudioSource* THUNDERSE = nullptr;
     AudioSource* ROCKSE = nullptr;
+    AudioSource* MRSE = nullptr;
 
 
     Effect* magic = nullptr;

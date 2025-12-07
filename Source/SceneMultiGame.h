@@ -95,9 +95,9 @@ private:
 	const int LEFT_DESC_Y = 50;
 
 	// --- 右側 (黒プレイヤー用) UI定数 ---
-	const int RIGHT_CARD_START_X = 1600; // 右側のカード開始位置
+	const int RIGHT_CARD_START_X = 1500; // 右側のカード開始位置
 	const int RIGHT_CARD_START_Y = 750;
-	const int RIGHT_DESC_X = 1550;       // 右側の説明文表示位置
+	const int RIGHT_DESC_X = 1450;       // 右側の説明文表示位置
 	const int RIGHT_DESC_Y = 50;
 
 	const int CARD_WIDTH = 81;   // 例: 816 / 10 = 81.6 (手札の幅)
@@ -184,6 +184,7 @@ private:
 
 	AudioSource* WHOLEHEALSE = nullptr;
 	AudioSource* BOMB2 = nullptr;
+	AudioSource* ROCK = nullptr;
 	
 	int endtimer = 0.0f;
 

@@ -15,7 +15,7 @@ void SceneTitle::Initialize()
 	BGM = Audio::Instance().LoadAudioSource("Data/Sound/Title.wav");
 
 	BGM->Play(false);
-	BGM->SetVolume(0.4f);
+	BGM->SetVolume(0.3f);
 }
 
 //終了化
@@ -36,21 +36,6 @@ void SceneTitle::Update(float elapsedTime)
 
 	const MouseButton anyButton =
 		Mouse::BTN_LEFT;
-	GamePad& gamePad = Input::Instance().GetGamePad();
-
-	//なにかボタンを押したらゲームシーンへ切り替え
-	const GamePadButton anykeyButton =
-		  GamePad::BTN_A
-		| GamePad::BTN_B
-		| GamePad::BTN_X
-		| GamePad::BTN_Y
-		;
-
-	if (gamePad.GetButtonDown() & anykeyButton)
-	{
-		BGM->Stop();
-		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneSelect));
-	}
 
 	if (mouseCursor.GetButtonDown() & anyButton)
 	{
