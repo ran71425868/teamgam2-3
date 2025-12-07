@@ -257,7 +257,7 @@ if(!isGameOver){
 		if (mouseCursor.GetButtonDown() & Mouse::BTN_RIGHT)
 		{
 			POINT cardcursor = mouseCursor.GetPosition();
-			deleteEffect->Play({ -240.0f,0.0f,0.0f }, 30.0f);
+			
 			// --- 1. 盤面クリック座標の取得 ---
 			Position cardclicked = ScreenToBoard(cardcursor.x, cardcursor.y);
 
@@ -274,7 +274,7 @@ if(!isGameOver){
 				}
 				// 決定したカードの効果IDを取得し、状態をリセットする前に保存
 				int effectId = cardManager->getCardInHand(selectedHandIndex).effectId;
-
+				deleteEffect->Play({ -240.0f,0.0f,0.0f }, 30.0f);
 				//  即時発動カード (ID 0, 5, 8, 9) の処理を CardEffectProcessor に委譲 (★ID: 5 を追加)
 				if (effectId == 0 || effectId == 5 || effectId == 8 || effectId == 9)
 				{
