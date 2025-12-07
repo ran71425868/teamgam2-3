@@ -70,4 +70,5 @@ public:
     Effect* flame = nullptr;
     Effect* seal = nullptr;
     Effect* break_card = nullptr;
+    Effect* Prohibited = nullptr;
 };
