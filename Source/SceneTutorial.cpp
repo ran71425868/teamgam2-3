@@ -173,7 +173,7 @@ void SceneTutorial::Update(float elapsedTime)
 	const MouseButton anyButton =
 		Mouse::BTN_LEFT;
 
-	DirectX::XMFLOAT2 nextleft = { 1600,850 };
+	DirectX::XMFLOAT2 nextleft = { 1500,750 };
 	DirectX::XMFLOAT2 nextright = { 1900,1000 };
 
 	if (nextleft.x < mouseCursor.GetPositionX() && nextright.x > mouseCursor.GetPositionX() && nextleft.y<mouseCursor.GetPositionY() && nextright.y>mouseCursor.GetPositionY())
