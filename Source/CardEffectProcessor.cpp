@@ -186,6 +186,8 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
                 // 移動不可を適用
                 logicPiece->setImmobilized(true);
 
+                seal->Play({targetPos.x * 100.0f, 10.0f, targetPos.y * 100.0f }, 150.0f);
+
                 // 1ターン後に移動不可を解除するための持続効果を付与
                 ActiveEffect unblockEffect(
                     10, // 効果ID: 10 (移動不可解除)
