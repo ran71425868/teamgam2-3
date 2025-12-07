@@ -188,6 +188,10 @@ private:
 	
 	int endtimer = 0.0f;
 
+	Sprite* tutorial = nullptr;
+	Sprite* next = nullptr;
+	int switch_state = 0;
+
 	Effect* deleteEffect = nullptr;
 	Effect* flame = nullptr;
 	Effect* heal = nullptr;

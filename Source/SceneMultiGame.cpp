@@ -33,6 +33,7 @@ void SceneMultiGame::Initialize()
 	BOMB2 = Audio::Instance().LoadAudioSource("Data/Sound/爆発2.wav");
 	WHOLEHEALSE = Audio::Instance().LoadAudioSource("Data/Sound/ステータス治療2.wav");
 	ROCK = Audio::Instance().LoadAudioSource("Data/Sound/氷魔法2.wav");
+	
 
 	// 視覚オブジェクトを生成し、対応する論理オブジェクトとリンクさせるヘルパー関数
 	auto createAndLinkPiece = [&](const std::string& color, Position pos, const std::string& type) {
@@ -96,6 +97,9 @@ void SceneMultiGame::Initialize()
 		&whiteCardManager,
 		&blackCardManager,
 		damageCallback);
+
+	tutorial = new Sprite("Data/Sprite/マルチ説明.png");
+	next = new Sprite("Data/Sprite/NEXT.png");
 
 	// CardManagerの初期化 (SceneGame::cardManagerがポインタと仮定)
 	cardManager = &whiteCardManager;
@@ -189,659 +193,686 @@ void SceneMultiGame::Finalize()
 // 更新処理
 void SceneMultiGame::Update(float elapsedTime)
 {
-	// ガード処理：ゲーム終了時は処理を停止
-	if (isGameOver && endtimer >= 200.0f) {
-		// ここに結果表示のロジック（未作成）が入る
-		// シーン遷移がないため、結果表示（例：テキスト表示）のみを行う
-		BGM->Stop();
-		if (winnerColor == "white")
-			SceneManager::Instance().ChangeScene(new SceneWhiteResult);
-		else
-			SceneManager::Instance().ChangeScene(new SceneBlackResult);
-		return;
+	Mouse& mouseCursor = Input::Instance().GetMouse();
+	const MouseButton anyButton =
+		Mouse::BTN_LEFT;
+	DirectX::XMFLOAT2 nextleft = { 1600,850 };
+	DirectX::XMFLOAT2 nextright = { 1900,1000 };
+
+	if (nextleft.x < mouseCursor.GetPositionX() && nextright.x > mouseCursor.GetPositionX() && nextleft.y<mouseCursor.GetPositionY() && nextright.y>mouseCursor.GetPositionY())
+	{
+		if (mouseCursor.GetButtonDown() & anyButton)
+		{
+			switch_state++;
+		}
 	}
 
-	if (!isGameOver) {
-		// --- カードクールダウン処理 ---
-		if (isCardInUse) {
-			cardCooldownTimer -= elapsedTime;
-			if (cardCooldownTimer <= 0.0f) {
-				isCardInUse = false;
-				cardCooldownTimer = 0.0f;
-			}
+	switch (switch_state)
+	{
+	case 0:
+	break;
+
+	case 1:
+	{
+		// ガード処理：ゲーム終了時は処理を停止
+		if (isGameOver && endtimer >= 200.0f) {
+			// ここに結果表示のロジック（未作成）が入る
+			// シーン遷移がないため、結果表示（例：テキスト表示）のみを行う
+			BGM->Stop();
+			if (winnerColor == "white")
+				SceneManager::Instance().ChangeScene(new SceneWhiteResult);
+			else
+				SceneManager::Instance().ChangeScene(new SceneBlackResult);
+			return;
 		}
 
-		// =======================================================
-		// ★ [最優先] ターン切り替わり時の持続効果処理の実行
-		// =======================================================
-		std::string currentTurn = board->getCurrentTurn();
-
-		if (currentTurn != lastTurnColor) {
-
-			// ActiveEffectManager にターン経過を通知し、効果を処理させる
-			ActiveEffectManager::GetInstance().ProcessTurnEffects(
-				currentTurn,
-				[this](const ActiveEffect& effect) {
-					ApplyPersistentEffect(effect); // ID 10 がここで実行され、移動不可が解除される
-				});
-
-			// ターンが切り替わったら、操作するカードマネージャーを切り替える
-			if (currentTurn == "white") {
-				cardManager = &whiteCardManager; // 白のカードを操作対象に
-			}
-			else {
-				cardManager = &blackCardManager; // 黒のカードを操作対象に
-			}
-
-			// ターンが変わったら選択カーソルをリセット
-			selectedHandIndex = 0;
-
-			// ターン開始時のドロー処理 (各マネージャーのStartTurnを呼ぶ)
-			cardManager->StartTurn();
-
-			lastTurnColor = currentTurn; // 前ターンを更新
-		}
-
-		Mouse& mouseCursor = Input::Instance().GetMouse();
-		GamePad& gamePad = Input::Instance().GetGamePad();
-
-		// --- キーボード入力によるカード選択/決定 ---
-		if (!IsSilenced(board->getCurrentTurn()) && !isCardInUse && cardManager->getHandSize() > 0) {
-			size_t handSize = cardManager->getHandSize();
-
-			// Aキー (左へ選択移動) またはゲームパッド左
-			if ((gamePad.GetButtonDown() & GamePad::BTN_LEFT)) {
-				// 選択可能な手札がある場合のみ処理
-				if (handSize > 0) {
-					// ★修正: インデックスは手札サイズに応じて更新される
-					selectedHandIndex = (selectedHandIndex > 0) ? selectedHandIndex - 1 : 0;
+		if (!isGameOver) {
+			// --- カードクールダウン処理 ---
+			if (isCardInUse) {
+				cardCooldownTimer -= elapsedTime;
+				if (cardCooldownTimer <= 0.0f) {
+					isCardInUse = false;
+					cardCooldownTimer = 0.0f;
 				}
 			}
 
-			// Dキー (右へ選択移動) またはゲームパッド右
-			if ( (gamePad.GetButtonDown() & GamePad::BTN_RIGHT)) {
-				// 選択可能な手札がある場合のみ処理
-				if (handSize > 0) {
-					// ★修正: インデックスは手札サイズに応じて更新される
-					// インデックスが handSize - 1 を超えないようにする
-					selectedHandIndex = (selectedHandIndex < handSize - 1) ? selectedHandIndex + 1 : (int)handSize - 1;
+			// =======================================================
+			// ★ [最優先] ターン切り替わり時の持続効果処理の実行
+			// =======================================================
+			std::string currentTurn = board->getCurrentTurn();
+
+			if (currentTurn != lastTurnColor) {
+
+				// ActiveEffectManager にターン経過を通知し、効果を処理させる
+				ActiveEffectManager::GetInstance().ProcessTurnEffects(
+					currentTurn,
+					[this](const ActiveEffect& effect) {
+						ApplyPersistentEffect(effect); // ID 10 がここで実行され、移動不可が解除される
+					});
+
+				// ターンが切り替わったら、操作するカードマネージャーを切り替える
+				if (currentTurn == "white") {
+					cardManager = &whiteCardManager; // 白のカードを操作対象に
 				}
+				else {
+					cardManager = &blackCardManager; // 黒のカードを操作対象に
+				}
+
+				// ターンが変わったら選択カーソルをリセット
+				selectedHandIndex = 0;
+
+				// ターン開始時のドロー処理 (各マネージャーのStartTurnを呼ぶ)
+				cardManager->StartTurn();
+
+				lastTurnColor = currentTurn; // 前ターンを更新
 			}
 
-			// マウス右クリック (カード決定・使用開始)
-			if (mouseCursor.GetButtonDown() & Mouse::BTN_RIGHT)
-			{
-				POINT cardcursor = mouseCursor.GetPosition();
+			Mouse& mouseCursor = Input::Instance().GetMouse();
+			GamePad& gamePad = Input::Instance().GetGamePad();
 
-				// --- 1. 盤面クリック座標の取得 ---
-				Position cardclicked = ScreenToBoard(cardcursor.x, cardcursor.y);
+			// --- キーボード入力によるカード選択/決定 ---
+			if (!IsSilenced(board->getCurrentTurn()) && !isCardInUse && cardManager->getHandSize() > 0) {
+				size_t handSize = cardManager->getHandSize();
 
-				// --- 2. カード効果の適用（右クリックで決定済みの場合） ---
-				// selectedHandIndex が 0以上の値で固定されている = ターゲット選択フェーズ
-				if (selectedHandIndex != -1) {
-
-					// 1. カードが使用済みでないか、インデックスが有効かチェック
-					if (!cardManager->isCardUsable(selectedHandIndex)) {
-						// カードが使用済み（isUsedCard = true）の場合、またはインデックスが無効な場合は、
-						// カード使用処理全体をスキップし、リターンする
-						Unauthorized_Click->Play(false);
-						Unauthorized_Click->SetVolume(0.4f);
-						return;
+				// Aキー (左へ選択移動) またはゲームパッド左
+				if ((gamePad.GetButtonDown() & GamePad::BTN_LEFT)) {
+					// 選択可能な手札がある場合のみ処理
+					if (handSize > 0) {
+						// ★修正: インデックスは手札サイズに応じて更新される
+						selectedHandIndex = (selectedHandIndex > 0) ? selectedHandIndex - 1 : 0;
 					}
-					// 決定したカードの効果IDを取得し、状態をリセットする前に保存
-					int effectId = cardManager->getCardInHand(selectedHandIndex).effectId;
+				}
 
-					// ID 5 (沈黙の呪文) の個別処理
-					if (effectId == 5)
-					{
-						Click->Play(false);
-						Click->SetVolume(0.6f);
-						ROCK->Play(false);
-						ROCK->SetVolume(0.6f);
-
-						std::string currentTurn = board->getCurrentTurn();
-						std::string enemyColor = (currentTurn == "white") ? "black" : "white";
-
-						// 1. 相手のカード使用を禁止するフラグを立てる (即時適用)
-						SetSilencedStatus(enemyColor, true);
-
-						// 2. 相手のカード使用禁止を解除するための ActiveEffect (ID 11) を追加
-						//    持続ターンを 2 に設定することで、相手のターン中ずっと沈黙が続き、
-						//    自分の次のターン開始時に解除されます。
-						ActiveEffect silenceRemovalEffect(
-							11,         // 効果ID: 11 (沈黙解除)
-							2,          // 残りターン数: 2
-							{ -1, -1 }, // ターゲット位置 (マスではないのでダミー)
-							enemyColor  // 所有者: ターゲットプレイヤーの色
-						);
-						ActiveEffectManager::GetInstance().AddEffect(silenceRemovalEffect);
-
-						// 3. カードを消費する
-						cardManager->UseCard(selectedHandIndex);
-
-						// 5. クールダウンと状態リセット
-						isCardInUse = true;
-						cardCooldownTimer = CARD_COOLDOWN_TIME;
-						selectedHandIndex = -1; // ハイライト解除
-						return; // このカードで処理を終了
+				// Dキー (右へ選択移動) またはゲームパッド右
+				if ((gamePad.GetButtonDown() & GamePad::BTN_RIGHT)) {
+					// 選択可能な手札がある場合のみ処理
+					if (handSize > 0) {
+						// ★修正: インデックスは手札サイズに応じて更新される
+						// インデックスが handSize - 1 を超えないようにする
+						selectedHandIndex = (selectedHandIndex < handSize - 1) ? selectedHandIndex + 1 : (int)handSize - 1;
 					}
+				}
 
-					//  即時発動カード (ID 0, 5, 8, 9) の処理を CardEffectProcessor に委譲 (★ID: 5 を追加)
-					if (effectId == 0 || effectId == 5 || effectId == 8 || effectId == 9)
-					{
-						Click->Play(false);
-						Click->SetVolume(0.6f);
+				// マウス右クリック (カード決定・使用開始)
+				if (mouseCursor.GetButtonDown() & Mouse::BTN_RIGHT)
+				{
+					POINT cardcursor = mouseCursor.GetPosition();
 
-						cardProcessor->ProcessInstantCard(
-							effectId,
-							board->getCurrentTurn(),
-							cardManager,
-							selectedHandIndex,
-							isCardInUse,
-							cardCooldownTimer,
-							CARD_COOLDOWN_TIME);
+					// --- 1. 盤面クリック座標の取得 ---
+					Position cardclicked = ScreenToBoard(cardcursor.x, cardcursor.y);
 
-						// 絶対の雷 (ID 8) はカード処理後にターン終了を伴う
-						if (effectId == 8) {
+					// --- 2. カード効果の適用（右クリックで決定済みの場合） ---
+					// selectedHandIndex が 0以上の値で固定されている = ターゲット選択フェーズ
+					if (selectedHandIndex != -1) {
+
+						// 1. カードが使用済みでないか、インデックスが有効かチェック
+						if (!cardManager->isCardUsable(selectedHandIndex)) {
+							// カードが使用済み（isUsedCard = true）の場合、またはインデックスが無効な場合は、
+							// カード使用処理全体をスキップし、リターンする
+							Unauthorized_Click->Play(false);
+							Unauthorized_Click->SetVolume(0.4f);
+							return;
+						}
+						// 決定したカードの効果IDを取得し、状態をリセットする前に保存
+						int effectId = cardManager->getCardInHand(selectedHandIndex).effectId;
+
+						// ID 5 (沈黙の呪文) の個別処理
+						if (effectId == 5)
+						{
+							Click->Play(false);
+							Click->SetVolume(0.6f);
+							ROCK->Play(false);
+							ROCK->SetVolume(0.6f);
+
+							std::string currentTurn = board->getCurrentTurn();
+							std::string enemyColor = (currentTurn == "white") ? "black" : "white";
+
+							// 1. 相手のカード使用を禁止するフラグを立てる (即時適用)
+							SetSilencedStatus(enemyColor, true);
+
+							// 2. 相手のカード使用禁止を解除するための ActiveEffect (ID 11) を追加
+							//    持続ターンを 2 に設定することで、相手のターン中ずっと沈黙が続き、
+							//    自分の次のターン開始時に解除されます。
+							ActiveEffect silenceRemovalEffect(
+								11,         // 効果ID: 11 (沈黙解除)
+								2,          // 残りターン数: 2
+								{ -1, -1 }, // ターゲット位置 (マスではないのでダミー)
+								enemyColor  // 所有者: ターゲットプレイヤーの色
+							);
+							ActiveEffectManager::GetInstance().AddEffect(silenceRemovalEffect);
+
+							// 3. カードを消費する
+							cardManager->UseCard(selectedHandIndex);
+
+							// 5. クールダウンと状態リセット
+							isCardInUse = true;
+							cardCooldownTimer = CARD_COOLDOWN_TIME;
+							selectedHandIndex = -1; // ハイライト解除
+							return; // このカードで処理を終了
+						}
+
+						//  即時発動カード (ID 0, 5, 8, 9) の処理を CardEffectProcessor に委譲 (★ID: 5 を追加)
+						if (effectId == 0 || effectId == 5 || effectId == 8 || effectId == 9)
+						{
+							Click->Play(false);
+							Click->SetVolume(0.6f);
+
+							cardProcessor->ProcessInstantCard(
+								effectId,
+								board->getCurrentTurn(),
+								cardManager,
+								selectedHandIndex,
+								isCardInUse,
+								cardCooldownTimer,
+								CARD_COOLDOWN_TIME);
+
+							// 絶対の雷 (ID 8) はカード処理後にターン終了を伴う
+							if (effectId == 8) {
+
+								Click->Play(false);
+								Click->SetVolume(0.6f);
+								board->switchTurn();
+							}
+
+							selectedHandIndex = -1; // ハイライト解除
+							return;
+						}
+
+						// 焦土の罠(ID: 1) の処理を ID 7 の前に移動・追加
+						if (effectId == 1) {
 
 							Click->Play(false);
 							Click->SetVolume(0.6f);
-							board->switchTurn();
+							// ターゲット選択フェーズへ移行 (マス選択待ち)
+							selectedCardEffectId = effectId;
+							cardManager->UseCard(selectedHandIndex); // 破棄
+
+							// 状態を「マス選択待ち」に設定
+							currentCardEffectState = CardEffectState::AWAITING_SQUARE_TARGET;
+
+							selectedHandIndex = -1;
+
+							// 合法なターゲットマスを計算し、リストに格納
+							CalculateCardTargetCandidates(effectId);
+
+							return;
 						}
 
-						selectedHandIndex = -1; // ハイライト解除
-						return;
-					}
+						// 次元の扉 (ID: 7) の処理
+						if (effectId == 7) {
 
-					// 焦土の罠(ID: 1) の処理を ID 7 の前に移動・追加
-					if (effectId == 1) {
+							Click->Play(false);
+							Click->SetVolume(0.6f);
+							// ターゲット選択フェーズへ移行 (ワープ元駒の選択待ち)
+							// 1. 選択中のカードの効果IDを保存
+							selectedCardEffectId = effectId;
 
-						Click->Play(false);
-						Click->SetVolume(0.6f);
-						// ターゲット選択フェーズへ移行 (マス選択待ち)
-						selectedCardEffectId = effectId;
-						cardManager->UseCard(selectedHandIndex); // 破棄
+							// 2. カードを手札から削除
+							cardManager->UseCard(selectedHandIndex); // 破棄
 
-						// 状態を「マス選択待ち」に設定
-						currentCardEffectState = CardEffectState::AWAITING_SQUARE_TARGET;
+							// 3. 状態を「ワープ元駒選択待ち」に設定
+							currentCardEffectState = CardEffectState::DIMENSIONAL_GATE_SELECT_PIECE;
 
-						selectedHandIndex = -1;
+							// 4. GUIハイライト用のインデックスはリセット
+							selectedHandIndex = -1;
 
-						// 合法なターゲットマスを計算し、リストに格納
-						CalculateCardTargetCandidates(effectId);
+							return;
+						}
 
-						return;
-					}
+						// ターゲット駒の選択が必要な効果かチェック (ID 2, 3, 4, 6)
+						if (effectId == 2 || effectId == 3 || effectId == 4 || effectId == 6)
+						{
+							Click->Play(false);
+							Click->SetVolume(0.6f);
+							// ターゲット選択フェーズへ移行
+							// 1. 選択中のカードの効果IDを保存
+							selectedCardEffectId = effectId;
 
-					// 次元の扉 (ID: 7) の処理
-					if (effectId == 7) {
+							// 2. カードを手札から削除（先に削除しておき、発動失敗時は何もしない）
+							cardManager->UseCard(selectedHandIndex); // 破棄
 
-						Click->Play(false);
-						Click->SetVolume(0.6f);
-						// ターゲット選択フェーズへ移行 (ワープ元駒の選択待ち)
-						// 1. 選択中のカードの効果IDを保存
-						selectedCardEffectId = effectId;
+							// 3. 状態を「駒選択待ち」に設定
+							currentCardEffectState = CardEffectState::AWAITING_PIECE_SELECTION;
 
-						// 2. カードを手札から削除
-						cardManager->UseCard(selectedHandIndex); // 破棄
+							// 4. GUIハイライト用のインデックスはリセット
+							selectedHandIndex = -1;
 
-						// 3. 状態を「ワープ元駒選択待ち」に設定
-						currentCardEffectState = CardEffectState::DIMENSIONAL_GATE_SELECT_PIECE;
+							// 5. ★追加: 合法なターゲット駒を計算し、リストに格納
+							CalculateCardTargetCandidates(effectId); // ← 新しいヘルパー関数を呼び出す
 
-						// 4. GUIハイライト用のインデックスはリセット
-						selectedHandIndex = -1;
-
-						return;
-					}
-
-					// ターゲット駒の選択が必要な効果かチェック (ID 2, 3, 4, 6)
-					if (effectId == 2 || effectId == 3 || effectId == 4 || effectId == 6)
-					{
-						Click->Play(false);
-						Click->SetVolume(0.6f);
-						// ターゲット選択フェーズへ移行
-						// 1. 選択中のカードの効果IDを保存
-						selectedCardEffectId = effectId;
-
-						// 2. カードを手札から削除（先に削除しておき、発動失敗時は何もしない）
-						cardManager->UseCard(selectedHandIndex); // 破棄
-
-						// 3. 状態を「駒選択待ち」に設定
-						currentCardEffectState = CardEffectState::AWAITING_PIECE_SELECTION;
-
-						// 4. GUIハイライト用のインデックスはリセット
-						selectedHandIndex = -1;
-
-						// 5. ★追加: 合法なターゲット駒を計算し、リストに格納
-						CalculateCardTargetCandidates(effectId); // ← 新しいヘルパー関数を呼び出す
-
-						// 右クリックで決定後のクリックはカード使用に専念させるため、ここでリターン
-						return;
+							// 右クリックで決定後のクリックはカード使用に専念させるため、ここでリターン
+							return;
+						}
 					}
 				}
 			}
-		}
 
-		// --- カード使用後、クールダウンが終了した場合 ---
-		if (!isCardInUse && cardCooldownTimer > 0.0f) {
-			// カード使用後のクールダウンが終了したが、ターンはまだ続行
-			// ここでは特に何もしない
-		}
+			// --- カード使用後、クールダウンが終了した場合 ---
+			if (!isCardInUse && cardCooldownTimer > 0.0f) {
+				// カード使用後のクールダウンが終了したが、ターンはまだ続行
+				// ここでは特に何もしない
+			}
 
-		if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
-			POINT cursor = mouseCursor.GetPosition();
+			if (mouseCursor.GetButtonDown() & Mouse::BTN_LEFT) {
+				POINT cursor = mouseCursor.GetPosition();
 
-			// 1. ボード座標への変換とボード外チェック
-			Position clicked = ScreenToBoard(cursor.x, cursor.y);
-			if (!board->isInsideBoard(clicked)) return; // ボード外なら何もしない
+				// 1. ボード座標への変換とボード外チェック
+				Position clicked = ScreenToBoard(cursor.x, cursor.y);
+				if (!board->isInsideBoard(clicked)) return; // ボード外なら何もしない
 
-			// =======================================================
-			// ★ [最優先] カード効果のターゲット選択ロジック
-			// =======================================================
+				// =======================================================
+				// ★ [最優先] カード効果のターゲット選択ロジック
+				// =======================================================
 
-			// 状態が NONE でない場合、カード効果のターゲット選択処理に専念する
-			if (currentCardEffectState != CardEffectState::NONE)
-			{
-				// ID 1 のターゲット選択の場合 (AWAITING_SQUARE_TARGET)
-				if (currentCardEffectState == CardEffectState::AWAITING_SQUARE_TARGET) {
-					// ApplyTargetedEffect に処理を委譲（ID 1 はターゲットマスのみを使用）
-					if (cardProcessor->ApplyTargetedEffect(selectedCardEffectId, clicked, board->getCurrentTurn())) {
-						// カード使用成功時の共通処理
-						isCardInUse = true;
-						cardCooldownTimer = CARD_COOLDOWN_TIME;
-
-						// 成功時: 状態をリセット
-						currentCardEffectState = CardEffectState::NONE;
-						selectedCardEffectId = -1;
-
-						// ターゲット候補をクリア
-						cardTargetCandidates.clear();
-					}
-					// 失敗時は状態維持 (再選択待ち)
-					return; // カードターゲット選択に専念するため、駒の移動処理には進まない
-				}
-
-				// ID 2, 3, 4, 6 のターゲット選択の場合 (AWAITING_PIECE_SELECTION)
-				if (currentCardEffectState == CardEffectState::AWAITING_PIECE_SELECTION)
+				// 状態が NONE でない場合、カード効果のターゲット選択処理に専念する
+				if (currentCardEffectState != CardEffectState::NONE)
 				{
-					// ApplyTargetedEffect は、成功した場合に true を返し、カード使用後のクールダウン処理などを CardEffectProcessor 側で実施
-					if (cardProcessor->ApplyTargetedEffect(selectedCardEffectId, clicked, board->getCurrentTurn())) {
-						// カード使用成功時の共通処理
-						isCardInUse = true;
-						cardCooldownTimer = CARD_COOLDOWN_TIME;
+					// ID 1 のターゲット選択の場合 (AWAITING_SQUARE_TARGET)
+					if (currentCardEffectState == CardEffectState::AWAITING_SQUARE_TARGET) {
+						// ApplyTargetedEffect に処理を委譲（ID 1 はターゲットマスのみを使用）
+						if (cardProcessor->ApplyTargetedEffect(selectedCardEffectId, clicked, board->getCurrentTurn())) {
+							// カード使用成功時の共通処理
+							isCardInUse = true;
+							cardCooldownTimer = CARD_COOLDOWN_TIME;
 
-						// 成功時: 状態をリセット
-						currentCardEffectState = CardEffectState::NONE;
-						selectedCardEffectId = -1;
+							// 成功時: 状態をリセット
+							currentCardEffectState = CardEffectState::NONE;
+							selectedCardEffectId = -1;
 
-						// ★追加: ターゲット候補をクリア
-						cardTargetCandidates.clear(); // ← クリア
+							// ターゲット候補をクリア
+							cardTargetCandidates.clear();
+						}
+						// 失敗時は状態維持 (再選択待ち)
+						return; // カードターゲット選択に専念するため、駒の移動処理には進まない
 					}
-					// 失敗時は状態維持 (再選択待ち)
-					return; // カードターゲット選択に専念するため、駒の移動処理には進まない
-				}
 
-				// DIMENSIONAL_GATE_SELECT_PIECE (ID 7) の処理 (ワープ元駒の選択待ち)
-				if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_PIECE) {
-					// CardEffectProcessor に駒の選択ロジックを委譲
-					// selectedPieceForEffect に選択された Piece* を一時保存
-					Piece* pieceToMove = FindSlimeAt(clicked); // 描画オブジェクトを取得
+					// ID 2, 3, 4, 6 のターゲット選択の場合 (AWAITING_PIECE_SELECTION)
+					if (currentCardEffectState == CardEffectState::AWAITING_PIECE_SELECTION)
+					{
+						// ApplyTargetedEffect は、成功した場合に true を返し、カード使用後のクールダウン処理などを CardEffectProcessor 側で実施
+						if (cardProcessor->ApplyTargetedEffect(selectedCardEffectId, clicked, board->getCurrentTurn())) {
+							// カード使用成功時の共通処理
+							isCardInUse = true;
+							cardCooldownTimer = CARD_COOLDOWN_TIME;
 
-					if (pieceToMove && pieceToMove->getColor() == board->getCurrentTurn()) {
-						// 1. 選択した駒 (Piece*) を一時保存
-						selectedPieceForEffect = pieceToMove;
-						// 2. 論理駒 (ChessPiece*) が存在するかチェック
-						ChessPiece* logicPiece = board->getPieceAt(clicked).get();
-						if (logicPiece) {
-							// 3. 成功時: 状態を「ワープ先マス選択待ち」に移行
-							currentCardEffectState = CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET;
-							// ワープ先候補の計算と格納 (全ての空きマス)
-							dimensionalGateTargets.clear();
-							for (int y = 2; y < 6; ++y) {
-								for (int x = 0; x < 8; ++x) {
-									Position p = { x, y };
-									// 駒が置かれていないマスを候補とする (前回の修正で空きマスのみワープ可となったため)
-									if (!board->getPieceAt(p)) {
-										dimensionalGateTargets.push_back(p);
+							// 成功時: 状態をリセット
+							currentCardEffectState = CardEffectState::NONE;
+							selectedCardEffectId = -1;
+
+							// ★追加: ターゲット候補をクリア
+							cardTargetCandidates.clear(); // ← クリア
+						}
+						// 失敗時は状態維持 (再選択待ち)
+						return; // カードターゲット選択に専念するため、駒の移動処理には進まない
+					}
+
+					// DIMENSIONAL_GATE_SELECT_PIECE (ID 7) の処理 (ワープ元駒の選択待ち)
+					if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_PIECE) {
+						// CardEffectProcessor に駒の選択ロジックを委譲
+						// selectedPieceForEffect に選択された Piece* を一時保存
+						Piece* pieceToMove = FindSlimeAt(clicked); // 描画オブジェクトを取得
+
+						if (pieceToMove && pieceToMove->getColor() == board->getCurrentTurn()) {
+							// 1. 選択した駒 (Piece*) を一時保存
+							selectedPieceForEffect = pieceToMove;
+							// 2. 論理駒 (ChessPiece*) が存在するかチェック
+							ChessPiece* logicPiece = board->getPieceAt(clicked).get();
+							if (logicPiece) {
+								// 3. 成功時: 状態を「ワープ先マス選択待ち」に移行
+								currentCardEffectState = CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET;
+								// ワープ先候補の計算と格納 (全ての空きマス)
+								dimensionalGateTargets.clear();
+								for (int y = 2; y < 6; ++y) {
+									for (int x = 0; x < 8; ++x) {
+										Position p = { x, y };
+										// 駒が置かれていないマスを候補とする (前回の修正で空きマスのみワープ可となったため)
+										if (!board->getPieceAt(p)) {
+											dimensionalGateTargets.push_back(p);
+										}
 									}
 								}
 							}
 						}
+						// 失敗時は状態維持 (再選択待ち)
+						return; // カードターゲット選択に専念するため、移動処理には進まない
 					}
-					// 失敗時は状態維持 (再選択待ち)
-					return; // カードターゲット選択に専念するため、移動処理には進まない
+
+					// DIMENSIONAL_GATE_SELECT_TARGET (ID 7) の処理 (ワープ先マスの選択待ち)
+					if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET) {
+						// CardEffectProcessor にターゲットマスの選択ロジックを委譲
+
+						// ApplyDimensionalGate は、成功した場合に true を返す（駒の移動と状態リセットを含む）
+						// この関数は Board::movePiece を内部で呼び出す必要があります。
+						if (cardProcessor->ApplyDimensionalGate(selectedCardEffectId, clicked, board->getCurrentTurn(), selectedPieceForEffect)) {
+
+							// 描画オブジェクトの位置を更新
+							if (selectedPieceForEffect) {
+								selectedPieceForEffect->SetBoardPosition(clicked);
+							}
+
+							// 成功時: 状態をリセット
+							currentCardEffectState = CardEffectState::NONE;
+							selectedCardEffectId = -1;
+							selectedPieceForEffect = nullptr; // 一時保存駒もリセット
+
+							// ワープ先ハイライトをクリア
+							dimensionalGateTargets.clear();
+
+							// カード使用によるターン終了（次元の扉の効果として）
+							//board->switchTurn();
+						}
+						// 失敗時は状態維持 (再選択待ち)
+						return; // カードターゲット選択に専念するため、移動処理には進まない
+					}
 				}
 
-				// DIMENSIONAL_GATE_SELECT_TARGET (ID 7) の処理 (ワープ先マスの選択待ち)
-				if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET) {
-					// CardEffectProcessor にターゲットマスの選択ロジックを委譲
+				auto clickedPiece = board->getPieceAt(clicked);
+				// --- 2. 駒が選択されていない場合 (selectedPos.x == -1) ---
+				if (selectedPos.x == -1) {
+					// 自分の駒をクリックした場合、それを選択する
+					if (clickedPiece) {
+						auto color = clickedPiece->getColor();
+						auto currentTurn = board->getCurrentTurn();
 
-					// ApplyDimensionalGate は、成功した場合に true を返す（駒の移動と状態リセットを含む）
-					// この関数は Board::movePiece を内部で呼び出す必要があります。
-					if (cardProcessor->ApplyDimensionalGate(selectedCardEffectId, clicked, board->getCurrentTurn(), selectedPieceForEffect)) {
-
-						// 描画オブジェクトの位置を更新
-						if (selectedPieceForEffect) {
-							selectedPieceForEffect->SetBoardPosition(clicked);
+						// 駒が移動不可状態ではないかチェック
+						if (clickedPiece->isImmobilized()) {
+							return; // 選択をキャンセル
 						}
 
-						// 成功時: 状態をリセット
-						currentCardEffectState = CardEffectState::NONE;
-						selectedCardEffectId = -1;
-						selectedPieceForEffect = nullptr; // 一時保存駒もリセット
-
-						// ワープ先ハイライトをクリア
-						dimensionalGateTargets.clear();
-
-						// カード使用によるターン終了（次元の扉の効果として）
-						//board->switchTurn();
+						// クリックした駒が現在のターンプレイヤーの駒であれば選択
+						if (color == currentTurn) {
+							selectedPos = clicked;
+							legalMoves = clickedPiece->getLegalMoves(*board);
+							// この時点で処理を終了し、選択状態を維持
+							return;
+						}
 					}
-					// 失敗時は状態維持 (再選択待ち)
-					return; // カードターゲット選択に専念するため、移動処理には進まない
 				}
-			}
+				// --- 3. 駒が既に選択されている場合 (else) ---
+				else {
 
-			auto clickedPiece = board->getPieceAt(clicked);
-			// --- 2. 駒が選択されていない場合 (selectedPos.x == -1) ---
-			if (selectedPos.x == -1) {
-				// 自分の駒をクリックした場合、それを選択する
-				if (clickedPiece) {
-					auto color = clickedPiece->getColor();
-					auto currentTurn = board->getCurrentTurn();
-
-					// 駒が移動不可状態ではないかチェック
-					if (clickedPiece->isImmobilized()) {
-						return; // 選択をキャンセル
-					}
-
-					// クリックした駒が現在のターンプレイヤーの駒であれば選択
-					if (color == currentTurn) {
-						selectedPos = clicked;
-						legalMoves = clickedPiece->getLegalMoves(*board);
-						// この時点で処理を終了し、選択状態を維持
+					// 修正ロジック 1: 自己移動の禁止
+					if (selectedPos.x == clicked.x && selectedPos.y == clicked.y) {
+						// 同じ駒を連打した場合 → 選択解除
+						selectedPos = { -1, -1 };
+						legalMoves.clear();
 						return;
 					}
-				}
-			}
-			// --- 3. 駒が既に選択されている場合 (else) ---
-			else {
 
-				// 修正ロジック 1: 自己移動の禁止
-				if (selectedPos.x == clicked.x && selectedPos.y == clicked.y) {
-					// 同じ駒を連打した場合 → 選択解除
-					selectedPos = { -1, -1 };
-					legalMoves.clear();
-					return;
-				}
+					// 移動先として合法か判定
+					bool isLegalMove = false;
+					for (auto& move : legalMoves) {
+						if (move.x == clicked.x && move.y == clicked.y) {
+							isLegalMove = true;
 
-				// 移動先として合法か判定
-				bool isLegalMove = false;
-				for (auto& move : legalMoves) {
-					if (move.x == clicked.x && move.y == clicked.y) {
-						isLegalMove = true;
-
-						break; // 合法な移動先を見つけたのでループを抜ける
+							break; // 合法な移動先を見つけたのでループを抜ける
+						}
 					}
-				}
 
-				if (isLegalMove) {
-					// slime の位置も更新
-					auto piece = FindSlimeAt(selectedPos);
+					if (isLegalMove) {
+						// slime の位置も更新
+						auto piece = FindSlimeAt(selectedPos);
 
-					// 修正: 移動する駒を取得（自傷と死亡判定のため）
-					auto movingPiece = board->getPieceAt(selectedPos);
+						// 修正: 移動する駒を取得（自傷と死亡判定のため）
+						auto movingPiece = board->getPieceAt(selectedPos);
 
-					auto attacker = board->getPieceAt(selectedPos);
-					auto defender = board->getPieceAt(clicked); // 取られる駒（nullptrの場合もある）
+						auto attacker = board->getPieceAt(selectedPos);
+						auto defender = board->getPieceAt(clicked); // 取られる駒（nullptrの場合もある）
 
-					// --- 体力ベースの戦闘判定 ---
-					if (defender) {
+						// --- 体力ベースの戦闘判定 ---
+						if (defender) {
 
-						// 1. 体力を比較
-						int attackerHealth = attacker->getHealth();
-						int defenderHealth = defender->getHealth();
+							// 1. 体力を比較
+							int attackerHealth = attacker->getHealth();
+							int defenderHealth = defender->getHealth();
 
-						// 2. 攻撃側の体力が防御側の体力未満の場合 (負け)
-						if (attackerHealth < defenderHealth) {
-							// 負け：攻撃側は消滅し、防御側にダメージを与える
-							deleteEffect->Play({ selectedPos.x * 100.0f,100.0f,selectedPos.y * 100.0f }, 30.0f);
-							// 描画オブジェクトの削除 (攻撃側)
-							RemovePieceAt(selectedPos);
-							// 盤面からの駒の削除 (攻撃側)
-							board->setPieceAt(selectedPos, nullptr);
+							// 2. 攻撃側の体力が防御側の体力未満の場合 (負け)
+							if (attackerHealth < defenderHealth) {
+								// 負け：攻撃側は消滅し、防御側にダメージを与える
+								deleteEffect->Play({ selectedPos.x * 100.0f,100.0f,selectedPos.y * 100.0f }, 30.0f);
+								// 描画オブジェクトの削除 (攻撃側)
+								RemovePieceAt(selectedPos);
+								// 盤面からの駒の削除 (攻撃側)
+								board->setPieceAt(selectedPos, nullptr);
 
-							// 防御側に自駒の体力分のダメージを与える
-							defender->takeDamage(attackerHealth);
-							DEFSE->Play(false);
-							DEFSE->SetVolume(0.4f);
+								// 防御側に自駒の体力分のダメージを与える
+								defender->takeDamage(attackerHealth);
+								DEFSE->Play(false);
+								DEFSE->SetVolume(0.4f);
 
-							//  防御側の死亡チェックと削除
-							if (defender->getHealth() <= 0) {
-								// 防御側も死亡した場合、描画と盤面から削除
+								//  防御側の死亡チェックと削除
+								if (defender->getHealth() <= 0) {
+									// 防御側も死亡した場合、描画と盤面から削除
+									deleteEffect->Play({ clicked.x * 100.0f,100.0f,clicked.y * 100.0f }, 30.0f);
+									RemovePieceAt(clicked);
+									board->setPieceAt(clicked, nullptr);
+								}
+
+								// 負けたため、移動処理をスキップし、ターンを終了
+								// 負けの場合は移動処理(board->movePiece)は不要
+
+								// 選択を解除し、ターンを切り替える
+								selectedPos = { -1, -1 };
+								legalMoves.clear();
+								board->switchTurn();
+								return; // 処理を終了
+							}
+
+							// 3. 攻撃側の体力が防御側の体力以上の場合 (勝ち)
+							// 勝利：通常通り相手の駒を取得（通常移動のロジックに任せる）
+							// 勝利時は、防御側のSlimeを削除する必要があるため、以下の処理を実行
+							else {
 								deleteEffect->Play({ clicked.x * 100.0f,100.0f,clicked.y * 100.0f }, 30.0f);
+								RemovePieceAt(clicked); // 取られる駒の Slime を削
+
+								ATKSE->Play(false);
+								ATKSE->SetVolume(0.4f);
+
+								board->setPieceAt(clicked, nullptr);
+							}
+						}
+
+						// 合法な移動を実行
+						board->movePiece(selectedPos, clicked);
+						MOVESE->Play(false);
+						MOVESE->SetVolume(0.4f);
+
+						{
+							Position currentPos = clicked;
+							HealSpot& spot = healSpots[currentPos.y][currentPos.x];
+							auto movingPiece = board->getPieceAt(currentPos); // 移動後の駒を取得
+
+							if (movingPiece && spot.isGenerated) {
+								std::string pieceColor = movingPiece->getColor();
+								bool shouldHeal = false;
+
+								// 1. 回復条件の判定
+								if (spot.type == HealType::COMMON) {
+									shouldHeal = true;
+								}
+								else if (spot.type == HealType::BLACK_ONLY && pieceColor == "white") {
+									shouldHeal = true;
+								}
+								else if (spot.type == HealType::WHITE_ONLY && pieceColor == "black") {
+									shouldHeal = true;
+								}
+
+								if (shouldHeal) {
+									int maxHealth = movingPiece->getMaxHealth();
+									int currentHealth = movingPiece->getHealth();
+
+									// 回復量の計算 (max(1, maxHealth / 2) の代替)
+									int healAmount = maxHealth / 2;
+									if (healAmount < 1) {
+										healAmount = 1;
+									}
+
+									//　setHealth/newHealthの代わりに heal メソッドを使用
+									movingPiece->heal(healAmount);
+
+									// 回復マスの消滅（一度使ったら消える場合）
+									spot.isGenerated = false;
+									spot.type = HealType::NONE;
+								}
+							}
+						}
+
+						if (piece) piece->SetBoardPosition(clicked);
+
+						MoveData move{ 1, selectedPos.x, selectedPos.y, clicked.x, clicked.y };
+						network.SendMove(move);
+
+						// ----------------------------------------------------
+						// 自傷と死亡判定
+						// ----------------------------------------------------
+						if (movingPiece) {
+							// 1. 1ダメージを与える
+							movingPiece->takeDamage(1);
+
+							// 2. 体力が0になったら死亡とみなし、盤面から削除
+							if (movingPiece->getHealth() <= 0) {
+								// 死亡: 盤面（Board）から駒を削除
+								deleteEffect->Play({ selectedPos.x * 100.0f,100.0f,selectedPos.y * 100.0f }, 100.0f);
+								board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
+
+								// 死亡した駒に対応する Slime も描画リストから削除
 								RemovePieceAt(clicked);
 								board->setPieceAt(clicked, nullptr);
 							}
+						}
 
-							// 負けたため、移動処理をスキップし、ターンを終了
-							// 負けの場合は移動処理(board->movePiece)は不要
+						// 動的な回復マス生成ロジック
+						{
+							Position movedTo = clicked;
+							auto movingPiece = board->getPieceAt(movedTo);
 
-							// 選択を解除し、ターンを切り替える
-							selectedPos = { -1, -1 };
-							legalMoves.clear();
+							// 1. 共通マス (y=2 から y=5) への移動チェック
+							bool isCommonSpot = (movedTo.y >= 2 && movedTo.y <= 5);
+
+							if (movingPiece && isCommonSpot && !isDynamicHealSpotActive) {
+
+								// 2. 駒の色に基づいてカウンターをインクリメント
+								std::string color = movingPiece->getColor();
+
+								if (color == "black") {
+									// 移動元の駒の色で判定すべきなので、移動前の駒情報を保持している必要がありますが、
+									// 簡略化のため、ここでは移動後の駒の色でカウントします。
+									blackMovedToCommonCount++;
+								}
+								else if (color == "white") {
+									whiteMovedToCommonCount++;
+								}
+
+								// 3. 生成条件の判定 (黒2回、白2回以上)
+								if (blackMovedToCommonCount >= 2 && whiteMovedToCommonCount >= 2) {
+
+									// 4. 生成場所をランダムに決定
+									Position targetPos = FindRandomEmptyCommonSpot();
+
+									// 5. 空きマスが見つかり、有効な座標であれば生成
+									if (board->isInsideBoard(targetPos)) {
+
+										// HealSpotを生成（共通タイプ）
+										GenerateHealSpots();
+										isDynamicHealSpotActive = true;
+
+										// カウンターをリセットして、次回の生成条件を待つ
+										blackMovedToCommonCount = 0;
+										whiteMovedToCommonCount = 0;
+									}
+								}
+							}
+						}
+
+						// 選択を解除し、ターンを切り替える
+						selectedPos = { -1, -1 };
+						legalMoves.clear();
+						// ゲーム終了判定
+						if (!board->isKingPresent("white")) {
+							isGameOver = true;
+							winnerColor = "black";
+						}
+						else if (!board->isKingPresent("black")) {
+							isGameOver = true;
+							winnerColor = "white";
+						}
+
+						// ゲームが終了していなければ、ターンを切り替える
+						if (!isGameOver) {
 							board->switchTurn();
-							return; // 処理を終了
 						}
-
-						// 3. 攻撃側の体力が防御側の体力以上の場合 (勝ち)
-						// 勝利：通常通り相手の駒を取得（通常移動のロジックに任せる）
-						// 勝利時は、防御側のSlimeを削除する必要があるため、以下の処理を実行
-						else {
-							deleteEffect->Play({ clicked.x * 100.0f,100.0f,clicked.y * 100.0f }, 30.0f);
-							RemovePieceAt(clicked); // 取られる駒の Slime を削
-
-							ATKSE->Play(false);
-							ATKSE->SetVolume(0.4f);
-
-							board->setPieceAt(clicked, nullptr);
-						}
-					}
-
-					// 合法な移動を実行
-					board->movePiece(selectedPos, clicked);
-					MOVESE->Play(false);
-					MOVESE->SetVolume(0.4f);
-
-					{
-						Position currentPos = clicked;
-						HealSpot& spot = healSpots[currentPos.y][currentPos.x];
-						auto movingPiece = board->getPieceAt(currentPos); // 移動後の駒を取得
-
-						if (movingPiece && spot.isGenerated) {
-							std::string pieceColor = movingPiece->getColor();
-							bool shouldHeal = false;
-
-							// 1. 回復条件の判定
-							if (spot.type == HealType::COMMON) {
-								shouldHeal = true;
-							}
-							else if (spot.type == HealType::BLACK_ONLY && pieceColor == "white") {
-								shouldHeal = true;
-							}
-							else if (spot.type == HealType::WHITE_ONLY && pieceColor == "black") {
-								shouldHeal = true;
-							}
-
-							if (shouldHeal) {
-								int maxHealth = movingPiece->getMaxHealth();
-								int currentHealth = movingPiece->getHealth();
-
-								// 回復量の計算 (max(1, maxHealth / 2) の代替)
-								int healAmount = maxHealth / 2;
-								if (healAmount < 1) {
-									healAmount = 1;
-								}
-
-								//　setHealth/newHealthの代わりに heal メソッドを使用
-								movingPiece->heal(healAmount);
-
-								// 回復マスの消滅（一度使ったら消える場合）
-								spot.isGenerated = false;
-								spot.type = HealType::NONE;
-							}
-						}
-					}
-
-					if (piece) piece->SetBoardPosition(clicked);
-
-					MoveData move{ 1, selectedPos.x, selectedPos.y, clicked.x, clicked.y };
-					network.SendMove(move);
-
-					// ----------------------------------------------------
-					// 自傷と死亡判定
-					// ----------------------------------------------------
-					if (movingPiece) {
-						// 1. 1ダメージを与える
-						movingPiece->takeDamage(1);
-
-						// 2. 体力が0になったら死亡とみなし、盤面から削除
-						if (movingPiece->getHealth() <= 0) {
-							// 死亡: 盤面（Board）から駒を削除
-							deleteEffect->Play({ selectedPos.x * 100.0f,100.0f,selectedPos.y * 100.0f }, 100.0f);
-							board->setPieceAt(clicked, nullptr); // 移動先のマスを空にする
-
-							// 死亡した駒に対応する Slime も描画リストから削除
-							RemovePieceAt(clicked);
-							board->setPieceAt(clicked, nullptr);
-						}
-					}
-
-					// 動的な回復マス生成ロジック
-					{
-						Position movedTo = clicked;
-						auto movingPiece = board->getPieceAt(movedTo);
-
-						// 1. 共通マス (y=2 から y=5) への移動チェック
-						bool isCommonSpot = (movedTo.y >= 2 && movedTo.y <= 5);
-
-						if (movingPiece && isCommonSpot && !isDynamicHealSpotActive) {
-
-							// 2. 駒の色に基づいてカウンターをインクリメント
-							std::string color = movingPiece->getColor();
-
-							if (color == "black") {
-								// 移動元の駒の色で判定すべきなので、移動前の駒情報を保持している必要がありますが、
-								// 簡略化のため、ここでは移動後の駒の色でカウントします。
-								blackMovedToCommonCount++;
-							}
-							else if (color == "white") {
-								whiteMovedToCommonCount++;
-							}
-
-							// 3. 生成条件の判定 (黒2回、白2回以上)
-							if (blackMovedToCommonCount >= 2 && whiteMovedToCommonCount >= 2) {
-
-								// 4. 生成場所をランダムに決定
-								Position targetPos = FindRandomEmptyCommonSpot();
-
-								// 5. 空きマスが見つかり、有効な座標であれば生成
-								if (board->isInsideBoard(targetPos)) {
-
-									// HealSpotを生成（共通タイプ）
-									GenerateHealSpots();
-									isDynamicHealSpotActive = true;
-
-									// カウンターをリセットして、次回の生成条件を待つ
-									blackMovedToCommonCount = 0;
-									whiteMovedToCommonCount = 0;
-								}
-							}
-						}
-					}
-
-					// 選択を解除し、ターンを切り替える
-					selectedPos = { -1, -1 };
-					legalMoves.clear();
-					// ゲーム終了判定
-					if (!board->isKingPresent("white")) {
-						isGameOver = true;
-						winnerColor = "black";
-					}
-					else if (!board->isKingPresent("black")) {
-						isGameOver = true;
-						winnerColor = "white";
-					}
-
-					// ゲームが終了していなければ、ターンを切り替える
-					if (!isGameOver) {
-						board->switchTurn();
-					}
-					return;
-				}
-				else {
-					// 不正な場所をクリックした場合
-
-					// 別の自分の駒をクリックしたかチェックし、選択を切り替えるロジックをここに追加できます。
-					auto currentTurn = board->getCurrentTurn();
-
-					if (clickedPiece && clickedPiece->getColor() == currentTurn) {
-						// パターンA: 別の自分の駒をクリックした場合 → 選択を切り替える
-						selectedPos = clicked;
-						legalMoves = clickedPiece->getLegalMoves(*board);
-						// 選択を切り替えたので、ここで関数を終了
 						return;
 					}
 					else {
-						// パターンB: 何もないマスや敵の駒をクリック → 選択解除
-						// シンプルに選択解除のみを行う
-						selectedPos = { -1, -1 };
-						Unauthorized_Click->Play(false);
-						Unauthorized_Click->SetVolume(0.4f);
-						legalMoves.clear();
+						// 不正な場所をクリックした場合
+
+						// 別の自分の駒をクリックしたかチェックし、選択を切り替えるロジックをここに追加できます。
+						auto currentTurn = board->getCurrentTurn();
+
+						if (clickedPiece && clickedPiece->getColor() == currentTurn) {
+							// パターンA: 別の自分の駒をクリックした場合 → 選択を切り替える
+							selectedPos = clicked;
+							legalMoves = clickedPiece->getLegalMoves(*board);
+							// 選択を切り替えたので、ここで関数を終了
+							return;
+						}
+						else {
+							// パターンB: 何もないマスや敵の駒をクリック → 選択解除
+							// シンプルに選択解除のみを行う
+							selectedPos = { -1, -1 };
+							Unauthorized_Click->Play(false);
+							Unauthorized_Click->SetVolume(0.4f);
+							legalMoves.clear();
+						}
 					}
 				}
 			}
 		}
+		MoveData recvMove{};
+		if (network.ReceiveMove(recvMove)) {
+			Position from{ recvMove.fromX, recvMove.fromY };
+			Position to{ recvMove.toX, recvMove.toY };
+			board->movePiece(from, to);
+			auto slime = FindSlimeAt(from);
+			if (slime) slime->SetBoardPosition(to);
+		}
+
+		for (auto p : pieces) p->Update(elapsedTime);
+
+		//カメラコントローラー更新処理
+		DirectX::XMFLOAT3 Poswhite{ 400.0f,0.0f,300.0f };
+		DirectX::XMFLOAT3 Posblack{ 400.0f,0.0f,600.0f };
+
+		DirectX::XMFLOAT3 target;
+
+		target.x = Poswhite.x;
+		target.y = 0.0f;
+		target.z = Posblack.z - Poswhite.z;
+
+		target.y += 0.5f;
+		cameraController->SetTarget(target);
+		cameraController->Update(elapsedTime);
+
+		//エフェクトマネージャー更新処理
+		EffectManager::Instance().Update(elapsedTime);
+
+		if (isGameOver)
+			endtimer++;
+
+		if (!board->isKingPresent("white")) {
+			isGameOver = true;
+			winnerColor = "black";
+		}
+		else if (!board->isKingPresent("black")) {
+			isGameOver = true;
+			winnerColor = "white";
+		}
 	}
-	MoveData recvMove{};
-	if (network.ReceiveMove(recvMove)) {
-		Position from{ recvMove.fromX, recvMove.fromY };
-		Position to{ recvMove.toX, recvMove.toY };
-		board->movePiece(from, to);
-		auto slime = FindSlimeAt(from);
-		if (slime) slime->SetBoardPosition(to);
+
+	break;
+
 	}
-
-	for (auto p : pieces) p->Update(elapsedTime);
-
-	//カメラコントローラー更新処理
-	DirectX::XMFLOAT3 Poswhite{ 400.0f,0.0f,300.0f };
-	DirectX::XMFLOAT3 Posblack{ 400.0f,0.0f,600.0f };
-
-	DirectX::XMFLOAT3 target;
-
-	target.x = Poswhite.x;
-	target.y = 0.0f;
-	target.z = Posblack.z - Poswhite.z;
-
-	target.y += 0.5f;
-	cameraController->SetTarget(target);
-	cameraController->Update(elapsedTime);
-
-	//エフェクトマネージャー更新処理
-	EffectManager::Instance().Update(elapsedTime);
-
-	if (isGameOver)
-		endtimer++;
-
-	if (!board->isKingPresent("white")) {
-		isGameOver = true;
-		winnerColor = "black";
-	}
-	else if (!board->isKingPresent("black")) {
-		isGameOver = true;
-		winnerColor = "white";
-	}
+	
 }
 
 // 描画処理
@@ -860,170 +891,189 @@ void SceneMultiGame::Render()
 
 	ModelRenderer* renderer = graphics.GetModelRenderer(); // ←環境に応じて取得方法を調整
 
-	//カメラパラメータ設定
-	Camera& camera = Camera::Instance();
-	rc.view = camera.GetView();
-	rc.projection = camera.GetProjection();
-
-	// 3Dモデル描画
+	switch (switch_state)
 	{
-		for (auto p : pieces) p->Render(rc, renderer);
+	case 0:
+		tutorial->Render(rc,
+			0, 0, 0, 1920, 1080,
+			0,
+			1, 1, 1, 1);
 
-		board->Render(rc, renderer);
+		next->Render(rc,
+			1500, 750, 0, 500, 500,
+			0,
+			1, 1, 1, 1);
 
-		// 選択された駒があり、合法手リストが空でなければハイライトを描画
-		if (selectedPos.x != -1 && !legalMoves.empty()) {
+		break;
+	case 1:
 
-			for (const auto& move : legalMoves) {
 
-				// 盤面座標 (move.x, move.y) をワールド座標に変換
-				DirectX::XMFLOAT4X4 transform;
-				DirectX::XMStoreFloat4x4(&transform,
-					DirectX::XMMatrixTranslation(
-						move.x * 100.0f, // X座標
-						2.0f,            // 駒より少し高い位置
-						move.y * 100.0f));// Z座標
+		//カメラパラメータ設定
+		Camera & camera = Camera::Instance();
+		rc.view = camera.GetView();
+		rc.projection = camera.GetProjection();
 
-				// ハイライトモデルを描画
-				renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
-			}
-		}
+		// 3Dモデル描画
+		{
+			for (auto p : pieces) p->Render(rc, renderer);
 
-		// --- 2.カードターゲット候補のハイライト ---
-		if ((currentCardEffectState == CardEffectState::AWAITING_PIECE_SELECTION || currentCardEffectState == CardEffectState::AWAITING_SQUARE_TARGET) && !cardTargetCandidates.empty()) {
+			board->Render(rc, renderer);
 
-			for (const auto& pos : cardTargetCandidates) {
-				// 盤面座標 (move.x, move.y) をワールド座標に変換
-				DirectX::XMFLOAT4X4 transform;
-				DirectX::XMStoreFloat4x4(&transform,
-					DirectX::XMMatrixTranslation(
-						pos.x * 100.0f, // X座標
-						2.0f,            // 駒より少し高い位置
-						pos.y * 100.0f));// Z座標
+			// 選択された駒があり、合法手リストが空でなければハイライトを描画
+			if (selectedPos.x != -1 && !legalMoves.empty()) {
 
-				// ハイライトモデルを描画
-				renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
-			}
-		}
+				for (const auto& move : legalMoves) {
 
-		// 回復マスの描画 (仮のロジック)
-		for (int y = 0; y < 8; ++y) {
-			for (int x = 0; x < 8; ++x) {
-				if (healSpots[y][x].isGenerated) {
-					// 回復マスのモデルをボード上に描画
+					// 盤面座標 (move.x, move.y) をワールド座標に変換
 					DirectX::XMFLOAT4X4 transform;
 					DirectX::XMStoreFloat4x4(&transform,
 						DirectX::XMMatrixTranslation(
-							x * 100.0f,
-							2.0f, // 盤面の高さ
-							y * 100.0f));
-					// マスのタイプに応じて異なるテクスチャや色で描画しても良い
-					modelRenderer->Render(rc, transform, healSpotModel, ShaderId::Lambert);
+							move.x * 100.0f, // X座標
+							2.0f,            // 駒より少し高い位置
+							move.y * 100.0f));// Z座標
+
+					// ハイライトモデルを描画
+					renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
+				}
+			}
+
+			// --- 2.カードターゲット候補のハイライト ---
+			if ((currentCardEffectState == CardEffectState::AWAITING_PIECE_SELECTION || currentCardEffectState == CardEffectState::AWAITING_SQUARE_TARGET) && !cardTargetCandidates.empty()) {
+
+				for (const auto& pos : cardTargetCandidates) {
+					// 盤面座標 (move.x, move.y) をワールド座標に変換
+					DirectX::XMFLOAT4X4 transform;
+					DirectX::XMStoreFloat4x4(&transform,
+						DirectX::XMMatrixTranslation(
+							pos.x * 100.0f, // X座標
+							2.0f,            // 駒より少し高い位置
+							pos.y * 100.0f));// Z座標
+
+					// ハイライトモデルを描画
+					renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
+				}
+			}
+
+			// 回復マスの描画 (仮のロジック)
+			for (int y = 0; y < 8; ++y) {
+				for (int x = 0; x < 8; ++x) {
+					if (healSpots[y][x].isGenerated) {
+						// 回復マスのモデルをボード上に描画
+						DirectX::XMFLOAT4X4 transform;
+						DirectX::XMStoreFloat4x4(&transform,
+							DirectX::XMMatrixTranslation(
+								x * 100.0f,
+								2.0f, // 盤面の高さ
+								y * 100.0f));
+						// マスのタイプに応じて異なるテクスチャや色で描画しても良い
+						modelRenderer->Render(rc, transform, healSpotModel, ShaderId::Lambert);
+					}
+				}
+			}
+
+			if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET)
+			{
+				// dimensionalGateTargets に格納された全ての空きマスを描画
+				for (const auto& pos : dimensionalGateTargets)
+				{
+					float x = pos.x;
+					float z = pos.y;
+					// 盤面座標 (move.x, move.y) をワールド座標に変換
+					DirectX::XMFLOAT4X4 transform;
+					DirectX::XMStoreFloat4x4(&transform,
+						DirectX::XMMatrixTranslation(
+							x * 100.0f, // X座標
+							2.0f,            // 駒より少し高い位置
+							z * 100.0f));// Z座標
+
+					// ハイライトモデルを描画
+					renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
+				}
+			}
+			//エフェクトマネージャー描画
+			EffectManager::Instance().Render(rc.view, rc.projection);
+		}
+
+		// 3Dデバッグ描画
+		{
+		}
+
+		// 2Dスプライト描画
+		{
+			for (auto p : pieces) {
+				Position piecePos = p->GetBoardPosition();
+
+				// 1. 選択状態の判定
+				bool isSelected = (piecePos.x == selectedPos.x && piecePos.y == selectedPos.y);
+
+				if (1) {
+					// 2. 体力情報の取得
+					int currentHealth = p->getHealth(); // Pieceオブジェクトから直接取得
+					int maxHealth = p->getMaxHealth();   // Pieceオブジェクトから直接取得
+
+					if (currentHealth == 0) continue; // 論理駒がリンクされていないか、HPが0なら描画しない
+
+					float healthRatio = (float)currentHealth / maxHealth;
+
+					// 3. 3D位置を計算 (駒の頭上に出現させるためのワールド座標)
+					DirectX::XMFLOAT3 worldPos = {
+						piecePos.x * 100.0f,
+						60.0f, // 駒の頭上の高さ (Y軸オフセット)
+						piecePos.y * 100.0f
+					};
+
+					// 4. ワールド座標をスクリーン座標に変換
+					DirectX::XMFLOAT2 screenPos = WorldToScreen(worldPos);
+
+					// 画面外なら描画しない
+					if (screenPos.x < 0 || screenPos.y < 0) continue;
+
+					// --- 体力バーの描画パラメータ ---
+					const float barWidth = 80.0f;  // スクリーン上のピクセル幅 (最大)
+					const float barHeight = 10.0f; // スクリーン上のピクセル高さ
+
+					// 矩形の描画開始座標 (中央揃えのため、中央位置から幅/高さを引く)
+					float startX = screenPos.x - barWidth / 2.0f;
+					float startY = screenPos.y - barHeight / 2.0f;
+
+					// 5. 体力バーの**背景（枠）**を描画
+					// 既に実装した DrawRect を使用
+					shapeRenderer->DrawRect(
+						rc,
+						startX,
+						startY,
+						barWidth,
+						barHeight,
+						DirectX::XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f)); // 黒い背景色
+
+					// 6. 現在の体力（塗りつぶし）を描画
+					float currentBarWidth = barWidth * healthRatio;
+
+					// 体力に応じた色を設定
+					DirectX::XMFLOAT4 barColor;
+					if (healthRatio > 0.6f) barColor = DirectX::XMFLOAT4(0.0f, 0.8f, 0.0f, 1.0f);     // 緑
+					else if (healthRatio > 0.3f) barColor = DirectX::XMFLOAT4(0.8f, 0.6f, 0.0f, 1.0f);  // オレンジ
+					else barColor = DirectX::XMFLOAT4(0.8f, 0.0f, 0.0f, 1.0f);                          // 赤
+
+					// バーは左から右へ満たされるように描画（startXから開始）
+					shapeRenderer->DrawRect(
+						rc,
+						startX,
+						startY,
+						currentBarWidth,
+						barHeight,
+						barColor);
 				}
 			}
 		}
-
-		if (currentCardEffectState == CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET)
+		if (board->isKingInCheck("black") || board->isKingInCheck("white"))
 		{
-			// dimensionalGateTargets に格納された全ての空きマスを描画
-			for (const auto& pos : dimensionalGateTargets)
-			{
-				float x = pos.x;
-				float z = pos.y;
-				// 盤面座標 (move.x, move.y) をワールド座標に変換
-				DirectX::XMFLOAT4X4 transform;
-				DirectX::XMStoreFloat4x4(&transform,
-					DirectX::XMMatrixTranslation(
-						x * 100.0f, // X座標
-						2.0f,            // 駒より少し高い位置
-						z * 100.0f));// Z座標
-
-				// ハイライトモデルを描画
-				renderer->Render(rc, transform, highlightModel, ShaderId::Lambert);
-			}
+			check->Render(rc,
+				500, -200, 0, 800, 500,
+				0,
+				1, 1, 1, 1);
 		}
-		//エフェクトマネージャー描画
-		EffectManager::Instance().Render(rc.view, rc.projection);
-	}
-
-	// 3Dデバッグ描画
-	{
-	}
-
-	// 2Dスプライト描画
-	{
-		for (auto p : pieces) {
-			Position piecePos = p->GetBoardPosition();
-
-			// 1. 選択状態の判定
-			bool isSelected = (piecePos.x == selectedPos.x && piecePos.y == selectedPos.y);
-
-			if (1) {
-				// 2. 体力情報の取得
-				int currentHealth = p->getHealth(); // Pieceオブジェクトから直接取得
-				int maxHealth = p->getMaxHealth();   // Pieceオブジェクトから直接取得
-
-				if (currentHealth == 0) continue; // 論理駒がリンクされていないか、HPが0なら描画しない
-
-				float healthRatio = (float)currentHealth / maxHealth;
-
-				// 3. 3D位置を計算 (駒の頭上に出現させるためのワールド座標)
-				DirectX::XMFLOAT3 worldPos = {
-					piecePos.x * 100.0f,
-					60.0f, // 駒の頭上の高さ (Y軸オフセット)
-					piecePos.y * 100.0f
-				};
-
-				// 4. ワールド座標をスクリーン座標に変換
-				DirectX::XMFLOAT2 screenPos = WorldToScreen(worldPos);
-
-				// 画面外なら描画しない
-				if (screenPos.x < 0 || screenPos.y < 0) continue;
-
-				// --- 体力バーの描画パラメータ ---
-				const float barWidth = 80.0f;  // スクリーン上のピクセル幅 (最大)
-				const float barHeight = 10.0f; // スクリーン上のピクセル高さ
-
-				// 矩形の描画開始座標 (中央揃えのため、中央位置から幅/高さを引く)
-				float startX = screenPos.x - barWidth / 2.0f;
-				float startY = screenPos.y - barHeight / 2.0f;
-
-				// 5. 体力バーの**背景（枠）**を描画
-				// 既に実装した DrawRect を使用
-				shapeRenderer->DrawRect(
-					rc,
-					startX,
-					startY,
-					barWidth,
-					barHeight,
-					DirectX::XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f)); // 黒い背景色
-
-				// 6. 現在の体力（塗りつぶし）を描画
-				float currentBarWidth = barWidth * healthRatio;
-
-				// 体力に応じた色を設定
-				DirectX::XMFLOAT4 barColor;
-				if (healthRatio > 0.6f) barColor = DirectX::XMFLOAT4(0.0f, 0.8f, 0.0f, 1.0f);     // 緑
-				else if (healthRatio > 0.3f) barColor = DirectX::XMFLOAT4(0.8f, 0.6f, 0.0f, 1.0f);  // オレンジ
-				else barColor = DirectX::XMFLOAT4(0.8f, 0.0f, 0.0f, 1.0f);                          // 赤
-
-				// バーは左から右へ満たされるように描画（startXから開始）
-				shapeRenderer->DrawRect(
-					rc,
-					startX,
-					startY,
-					currentBarWidth,
-					barHeight,
-					barColor);
-			}
-		}
-	}
-	if (board->isKingInCheck("black") || board->isKingInCheck("white"))
-	{
-		check->Render(rc,
-			500, -200, 0, 800, 500,
-			0,
-			1, 1, 1, 1);
+		break;
 	}
 }
 
@@ -1042,104 +1092,110 @@ void SceneMultiGame::DrawGUI()
 		graphics.GetRenderState()    // RenderState* を取得
 	};
 
-	std::string currentTurn = board->getCurrentTurn();
-	// ===========================================================
-	//  共通描画設定
-	// ===========================================================
-	const float DESC_WIDTH = 400.0f;
-	const float DESC_HEIGHT = 550.0f;
-
-	// ===========================================================
-	//  1. 左側 (白プレイヤー) の手札描画
-	// ===========================================================
+	switch (switch_state)
 	{
-		size_t handSize = whiteCardManager.getHandSize();
-		bool isMyTurn = (currentTurn == "white");
+	case 1:
 
-		for (int i = 0; i < handSize; ++i) {
-			int cardX = LEFT_CARD_START_X + (CARD_WIDTH + CARD_SPACING) * i;
-			int cardY = LEFT_CARD_START_Y;
+		std::string currentTurn = board->getCurrentTurn();
+		// ===========================================================
+		//  共通描画設定
+		// ===========================================================
+		const float DESC_WIDTH = 400.0f;
+		const float DESC_HEIGHT = 550.0f;
 
-			const Card& card = whiteCardManager.getCardInHand(i);
-			int effectId = card.effectId;
+		// ===========================================================
+		//  1. 左側 (白プレイヤー) の手札描画
+		// ===========================================================
+		{
+			size_t handSize = whiteCardManager.getHandSize();
+			bool isMyTurn = (currentTurn == "white");
 
-			// カード画像描画
-			if (effectId >= 0 && effectId < 10 && cardSprites[effectId]) {
-				// 自分のターンでない場合は少し暗くするなどの表現も可能
-				float color = isMyTurn ? 1.0f : 0.5f;
-				cardSprites[effectId]->Render(rc, (float)cardX, (float)cardY, 0.0f,
-					(float)CARD_WIDTH, (float)CARD_HEIGHT, 0.0f, color, color, color, 1.0f);
+			for (int i = 0; i < handSize; ++i) {
+				int cardX = LEFT_CARD_START_X + (CARD_WIDTH + CARD_SPACING) * i;
+				int cardY = LEFT_CARD_START_Y;
+
+				const Card& card = whiteCardManager.getCardInHand(i);
+				int effectId = card.effectId;
+
+				// カード画像描画
+				if (effectId >= 0 && effectId < 10 && cardSprites[effectId]) {
+					// 自分のターンでない場合は少し暗くするなどの表現も可能
+					float color = isMyTurn ? 1.0f : 0.5f;
+					cardSprites[effectId]->Render(rc, (float)cardX, (float)cardY, 0.0f,
+						(float)CARD_WIDTH, (float)CARD_HEIGHT, 0.0f, color, color, color, 1.0f);
+				}
+
+				// ★自分のターンなら選択ハイライトを描画
+				if (isMyTurn && !isCardInUse && i == selectedHandIndex) {
+					shapeRenderer->DrawRectBorder(rc, cardX, cardY, CARD_WIDTH, CARD_HEIGHT,
+						DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 5.0f);
+				}
 			}
 
-			// ★自分のターンなら選択ハイライトを描画
-			if (isMyTurn && !isCardInUse && i == selectedHandIndex) {
-				shapeRenderer->DrawRectBorder(rc, cardX, cardY, CARD_WIDTH, CARD_HEIGHT,
-					DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 5.0f);
-			}
-		}
+			// ★自分のターンなら説明文(左側)を描画
+			if (isMyTurn && !isCardInUse && handSize > 0 && selectedHandIndex != -1) {
+				const Card& selectedCard = whiteCardManager.getCardInHand(selectedHandIndex);
 
-		// ★自分のターンなら説明文(左側)を描画
-		if (isMyTurn && !isCardInUse && handSize > 0 && selectedHandIndex != -1) {
-			const Card& selectedCard = whiteCardManager.getCardInHand(selectedHandIndex);
+				// 黒背景
+				shapeRenderer->DrawRect(rc, LEFT_DESC_X - 10, LEFT_DESC_Y - 10,
+					DESC_WIDTH + 20.0f, DESC_HEIGHT + 20.0f, DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.7f));
 
-			// 黒背景
-			shapeRenderer->DrawRect(rc, LEFT_DESC_X - 10, LEFT_DESC_Y - 10,
-				DESC_WIDTH + 20.0f, DESC_HEIGHT + 20.0f, DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.7f));
-
-			// 説明画像
-			int effectId = selectedCard.effectId;
-			if (effectId >= 0 && effectId < 10 && cardDescriptionSprites[effectId]) {
-				cardDescriptionSprites[effectId]->Render(rc, LEFT_DESC_X, LEFT_DESC_Y, 0.0f,
-					DESC_WIDTH, DESC_HEIGHT, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f);
-			}
-		}
-	}
-
-	// ===========================================================
-	//  2. 右側 (黒プレイヤー) の手札描画
-	// ===========================================================
-	{
-		size_t handSize = blackCardManager.getHandSize();
-		bool isMyTurn = (currentTurn == "black");
-
-		// 右側のカードは右端から左に向かって並べる、あるいは左から右へ並べる
-		// ここでは指定座標から右へ並べます
-		for (int i = 0; i < handSize; ++i) {
-			int cardX = RIGHT_CARD_START_X + (CARD_WIDTH + CARD_SPACING) * i;
-			int cardY = RIGHT_CARD_START_Y;
-
-			const Card& card = blackCardManager.getCardInHand(i);
-			int effectId = card.effectId;
-
-			// カード画像描画
-			if (effectId >= 0 && effectId < 10 && cardSprites[effectId]) {
-				float color = isMyTurn ? 1.0f : 0.5f;
-				cardSprites[effectId]->Render(rc, (float)cardX, (float)cardY, 0.0f,
-					(float)CARD_WIDTH, (float)CARD_HEIGHT, 0.0f, color, color, color, 1.0f);
-			}
-
-			// ★自分のターンなら選択ハイライトを描画
-			if (isMyTurn && !isCardInUse && i == selectedHandIndex) {
-				shapeRenderer->DrawRectBorder(rc, cardX, cardY, CARD_WIDTH, CARD_HEIGHT,
-					DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 5.0f);
+				// 説明画像
+				int effectId = selectedCard.effectId;
+				if (effectId >= 0 && effectId < 10 && cardDescriptionSprites[effectId]) {
+					cardDescriptionSprites[effectId]->Render(rc, LEFT_DESC_X, LEFT_DESC_Y, 0.0f,
+						DESC_WIDTH, DESC_HEIGHT, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+				}
 			}
 		}
 
-		// ★自分のターンなら説明文(右側)を描画
-		if (isMyTurn && !isCardInUse && handSize > 0 && selectedHandIndex != -1) {
-			const Card& selectedCard = blackCardManager.getCardInHand(selectedHandIndex);
+		// ===========================================================
+		//  2. 右側 (黒プレイヤー) の手札描画
+		// ===========================================================
+		{
+			size_t handSize = blackCardManager.getHandSize();
+			bool isMyTurn = (currentTurn == "black");
 
-			// 黒背景
-			shapeRenderer->DrawRect(rc, RIGHT_DESC_X - 10, RIGHT_DESC_Y - 10,
-				DESC_WIDTH + 20.0f, DESC_HEIGHT + 20.0f, DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.7f));
+			// 右側のカードは右端から左に向かって並べる、あるいは左から右へ並べる
+			// ここでは指定座標から右へ並べます
+			for (int i = 0; i < handSize; ++i) {
+				int cardX = RIGHT_CARD_START_X + (CARD_WIDTH + CARD_SPACING) * i;
+				int cardY = RIGHT_CARD_START_Y;
 
-			// 説明画像
-			int effectId = selectedCard.effectId;
-			if (effectId >= 0 && effectId < 10 && cardDescriptionSprites[effectId]) {
-				cardDescriptionSprites[effectId]->Render(rc, RIGHT_DESC_X, RIGHT_DESC_Y, 0.0f,
-					DESC_WIDTH, DESC_HEIGHT, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+				const Card& card = blackCardManager.getCardInHand(i);
+				int effectId = card.effectId;
+
+				// カード画像描画
+				if (effectId >= 0 && effectId < 10 && cardSprites[effectId]) {
+					float color = isMyTurn ? 1.0f : 0.5f;
+					cardSprites[effectId]->Render(rc, (float)cardX, (float)cardY, 0.0f,
+						(float)CARD_WIDTH, (float)CARD_HEIGHT, 0.0f, color, color, color, 1.0f);
+				}
+
+				// ★自分のターンなら選択ハイライトを描画
+				if (isMyTurn && !isCardInUse && i == selectedHandIndex) {
+					shapeRenderer->DrawRectBorder(rc, cardX, cardY, CARD_WIDTH, CARD_HEIGHT,
+						DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f), 5.0f);
+				}
+			}
+
+			// ★自分のターンなら説明文(右側)を描画
+			if (isMyTurn && !isCardInUse && handSize > 0 && selectedHandIndex != -1) {
+				const Card& selectedCard = blackCardManager.getCardInHand(selectedHandIndex);
+
+				// 黒背景
+				shapeRenderer->DrawRect(rc, RIGHT_DESC_X - 10, RIGHT_DESC_Y - 10,
+					DESC_WIDTH + 20.0f, DESC_HEIGHT + 20.0f, DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.7f));
+
+				// 説明画像
+				int effectId = selectedCard.effectId;
+				if (effectId >= 0 && effectId < 10 && cardDescriptionSprites[effectId]) {
+					cardDescriptionSprites[effectId]->Render(rc, RIGHT_DESC_X, RIGHT_DESC_Y, 0.0f,
+						DESC_WIDTH, DESC_HEIGHT, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+				}
 			}
 		}
+		break;
 	}
 }
 
