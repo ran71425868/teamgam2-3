@@ -257,7 +257,7 @@ if(!isGameOver){
 		if (mouseCursor.GetButtonDown() & Mouse::BTN_RIGHT)
 		{
 			POINT cardcursor = mouseCursor.GetPosition();
-
+			deleteEffect->Play({ -240.0f,0.0f,0.0f }, 30.0f);
 			// --- 1. 盤面クリック座標の取得 ---
 			Position cardclicked = ScreenToBoard(cardcursor.x, cardcursor.y);
 
