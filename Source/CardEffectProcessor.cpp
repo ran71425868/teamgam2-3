@@ -50,6 +50,7 @@ CardEffectProcessor::CardEffectProcessor(Board* b, std::vector<Piece*>* p, CardM
     thunder= new Effect("Data/Effect/thunder.efk");
     flame = new Effect("Data/Effect/flame.efk");
     seal = new Effect("Data/Effect/seal.efk");
+    break_card= new Effect("Data/Effect/break.efk");
 }
 
 // ターゲット駒が、指定した色であるかをチェックする補助関数
@@ -265,6 +266,7 @@ void CardEffectProcessor::ProcessInstantCard(int effectId, const std::string& cu
         int count3 = ActiveEffectManager::GetInstance().CancelEffect(3, enemyColor); // 悠久の盟約
         int count6 = ActiveEffectManager::GetInstance().CancelEffect(6, enemyColor); // 破滅の刻印
 
+        break_card->Play({ 3.5 * 100.0f,100.0f,3.5 * 100.0f }, 100);
         cardUsed = true;
         break;
     }

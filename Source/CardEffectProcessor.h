@@ -69,4 +69,5 @@ public:
     Effect* thunder = nullptr;
     Effect* flame = nullptr;
     Effect* seal = nullptr;
+    Effect* break_card = nullptr;
 };
