@@ -449,7 +449,7 @@ if(!isGameOver){
 						currentCardEffectState = CardEffectState::DIMENSIONAL_GATE_SELECT_TARGET;
 						// ワープ先候補の計算と格納 (全ての空きマス)
 						dimensionalGateTargets.clear();
-						for (int y = 0; y < 8; ++y) {
+						for (int y = 2; y < 6; ++y) {
 							for (int x = 0; x < 8; ++x) {
 								Position p = { x, y };
 								// 駒が置かれていないマスを候補とする (前回の修正で空きマスのみワープ可となったため)
@@ -1419,40 +1419,46 @@ void SceneGame::CalculateCardTargetCandidates(int effectId)
 			Position pos = { x, y };
 			auto piece = board->getPieceAt(pos);
 
+			bool isLegalTarget = false;
+
+			// 駒がある場合のみ情報を取得する
+			std::string targetColor = "";
+			std::string targetType = "";
 			if (piece) {
-				bool isLegalTarget = false;
-				std::string targetColor = piece ? piece->getColor() : "";
-				std::string targetType = piece ? piece->getType() : "";
+				targetColor = piece->getColor();
+				targetType = piece->getType();
+			}
+	
+			switch (effectId) {
 
-				switch (effectId) {
-
-				case 1: // 焦土の罠 (Trap): 共有マス内の空きマスに設置
-					// ターゲット位置が共有マス (y=2 から y=5) 内であり、かつ駒が置かれていないこと
-					if (y >= 2 && y <= 5 && !piece) {
-						isLegalTarget = true;
-					}
-					break;
-
-				case 2: // 生命の祝福 (Buff): 自身の駒単体の体力を回復
-				case 3: // 悠久の盟約 (Buff): 自身の駒全体に付与 (★トリガーとして自駒が必要)
-				case 6: // 破滅の刻印 (Trap): 自身の駒単体に付与
-					// 自駒がターゲット
-					if (targetColor == currentTurn) {
-						isLegalTarget = true;
-					}
-					break;
-
-				case 4: // 石化の鎖 (Debuff): 敵の駒に付与 (キング以外)
-					// 敵駒がターゲット、かつキングではない
-					if (targetColor == enemyColor && targetType != "King") {
-						isLegalTarget = true;
-					}
-					break;
+			case 1: // 焦土の罠 (Trap): 共有マス内の【空きマス】に設置
+				// piece が nullptr (空きマス) であることを条件にする
+				// かつ、共通マス (y=2～5) であること
+				if (!piece && pos.y >= 2 && pos.y <= 5) {
+					isLegalTarget = true;
 				}
+				break;
 
-				if (isLegalTarget) {
-					cardTargetCandidates.push_back(pos);
+			case 2: // 生命の祝福 (Buff): 自身の駒単体の体力を回復
+			case 3: // 悠久の盟約 (Buff): 自身の駒全体に付与 (★トリガーとして自駒が必要)
+			case 6: // 破滅の刻印 (Trap): 自身の駒単体に付与
+				// piece が存在し、かつ自駒であること
+				if (piece && targetColor == currentTurn) {
+					isLegalTarget = true;
 				}
+				break;
+
+			case 4: // 石化の鎖 (Debuff): 敵の駒に付与 (キング以外)
+				// 敵駒がターゲット、かつキングではない
+				if (targetColor == enemyColor && targetType != "King") {
+					isLegalTarget = true;
+				}
+				break;
+			}
+
+			if (isLegalTarget) {
+				cardTargetCandidates.push_back(pos);
+
 			}
 		}
 	}
