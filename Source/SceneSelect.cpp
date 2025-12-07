@@ -11,9 +11,9 @@ void SceneSelect::Initialize()
 {
 
 	sprite = new Sprite("Data/Sprite/仮セレクト.png");
-	sprite2 = new Sprite("Data/Sprite/チュートリアル.png");
-	sprite3 = new Sprite("Data/Sprite/シングル.png");
-	sprite4 = new Sprite("Data/Sprite/マルチ.png");
+	sprite2 = new Sprite("Data/Sprite/チュートリアルボタン.png");
+	sprite3 = new Sprite("Data/Sprite/シングルボタン.png");
+	sprite4 = new Sprite("Data/Sprite/マルチボタン.png");
 
 }
 
@@ -25,7 +25,7 @@ void SceneSelect::Finalize()
 		delete sprite;
 		sprite = nullptr;
 	}
-	/*if (sprite2 != nullptr)
+	if (sprite2 != nullptr)
 	{
 		delete sprite2;
 		sprite2 = nullptr;
@@ -39,7 +39,7 @@ void SceneSelect::Finalize()
 	{
 		delete sprite4;
 		sprite4 = nullptr;
-	}*/
+	}
 }
 
 //更新処理
@@ -51,14 +51,14 @@ void SceneSelect::Update(float elapsedTime)
 		Mouse::BTN_LEFT;
 
 	//長方形の描画位置
-	DirectX::XMFLOAT2 tutorialleft = { 200,450 };
-	DirectX::XMFLOAT2 tutorialright = { 400,600 };
+	DirectX::XMFLOAT2 tutorialleft = { 230,470 };
+	DirectX::XMFLOAT2 tutorialright = { 420,650 };
 
-	DirectX::XMFLOAT2 stageleft = { 800,450 };
-	DirectX::XMFLOAT2 stageright = { 1000,600 };
+	DirectX::XMFLOAT2 stageleft = { 850,450 };
+	DirectX::XMFLOAT2 stageright = { 1030,650 };
 
-	DirectX::XMFLOAT2 stage2left = { 1400,400 };
-	DirectX::XMFLOAT2 stage2right = { 1600,550 };
+	DirectX::XMFLOAT2 stage2left = { 1420,430 };
+	DirectX::XMFLOAT2 stage2right = { 1630,650 };
 
 
 	//ボタンの描画をしているとこに当たり判定
@@ -112,17 +112,17 @@ void SceneSelect::Render()
 			1, 1, 1, 1);
 
 		sprite2->Render(rc,
-			120, 400, 0, 400, 300,
+			120, 350, 0, 400, 400,
 			0,
 			1, 1, 1, 1);
 
 		sprite3->Render(rc,
-			700, 400, 0, 500, 300,
+			700, 310, 0, 470, 470,
 			0,
 			1, 1, 1, 1);
 
 		sprite4->Render(rc,
-			1300, 300, 0, 500, 500,
+			1400, 430, 0, 250, 250,
 			0,
 			1, 1, 1, 1);
 

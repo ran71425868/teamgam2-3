@@ -9,7 +9,7 @@
 void SceneWhiteResult::Initialize()
 {
 	sprite = new Sprite("Data/Sprite/‰¼ƒŠƒUƒ‹ƒg.png");
-	win = new Sprite("Data/Sprite/”’Ÿ‚¿.png");
+	win = new Sprite("Data/Sprite/White_Win.png");
 }
 
 //I—¹‰»
