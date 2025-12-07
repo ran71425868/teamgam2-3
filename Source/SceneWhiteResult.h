@@ -28,4 +28,6 @@ public:
 private:
 	Sprite* sprite = nullptr;
 	Sprite* win = nullptr;
+
+	AudioSource* BGM = nullptr;
 };

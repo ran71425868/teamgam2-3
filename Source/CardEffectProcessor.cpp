@@ -43,6 +43,7 @@ CardEffectProcessor::CardEffectProcessor(Board* b, std::vector<Piece*>* p, CardM
     BOMB = Audio::Instance().LoadAudioSource("Data/Sound/g1.wav");
     THUNDERSE = Audio::Instance().LoadAudioSource("Data/Sound/—‹–‚–@1.wav");
     ROCKSE = Audio::Instance().LoadAudioSource("Data/Sound/close_locker.wav");
+    MRSE = Audio::Instance().LoadAudioSource("Data/Sound/–‚–@”½ŽË.wav");
 
     magic = new Effect("Data/Effect/magic.efk");
     heal = new Effect("Data/Effect/heal.efk");
@@ -265,6 +266,8 @@ void CardEffectProcessor::ProcessInstantCard(int effectId, const std::string& cu
         int count6 = ActiveEffectManager::GetInstance().CancelEffect(6, enemyColor); // ”j–Å‚Ìˆó
 
         break_card->Play({ 3.5 * 100.0f,100.0f,3.5 * 100.0f }, 100);
+        MRSE->Play(false);
+        MRSE->SetVolume(0.4f);
         cardUsed = true;
         break;
     }

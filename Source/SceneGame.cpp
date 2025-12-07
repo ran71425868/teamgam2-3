@@ -1049,8 +1049,8 @@ void SceneGame::DrawGUI()
 		// 描画位置とサイズの定義 (画面左上隅を起点とする)
 		const float CARD_DESC_X = 50.0f; // 描画開始 X 座標
 		const float CARD_DESC_Y = 50.0f; // 描画開始 Y 座標
-		const float DESC_WIDTH = 300.0f; // 説明画像の幅
-		const float DESC_HEIGHT = 400.0f; // 説明画像の高さ
+		const float DESC_WIDTH = 400.0f; // 説明画像の幅
+		const float DESC_HEIGHT = 550.0f; // 説明画像の高さ
 
 		// 説明文の背景として黒い矩形を描画 (読みやすさのため)
 		shapeRenderer->DrawRect(
