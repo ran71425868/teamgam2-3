@@ -31,6 +31,7 @@ void SceneGame::Initialize()
 	Unauthorized_Click = Audio::Instance().LoadAudioSource("Data/Sound/ビープ音4_1.wav");
 	Click = Audio::Instance().LoadAudioSource("Data/Sound/決定ボタンを押す2.wav");
 	BOMB2 = Audio::Instance().LoadAudioSource("Data/Sound/爆発2.wav");
+	WHOLEHEALSE = Audio::Instance().LoadAudioSource("Data/Sound/ステータス治療2.wav");
 
 	// 視覚オブジェクトを生成し、対応する論理オブジェクトとリンクさせるヘルパー関数
 	auto createAndLinkPiece = [&](const std::string& color, Position pos, const std::string& type) {
@@ -202,6 +203,7 @@ void SceneGame::Finalize()
 	delete Unauthorized_Click;
 	delete Click;
 	delete BOMB2;
+	delete WHOLEHEALSE;
 
 	delete ai;
 	delete deleteEffect;
@@ -1358,6 +1360,8 @@ void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 				Position pos = { x, y };
 
 				Heal->Play({ 3.5 * 100.0f,10.0f,3.5 * 100.0f }, 200);
+				WHOLEHEALSE->Play(false);
+				WHOLEHEALSE->SetVolume(0.4f);
 
 				// 1. Boardから論理駒 (shared_ptr<ChessPiece>) を取得
 				auto logicPiece = board->getPieceAt(pos);

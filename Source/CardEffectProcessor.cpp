@@ -39,7 +39,6 @@ CardEffectProcessor::CardEffectProcessor(Board* b, std::vector<Piece*>* p, CardM
 {
 
     SINGLEHEALSE = Audio::Instance().LoadAudioSource("Data/Sound/ステータス治療1.wav");
-    WHOLEHEALSE = Audio::Instance().LoadAudioSource("Data/Sound/ステータス治療2.wav");
     WARP = Audio::Instance().LoadAudioSource("Data/Sound/ワープ.wav");
     BOMB = Audio::Instance().LoadAudioSource("Data/Sound/g1.wav");
     THUNDERSE = Audio::Instance().LoadAudioSource("Data/Sound/雷魔法1.wav");
@@ -180,8 +179,6 @@ bool CardEffectProcessor::ApplyTargetedEffect(int effectId, Position targetPos, 
             // 3. ActiveEffectManagerに登録
             ActiveEffectManager::GetInstance().AddEffect(effect);
 
-            WHOLEHEALSE->Play(false);
-            WHOLEHEALSE->SetVolume(0.4f);
 
             return true; // 効果適用成功
         }

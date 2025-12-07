@@ -31,6 +31,7 @@ void SceneMultiGame::Initialize()
 	Unauthorized_Click = Audio::Instance().LoadAudioSource("Data/Sound/ビープ音4_1.wav");
 	Click = Audio::Instance().LoadAudioSource("Data/Sound/決定ボタンを押す2.wav");
 	BOMB2 = Audio::Instance().LoadAudioSource("Data/Sound/爆発2.wav");
+	WHOLEHEALSE = Audio::Instance().LoadAudioSource("Data/Sound/ステータス治療2.wav");
 
 	// 視覚オブジェクトを生成し、対応する論理オブジェクトとリンクさせるヘルパー関数
 	auto createAndLinkPiece = [&](const std::string& color, Position pos, const std::string& type) {
@@ -176,6 +177,7 @@ void SceneMultiGame::Finalize()
 	delete Unauthorized_Click;
 	delete Click;
 	delete BOMB2;
+	delete WHOLEHEALSE;
 
 	delete deleteEffect;
 	delete flame;
@@ -243,7 +245,7 @@ void SceneMultiGame::Update(float elapsedTime)
 		GamePad& gamePad = Input::Instance().GetGamePad();
 
 		// --- キーボード入力によるカード選択/決定 ---
-		if (!isCardInUse && cardManager->getHandSize() > 0) {
+		if (!IsSilenced(board->getCurrentTurn()) && !isCardInUse && cardManager->getHandSize() > 0) {
 			size_t handSize = cardManager->getHandSize();
 
 			// Aキー (左へ選択移動) またはゲームパッド左
@@ -288,6 +290,40 @@ void SceneMultiGame::Update(float elapsedTime)
 					// 決定したカードの効果IDを取得し、状態をリセットする前に保存
 					int effectId = cardManager->getCardInHand(selectedHandIndex).effectId;
 					deleteEffect->Play({ -240.0f,0.0f,0.0f }, 30.0f);
+
+					// ID 5 (沈黙の呪文) の個別処理
+					if (effectId == 5)
+					{
+						Click->Play(false);
+						Click->SetVolume(0.6f);
+
+						std::string currentTurn = board->getCurrentTurn();
+						std::string enemyColor = (currentTurn == "white") ? "black" : "white";
+
+						// 1. 相手のカード使用を禁止するフラグを立てる (即時適用)
+						SetSilencedStatus(enemyColor, true);
+
+						// 2. 相手のカード使用禁止を解除するための ActiveEffect (ID 11) を追加
+						//    持続ターンを 2 に設定することで、相手のターン中ずっと沈黙が続き、
+						//    自分の次のターン開始時に解除されます。
+						ActiveEffect silenceRemovalEffect(
+							11,         // 効果ID: 11 (沈黙解除)
+							2,          // 残りターン数: 2
+							{ -1, -1 }, // ターゲット位置 (マスではないのでダミー)
+							enemyColor  // 所有者: ターゲットプレイヤーの色
+						);
+						ActiveEffectManager::GetInstance().AddEffect(silenceRemovalEffect);
+
+						// 3. カードを消費する
+						cardManager->UseCard(selectedHandIndex);
+
+						// 5. クールダウンと状態リセット
+						isCardInUse = true;
+						cardCooldownTimer = CARD_COOLDOWN_TIME;
+						selectedHandIndex = -1; // ハイライト解除
+						return; // このカードで処理を終了
+					}
+
 					//  即時発動カード (ID 0, 5, 8, 9) の処理を CardEffectProcessor に委譲 (★ID: 5 を追加)
 					if (effectId == 0 || effectId == 5 || effectId == 8 || effectId == 9)
 					{
@@ -1344,6 +1380,8 @@ void SceneMultiGame::ApplyPersistentEffect(const ActiveEffect& effect)
 			for (int x = 0; x < 8; ++x) {
 				Position pos = { x, y };
 				heal->Play({ 3.5 * 100.0f,10.0f,3.5 * 100.0f }, 200);
+				WHOLEHEALSE->Play(false);
+				WHOLEHEALSE->SetVolume(0.4f);
 
 				// 1. Boardから論理駒 (shared_ptr<ChessPiece>) を取得
 				auto logicPiece = board->getPieceAt(pos);
@@ -1423,6 +1461,13 @@ void SceneMultiGame::ApplyPersistentEffect(const ActiveEffect& effect)
 		break;
 	}
 
+	// ★追加: case 11: 沈黙解除 (Silence Removal)
+	case 11:
+	{
+		SetSilencedStatus(effect.ownerColor, false); // 沈黙状態を解除
+		break;
+	}
+
 	default:
 		// 未知の持続効果
 		break;
@@ -1495,6 +1540,27 @@ void SceneMultiGame::CalculateCardTargetCandidates(int effectId)
 			}
 		}
 	}
+}
+
+void SceneMultiGame::SetSilencedStatus(const std::string& color, bool status)
+{
+	if (color == "white") {
+		isWhiteSilenced = status;
+	}
+	else if (color == "black") {
+		isBlackSilenced = status;
+	}
+}
+
+bool SceneMultiGame::IsSilenced(const std::string& color) const
+{
+	if (color == "white") {
+		return isWhiteSilenced;
+	}
+	else if (color == "black") {
+		return isBlackSilenced;
+	}
+	return false;
 }
 
 //　駒が置かれておらず、かつ回復マスが生成されていない共通マスをランダムに選ぶ

@@ -181,6 +181,7 @@ private:
 	AudioSource* Unauthorized_Click = nullptr;
 	AudioSource* Click = nullptr;
 
+	AudioSource* WHOLEHEALSE = nullptr;
 	AudioSource* BOMB2 = nullptr;
 
 	int timer = 0;

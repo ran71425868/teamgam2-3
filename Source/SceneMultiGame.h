@@ -71,6 +71,10 @@ private:
 
 	// --- カード表示/選択システム用の追加フィールド ---
 
+	// ★追加: 沈黙の呪文の状態
+	bool isWhiteSilenced = false;
+	bool isBlackSilenced = false;
+
 	// 現在選択中の手札のインデックス (0, 1, 2)。-1 は未選択を意味するが、
 	// ドローされている場合は常にどれかを選択状態にするのが自然なため、0〜2の範囲
 	int selectedHandIndex = 0;
@@ -163,6 +167,10 @@ private:
 	// カードのターゲット候補を計算するヘルパー関数
 	void CalculateCardTargetCandidates(int effectId);
 
+	// ★追加: 沈黙状態を設定/取得するヘルパー関数
+	void SetSilencedStatus(const std::string& color, bool status);
+	bool IsSilenced(const std::string& color) const;
+
 	Sprite* check = nullptr;
 	// 前のターンがどちらの色だったかを記憶する
 	std::string lastTurnColor = "white";
@@ -174,6 +182,7 @@ private:
 	AudioSource* Unauthorized_Click = nullptr;
 	AudioSource* Click = nullptr;
 
+	AudioSource* WHOLEHEALSE = nullptr;
 	AudioSource* BOMB2 = nullptr;
 	
 	int endtimer = 0.0f;

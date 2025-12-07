@@ -57,7 +57,6 @@ public:
     bool ApplyDimensionalGate(int effectId, Position targetPos, const std::string& currentTurn, Piece* pieceToMove);
 
     AudioSource* SINGLEHEALSE = nullptr;
-    AudioSource* WHOLEHEALSE = nullptr;
     AudioSource* WARP = nullptr;
     AudioSource* BOMB = nullptr;
     AudioSource* THUNDERSE = nullptr;
