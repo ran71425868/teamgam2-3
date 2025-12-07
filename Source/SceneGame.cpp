@@ -1381,9 +1381,10 @@ void SceneGame::ApplyPersistentEffect(const ActiveEffect& effect)
 			for (int dx = -1; dx <= 1; ++dx) {
 				Position damagePos = { selfDestructPos.x + dx, selfDestructPos.y + dy };
 
-				flame->Play({ selfDestructPos.x * 100.0f,0.0f,selfDestructPos.y * 100.0f }, 5000.0f);
+				flame->Play({ selfDestructPos.x * 100.0f,0.0f,selfDestructPos.y * 100.0f }, 100.0f);
 				BOMB2->Play(false);
 				BOMB2->SetVolume(0.6f);
+
 				// ボード内で、かつターゲット駒自身ではないマスをチェック
 				if (board->isInsideBoard(damagePos) && (dx != 0 || dy != 0)) {
 					auto victim = board->getPieceAt(damagePos);
