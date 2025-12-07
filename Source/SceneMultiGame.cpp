@@ -139,6 +139,7 @@ void SceneMultiGame::Initialize()
 	deleteEffect = new Effect("Data/Effect/Blow11.efk");
 	flame = new Effect("Data/Effect/flame.efk");
 	heal = new Effect("Data/Effect/heal.efk");
+	Prohibited = new Effect("Data/Effect/ice.efk");
 }
 
 // 終了化
@@ -187,6 +188,7 @@ void SceneMultiGame::Finalize()
 	delete deleteEffect;
 	delete flame;
 	delete heal;
+	delete Prohibited;
 
 }
 
@@ -199,11 +201,12 @@ void SceneMultiGame::Update(float elapsedTime)
 	DirectX::XMFLOAT2 nextleft = { 1600,850 };
 	DirectX::XMFLOAT2 nextright = { 1900,1000 };
 
-	if (nextleft.x < mouseCursor.GetPositionX() && nextright.x > mouseCursor.GetPositionX() && nextleft.y<mouseCursor.GetPositionY() && nextright.y>mouseCursor.GetPositionY())
+	if (nextleft.x < mouseCursor.GetPositionX() && nextright.x > mouseCursor.GetPositionX() && nextleft.y<mouseCursor.GetPositionY() && nextright.y>mouseCursor.GetPositionY()&&count==1)
 	{
 		if (mouseCursor.GetButtonDown() & anyButton)
 		{
 			switch_state++;
+			count--;
 		}
 	}
 
@@ -329,6 +332,7 @@ void SceneMultiGame::Update(float elapsedTime)
 
 							// 1. 相手のカード使用を禁止するフラグを立てる (即時適用)
 							SetSilencedStatus(enemyColor, true);
+							Prohibited->Play({ 3.5 * 100.0f,0.0f,3.5 * 100.0f }, 300.0f);
 
 							// 2. 相手のカード使用禁止を解除するための ActiveEffect (ID 11) を追加
 							//    持続ターンを 2 に設定することで、相手のターン中ずっと沈黙が続き、
