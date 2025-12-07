@@ -528,6 +528,7 @@ void SceneTutorial::Update(float elapsedTime)
 						// パターンA: 別の自分の駒をクリックした場合 → 選択を切り替える
 						selectedPos = clicked;
 						legalMoves = clickedPiece->getLegalMoves(*board);
+						explanation = clickedPiece->getType();
 						// 選択を切り替えたので、ここで関数を終了
 						return;
 					}
